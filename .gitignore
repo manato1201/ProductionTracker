@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.sqlite3
+backend/staticfiles/
+
+# Node
+node_modules/
+frontend/dist/
+frontend/coverage/
+
+# Secrets / local config (never commit)
+.env
+.env.*
+!.env.example
+
+# Backups
+backups/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
