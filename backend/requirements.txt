@@ -1,0 +1,7 @@
+# 着手時(2026-10-25)に PyPI で確認した安定版。Django は LTS 系(5.2)に固定する。
+Django>=5.2,<5.3
+djangorestframework>=3.18,<3.19
+psycopg[binary]>=3.3,<3.4
+sentry-sdk>=2.73,<3
+gunicorn>=26,<27
+whitenoise>=6.12,<7

@@ -1,0 +1,85 @@
+# docker compose up だけで起動する(ローカル開発用)。
+#   画面:   http://localhost:5173
+#   API:    http://localhost:8000/api/v1/   管理画面: http://localhost:8000/admin/
+# 値は .env から読む(無ければ開発用の既定値)。公開する前に必ず .env を設定すること。
+name: productiontracker
+
+x-django-env: &django-env
+  DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-dev-only-secret-key-change-me}
+  DJANGO_DEBUG: ${DJANGO_DEBUG:-1}
+  DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,web}
+  DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-}
+  DJANGO_SECURE_COOKIES: ${DJANGO_SECURE_COOKIES:-0}
+  DJANGO_BEHIND_PROXY: ${DJANGO_BEHIND_PROXY:-0}
+  POSTGRES_HOST: db
+  POSTGRES_DB: ${POSTGRES_DB:-productiontracker}
+  POSTGRES_USER: ${POSTGRES_USER:-productiontracker}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-productiontracker}
+  DJANGO_SUPERUSER_USERNAME: ${DJANGO_SUPERUSER_USERNAME:-}
+  DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
+  INGEST_API_KEYS: ${INGEST_API_KEYS:-}
+  REQUIRE_VERSION_FOR_COMPLETION: ${REQUIRE_VERSION_FOR_COMPLETION:-1}
+  RETURN_TASK_ON_VERSION_REJECT: ${RETURN_TASK_ON_VERSION_REJECT:-0}
+  SENTRY_DSN: ${SENTRY_DSN:-}
+  SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-development}
+  SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0}
+  SENTRY_SAMPLE_RATE: ${SENTRY_SAMPLE_RATE:-1.0}
+  SENTRY_DEBUG_ENDPOINT_ENABLED: ${SENTRY_DEBUG_ENDPOINT_ENABLED:-0}
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-productiontracker}
+      POSTGRES_USER: ${POSTGRES_USER:-productiontracker}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-productiontracker}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    logging: &logging
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }  # ログのローテーションは Docker 側
+
+  web:
+    build: ./backend
+    command: python manage.py runserver 0.0.0.0:8000
+    environment: *django-env
+    volumes:
+      - ./backend:/app
+    ports:
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/healthz').status == 200 else 1)"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging: *logging
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    environment:
+      VITE_PROXY_TARGET: http://web:8000
+      VITE_ALLOWED_HOSTS: ${VITE_ALLOWED_HOSTS:-}
+      VITE_SENTRY_DSN: ${VITE_SENTRY_DSN:-}
+      VITE_SENTRY_DEBUG: ${VITE_SENTRY_DEBUG:-0}
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "127.0.0.1:5173:5173"
+    depends_on:
+      web:
+        condition: service_healthy
+    logging: *logging
+
+volumes:
+  pgdata:
