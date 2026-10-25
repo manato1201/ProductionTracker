@@ -9,10 +9,25 @@
 | バックエンド | Django 5.2 LTS + Django REST framework、PostgreSQL 16(テストの既定は SQLite) |
 | フロント | Vite + React 19 + TypeScript、React Router、MUI 7、Sass(デザイントークン)、@dnd-kit |
 | 監視 | Sentry(Django / React)、`/healthz`、JSON ログ |
-| テスト | pytest + pytest-django + factory_boy(122 件)/ Vitest(27 件) |
+| テスト | pytest + pytest-django + factory_boy(137 件)/ Vitest(28 件) |
 | 起動 | `docker compose`(`db` / `web` / `frontend`) |
 
 ![タスクボード](docs/screenshots/board.png)
+
+## 構成図
+図は [`docs/diagrams/build.py`](docs/diagrams/build.py) から作る(SVG を手で編集しない。直し方は [docs/diagrams/README.md](docs/diagrams/README.md))。
+
+![システム構成](docs/diagrams/architecture.svg)
+
+| 図 | 何が分かるか |
+|---|---|
+| [システム構成](docs/diagrams/architecture.svg) | 画面・API・DB と、連携ツール・監視・バックアップの関係(上の図) |
+| [状態遷移の流れ](docs/diagrams/transition-flow.svg) | かんばんで列を動かしてから、トーストが出るまでの 9 手順 |
+| [取り込みの流れ](docs/diagrams/ingest-flow.svg) | `insight.db` が品質タブに出るまでの 9 手順と、件数の突き合わせ |
+| [コードの地図](docs/diagrams/code-map.svg) | どのファイルが何を担当し、どちら向きに呼ぶか |
+| [運用構成](docs/diagrams/operations.svg) | 自分の PC + Cloudflare Tunnel / Access、バックアップ、監視 |
+
+![状態遷移の流れ](docs/diagrams/transition-flow.svg)
 
 ## 起動(Docker)
 ```bash
@@ -103,6 +118,7 @@ docker-compose.yml  .env.example
 ```
 
 ## ドキュメント
+- **[docs/learning/](docs/learning/README.md) — 保守・拡張のための学習資料(最初にここ)**
 - [docs/ui-rules.md](docs/ui-rules.md) — UI の決めごと表 / [docs/er.md](docs/er.md) — ER 図
 - [docs/integration.md](docs/integration.md) — AssetDataInsightSuite・VisualRegressionQATool・Hub・Publish API
 - [docs/auth.md](docs/auth.md) — 認証と、外部 ID 基盤の差し込み口

@@ -7,6 +7,11 @@
 | DCC パネル等 → API | `Authorization: Token <ユーザー別トークン>` | `python manage.py drf_create_token <username>` で発行。`-r` を付けると再発行(古いものは無効) |
 | 外部ツール → 取り込み API | `X-API-Key` | **取り込み API 専用**。画面の API には使えない。`INGEST_API_KEYS` に無ければ(空なら)常に 401 |
 
+## ログインの総当たり対策
+`POST /auth/login/` は、IP(`X-Forwarded-For` があればその値)ごとに **10 回/分**(`LOGIN_THROTTLE_RATE` で変更)。超えると `429 {"code": "throttled"}`。
+キャッシュはプロセスごと(既定の LocMemCache)なので、gunicorn のワーカー数だけ実質の上限は緩くなる。厳密に制限するなら共有キャッシュ(Redis など)を使う。
+Cloudflare Access の背後では、そもそも Access を通った人だけがここに届く。
+
 ## 差し替え口
 認証クラスは環境変数で入れ替えられる(`config/settings.py`):
 

@@ -10,14 +10,19 @@ import type { SvgIconComponent } from "@mui/icons-material";
 import type { Priority, TaskStatus, VersionStatus } from "../api/types";
 
 // アイコンは @mui/icons-material の 1 セットに統一(決めごと P1)。
-export const TASK_STATUSES: TaskStatus[] = ["todo", "in_progress", "review", "done"];
-
 export const TASK_STATUS_META: Record<TaskStatus, { label: string; Icon: SvgIconComponent }> = {
   todo: { label: "未着手", Icon: RadioButtonUncheckedIcon },
   in_progress: { label: "進行中", Icon: PlayCircleOutlineIcon },
   review: { label: "レビュー待ち", Icon: HourglassTopIcon },
   done: { label: "完了", Icon: CheckCircleIcon },
 };
+
+/**
+ * 状態の一覧。並び順 = かんばんの列順 = Shift+←/→ で動く隣。
+ * META(Record<TaskStatus, ...>)から導くので、状態を足して META を書き忘れると型エラーになり、
+ * 一覧への足し忘れは起きない。並び順は META の定義順。
+ */
+export const TASK_STATUSES = Object.keys(TASK_STATUS_META) as TaskStatus[];
 
 export const PRIORITIES: Priority[] = ["urgent", "high", "normal", "low"];
 

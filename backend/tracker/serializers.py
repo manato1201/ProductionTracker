@@ -106,17 +106,14 @@ class ProjectSerializer(serializers.ModelSerializer):
         return attrs
 
     def get_task_counts(self, obj):
-        # 一覧では viewset の annotate を使う。無ければ数える(作成直後など)。
-        if hasattr(obj, "n_todo"):
-            counts = {
-                Task.Status.TODO: obj.n_todo,
-                Task.Status.IN_PROGRESS: obj.n_in_progress,
-                Task.Status.REVIEW: obj.n_review,
-                Task.Status.DONE: obj.n_done,
-            }
-        else:
-            counts = {s: Task.objects.filter(entity__project=obj, status=s).count() for s in Task.Status.values}
-        counts = {str(k): v for k, v in counts.items()}
+        # 一覧では viewset の annotate(n_<状態>)を使う。無ければ数える(作成直後など)。状態の一覧は Task.Status から導く。
+        annotated = hasattr(obj, f"n_{Task.Status.values[0]}")
+        counts = {
+            status: getattr(obj, f"n_{status}")
+            if annotated
+            else Task.objects.filter(entity__project=obj, status=status).count()
+            for status in Task.Status.values
+        }
         counts["total"] = sum(counts.values())
         return counts
 

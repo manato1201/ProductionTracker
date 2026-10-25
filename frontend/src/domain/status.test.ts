@@ -12,6 +12,12 @@ describe("adjacentStatus", () => {
   });
 });
 
+describe("状態の一覧", () => {
+  it("並び順はかんばんの列順(META の定義順)", () => {
+    expect(TASK_STATUSES).toEqual(["todo", "in_progress", "review", "done"]);
+  });
+});
+
 describe("状態の見た目", () => {
   it("全ての状態に文字とアイコンがある(色だけにしない)", () => {
     for (const s of TASK_STATUSES) {

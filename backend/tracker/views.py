@@ -96,13 +96,9 @@ class ProjectViewSet(
             "entities__tasks", filter=Q(entities__tasks__status=status), distinct=True
         )
         role = ProjectMember.objects.filter(project=OuterRef("pk"), user=user).values("role")[:1]
-        qs = visible_projects(user).annotate(
-            n_todo=count("todo"),
-            n_in_progress=count("in_progress"),
-            n_review=count("review"),
-            n_done=count("done"),
-            my_role=Subquery(role),
-        )
+        # 状態ごとの件数(n_todo, n_in_progress, ...)。状態の一覧は Task.Status から導く(足しても、ここは変えなくてよい)
+        counts = {f"n_{status}": count(status) for status in Task.Status.values}
+        qs = visible_projects(user).annotate(**counts, my_role=Subquery(role))
         q = self.request.query_params.get("q")
         if q:
             qs = qs.filter(Q(name__icontains=q) | Q(code__icontains=q))
@@ -192,9 +188,6 @@ class EntityViewSet(
 
 
 # --- タスク ---
-TASK_STATUS_ORDER = {"todo": 0, "in_progress": 1, "review": 2, "done": 3}
-
-
 class TaskViewSet(
     mixins.ListModelMixin,
     mixins.CreateModelMixin,

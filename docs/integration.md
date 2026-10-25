@@ -15,7 +15,9 @@ X-API-Key: <INGEST_API_KEYS のいずれか>
 → 201(新規) / 200(同じ (project, scan_run_id) の再送 = 上書き)
 {"created": true, "stored": 4, "matched": 3, "unmatched": ["assets/other/x.fbx"], "defects_total": 10, ...}
 ```
-- **冪等**: `(project, scan_run_id)` の行を全て置き換える。再送しても重複しない。
+- **冪等**: `(project, scan_run_id)` の行を全て置き換える。再送しても重複しない。同じ実行の同時再送は、プロジェクトの行をロックして直列に処理する。
+- **時刻はタイムゾーン付き必須**(`+09:00` または `Z`)。無いと 400。黙って補うと、取り込み元と時刻がずれても気づけないため。
+- `asset_path` は正規化して空になるもの(`./` など)を 400 で拒否する。
 - **アセットとの対応**: `Entity.path` との**前方一致**(最長一致)。区切りは `/` に揃え、大文字小文字は区別しない(Windows のドライブ文字のずれ対策)。`crate` と `crater` は別物(区切りを跨ぐ前方一致はしない)。
 - 対応するアセットが無いパスも `entity = NULL` で保存し、`unmatched` で返す(元データと件数を一致させるため)。
 - 送信スクリプト: [`scripts/send_quality.py`](../scripts/send_quality.py)
@@ -24,6 +26,8 @@ X-API-Key: <INGEST_API_KEYS のいずれか>
 export INGEST_API_KEY=...           # コマンドラインに鍵を書かない
 python scripts/send_quality.py --db path/to/insight.db --project DEMO           # 最新の実行
 python scripts/send_quality.py --db path/to/insight.db --project DEMO --dry-run  # 送らずに件数だけ確認
+# insight.db の時刻にタイムゾーンが無いとき(日本時間で記録されているなど)は、時差を明示する:
+python scripts/send_quality.py --db path/to/insight.db --project DEMO --naive-offset +09:00
 ```
 送信後、API が返した欠陥件数と `insight.db` の `COUNT(*)` を突き合わせ、**一致しなければ終了コード 1**。
 
@@ -39,7 +43,7 @@ X-API-Key: ...
 {
   "run_id": "run-001", "version": 12, "verdict": "pass" | "fail",
   "diff_ratio": 0.0132,                       // 0〜1 の割合(%ではない)
-  "captured_at": "2026-10-11T10:00:00+09:00",
+  "captured_at": "2026-10-11T10:00:00+09:00",      // タイムゾーン付き必須
   "conditions": {"resolution": "1920x1080", "fixed_time": "2026-01-01T00:00:00Z", "seed": 42}
 }
 → 201(新規) / 200(同じ (run_id, version) の再送 = 上書き)

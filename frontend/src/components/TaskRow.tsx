@@ -1,4 +1,3 @@
-import { Link as RouterLink } from "react-router-dom";
 import type { Task } from "../api/types";
 import { DueText } from "./DueText";
 import { PriorityLabel, StatusLabel } from "./StatusLabel";
@@ -20,13 +19,5 @@ export function TaskRow({ task, onOpen, showProject }: { task: Task; onOpen: (t:
         <DueText due={task.due} overdue={task.is_overdue} />
       </div>
     </button>
-  );
-}
-
-export function EntityLink({ task }: { task: Task }) {
-  return (
-    <RouterLink to={`/projects/${task.project_code}/entities/${task.entity}`} onClick={(e) => e.stopPropagation()}>
-      {task.entity_name}
-    </RouterLink>
   );
 }

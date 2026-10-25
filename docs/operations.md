@@ -30,8 +30,18 @@ BACKUP_RCLONE_DEST=r2:my-bucket/pt ./scripts/backup.sh   # rclone で R2 にも�
 稼働中の DB を上書きするときだけ、web を止めてから `RESTORE_OVERWRITE=1 ./scripts/restore.sh <dump> "$POSTGRES_DB"`。
 **数か月ごとに 1 回、実際に復元を試す**こと(取れているだけでは不十分)。
 
+## `manage.py check --deploy` の結果
+`DJANGO_DEBUG=0` で実行して出る警告と、このリポジトリの扱い:
+
+| 警告 | 扱い |
+|---|---|
+| W004 `SECURE_HSTS_SECONDS` | 既定は無効。https だけで公開するなら `DJANGO_HSTS_SECONDS`(短い値から。一度配ると戻しにくい) |
+| W008 `SECURE_SSL_REDIRECT` | 既定は無効。Tunnel が TLS を終端するので通常は不要。必要なら `DJANGO_SSL_REDIRECT=1` |
+| W012 / W016 Secure クッキー | `DJANGO_SECURE_COOKIES=1`(https で公開するとき) |
+| W009 `SECRET_KEY` が短い | 50 文字以上のランダム値を `DJANGO_SECRET_KEY` に(`python -c "import secrets; print(secrets.token_urlsafe(64))"`) |
+
 ## 更新(マイグレーションを伴うとき)
-1. `./scripts/backup.sh`(**必ず先に**)
+1. `./scripts/backup.sh`(**必ず先に**)。マイグレーション `0003` は DB に制約を足す。**既存データが違反していると失敗する**(例: `demo` と `DEMO` が両方ある、見積が負)ので、バックアップから別 DB に復元して先に試すと安全
 2. `git pull` → `docker compose build` → `docker compose up -d`(起動時に `migrate` が走る)
 3. `curl http://localhost:8000/healthz` が `200` であること、画面でログインできること
 4. 失敗したらロールバック: `docker compose down` → 旧バージョンに `git checkout` → 必要なら `restore.sh` で DB を戻す(マイグレーションは前方のみの変更なので、DB はバックアップから戻すのが確実)
