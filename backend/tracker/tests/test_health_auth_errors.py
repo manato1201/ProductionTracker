@@ -104,3 +104,34 @@ def test_unexpected_error_returns_json_500_for_api(db, settings):
     res = c.get("/api/v1/_debug/sentry/")
     assert res.status_code == 500
     assert res.json() == {"code": "server_error", "detail": "サーバーでエラーが発生しました。"}
+
+
+def test_login_is_throttled(db, monkeypatch):
+    """ログインの総当たり対策。既定は 10 回/分(テスト設定では緩めてあるので、ここで絞る)。"""
+    from django.core.cache import cache
+    from rest_framework.throttling import ScopedRateThrottle
+
+    monkeypatch.setitem(ScopedRateThrottle.THROTTLE_RATES, "login", "3/min")
+    cache.clear()
+    UserFactory(username="alice")
+    c = APIClient()
+    codes = [c.post("/api/v1/auth/login/", {"username": "alice", "password": "bad"}, format="json").status_code for _ in range(5)]
+    assert codes == [401, 401, 401, 429, 429]
+    assert c.post("/api/v1/auth/login/", {"username": "alice", "password": "pass-12345"}, format="json").json()["code"] == "throttled"
+    cache.clear()
+
+
+def test_production_default_allowed_hosts_exclude_testserver():
+    """本番の既定に `testserver`(テスト用)を含めない。"""
+    import importlib
+    import os
+
+    from config import settings as base
+
+    old = os.environ.pop("DJANGO_ALLOWED_HOSTS", None)
+    try:
+        assert "testserver" not in importlib.reload(base).ALLOWED_HOSTS
+    finally:
+        if old is not None:
+            os.environ["DJANGO_ALLOWED_HOSTS"] = old
+        importlib.reload(base)

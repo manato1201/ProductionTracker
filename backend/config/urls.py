@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import include, path
 from rest_framework.routers import SimpleRouter
 
@@ -34,16 +34,16 @@ urlpatterns = [
 ]
 
 
-def _json_error(status, code, detail):
+def _error_view(status, code, detail):
+    """API(/api/ 以下)は統一形式の JSON、それ以外(管理画面など)は文字だけを返す。"""
+
     def view(request, *args, **kwargs):
         if request.path.startswith("/api/"):
             return JsonResponse({"code": code, "detail": detail}, status=status)
-        from django.http import HttpResponse
-
         return HttpResponse(detail, status=status, content_type="text/plain; charset=utf-8")
 
     return view
 
 
-handler404 = _json_error(404, "not_found", "見つかりません。")
-handler500 = _json_error(500, "server_error", "サーバーでエラーが発生しました。")
+handler404 = _error_view(404, "not_found", "見つかりません。")
+handler500 = _error_view(500, "server_error", "サーバーでエラーが発生しました。")

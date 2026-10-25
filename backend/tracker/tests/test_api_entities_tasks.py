@@ -1,3 +1,4 @@
+import pytest
 
 from tracker.models import Task
 
@@ -148,3 +149,23 @@ def test_next_statuses_follow_the_transition_table(client_for, artist, task):
     for status, expected in [("in_progress", ["review"]), ("review", ["in_progress", "done"]), ("done", ["in_progress"])]:
         Task.objects.filter(pk=task.pk).update(status=status)
         assert c.get(f"{BASE}/tasks/{task.id}/").json()["next_statuses"] == expected
+
+
+@pytest.mark.parametrize("query", ["kind=ship", "status=bogus"])
+def test_entity_filters_reject_unknown_values(client_for, artist, query):
+    assert client_for(artist).get(f"{BASE}/entities/?{query}").status_code == 400
+
+
+def test_task_priority_filter_validated(client_for, artist, entity):
+    TaskFactory(entity=entity, step=StepFactory(), priority="urgent")
+    c = client_for(artist)
+    assert c.get(f"{BASE}/tasks/?priority=urgent").json()["count"] == 1
+    assert c.get(f"{BASE}/tasks/?priority=ultra").status_code == 400
+
+
+def test_estimate_has_db_level_guard(task):
+    from django.db import IntegrityError, transaction
+
+    task.estimate_h = -1
+    with pytest.raises(IntegrityError), transaction.atomic():
+        task.save()

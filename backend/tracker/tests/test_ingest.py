@@ -157,3 +157,27 @@ def test_visual_results_listing(client_for, ingest_client, task, artist, outside
     assert client_for(artist).get(f"{BASE}/visual-results/?entity={task.entity_id}").json()["count"] == 1
     assert client_for(artist).get(f"{BASE}/visual-results/?version={version.id}").json()["results"][0]["verdict_label"] == "不合格"
     assert client_for(outsider).get(f"{BASE}/visual-results/?version={version.id}").json()["count"] == 0
+
+
+def test_naive_timestamps_are_rejected(ingest_client, project, task):
+    """タイムゾーンが無い時刻は、黙って補わず 400(取り込み元と時刻がずれても気づけないため)。"""
+    res = ingest_client.post(f"{BASE}/ingest/quality/", quality_payload(scanned_at="2026-10-11T09:00:00"), format="json", **KEY)
+    assert res.status_code == 400 and "タイムゾーン" in res.json()["detail"]
+    version = VersionFactory.create(task)
+    res = ingest_client.post(f"{BASE}/ingest/visual/", visual_payload(version, captured_at="2026-10-11T10:00:00"), format="json", **KEY)
+    assert res.status_code == 400
+
+
+def test_empty_asset_path_is_rejected(ingest_client, project):
+    res = ingest_client.post(f"{BASE}/ingest/quality/", quality_payload(results=[{"asset_path": " ./ ", "defects": 1}]), format="json", **KEY)
+    assert res.status_code == 400
+
+
+def test_visual_diff_ratio_has_db_level_guard(task):
+    from datetime import UTC, datetime
+
+    from django.db import IntegrityError, transaction
+
+    version = VersionFactory.create(task)
+    with pytest.raises(IntegrityError), transaction.atomic():
+        VisualResult.objects.create(version=version, run_id="r", verdict="pass", diff_ratio=1.5, captured_at=datetime.now(UTC))

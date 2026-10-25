@@ -22,7 +22,7 @@ export function StatusMenu({ task, onSelect, disabled, variant }: Props) {
   return (
     <>
       {variant === "icon" ? (
-        <IconButton size="small" aria-label={label} aria-haspopup="menu" onClick={open} disabled={disabled} onPointerDown={(e) => e.stopPropagation()}>
+        <IconButton size="small" aria-label={label} aria-haspopup="menu" onClick={open} disabled={disabled} onMouseDown={(e) => e.stopPropagation()} onTouchStart={(e) => e.stopPropagation()}>
           <MoreVertIcon fontSize="small" />
         </IconButton>
       ) : (
@@ -30,6 +30,7 @@ export function StatusMenu({ task, onSelect, disabled, variant }: Props) {
           状態を変更
         </Button>
       )}
+      {/* ドラッグの開始(dnd-kit は mousedown / touchstart を見る)をメニューのボタンで起こさない */}
       <Menu anchorEl={anchor} open={anchor !== null} onClose={() => setAnchor(null)} onClick={(e) => e.stopPropagation()}>
         {task.next_statuses.length === 0 ? <MenuItem disabled>変更できる状態はありません</MenuItem> : null}
         {task.next_statuses.map((s) => {

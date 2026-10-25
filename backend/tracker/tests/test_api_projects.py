@@ -1,6 +1,7 @@
 import pytest
+from django.db import IntegrityError, transaction
 
-from .factories import EntityFactory, MemberFactory, ProjectFactory, TaskFactory
+from .factories import EntityFactory, MemberFactory, ProjectFactory, StepFactory, TaskFactory
 
 BASE = "/api/v1"
 
@@ -74,7 +75,7 @@ def test_code_cannot_change(client_for, project, reviewer):
 def test_task_counts_and_progress(client_for, project, artist, step):
     e = EntityFactory(project=project)
     TaskFactory(entity=e, step=step, status="done")
-    TaskFactory(entity=e, step=__import__("tracker.tests.factories", fromlist=["StepFactory"]).StepFactory(), status="todo")
+    TaskFactory(entity=e, step=StepFactory(), status="todo")
     body = client_for(artist).get(f"{BASE}/projects/DEMO/").json()
     assert body["task_counts"] == {"todo": 1, "in_progress": 0, "review": 0, "done": 1, "total": 2}
     assert body["progress"] == 0.5
@@ -105,3 +106,26 @@ def test_members_list(client_for, project, artist, reviewer):
 def test_unknown_api_path_is_json_404(client_for, artist):
     res = client_for(artist).get(f"{BASE}/nope/")
     assert res.status_code == 404 and res.json()["code"] == "not_found"
+
+
+def test_project_code_is_case_insensitively_unique(client_for, outsider, project):
+    """demo と DEMO を別物にしない。DB の制約が最後の砦で、API は 500 でなく 400 を返す。"""
+    res = client_for(outsider).post(f"{BASE}/projects/", {"code": "demo", "name": "x"}, format="json")
+    assert res.status_code == 400 and res.json()["code"] == "validation_error"
+    with pytest.raises(IntegrityError), transaction.atomic():
+        ProjectFactory(code="Demo")
+
+
+def test_viewer_cannot_write_flag(client_for, project, viewer):
+    body = client_for(viewer).get(f"{BASE}/projects/DEMO/").json()
+    assert (body["my_role"], body["can_write"], body["can_review"]) == ("viewer", False, False)
+
+
+def test_permission_flags_follow_the_model_rules(client_for, project, artist, reviewer, make_user):
+    """UI に出す can_write / can_review は、モデルの判定(Project.can_write / can_review)と常に一致する。"""
+    staff = make_user(None, is_staff=True)
+    for user in (artist, reviewer, staff):
+        body = client_for(user).get(f"{BASE}/projects/DEMO/").json()
+        assert body["can_write"] == project.can_write(user)
+        assert body["can_review"] == project.can_review(user)
+    assert client_for(staff).get(f"{BASE}/projects/DEMO/").json()["can_review"] is False  # 管理者でも承認はレビュアーのみ

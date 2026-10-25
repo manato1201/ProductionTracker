@@ -1,11 +1,12 @@
 import AddIcon from "@mui/icons-material/Add";
-import { Button, Chip, Stack } from "@mui/material";
+import { Button, Stack } from "@mui/material";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { projects } from "../api/endpoints";
 import type { Project } from "../api/types";
 import { ProjectFormDialog } from "../components/Dialogs";
 import { EmptyState, ErrorNotice, RowSkeletons } from "../components/Feedback";
+import { FilterChip } from "../components/FilterChip";
 import { formatDate, formatPercent, symbolOf } from "../domain/format";
 import { useResource } from "../hooks/useResource";
 
@@ -39,7 +40,7 @@ export default function ProjectsPage() {
       </Stack>
       <Stack direction="row" gap={1} sx={{ mb: 2 }} role="group" aria-label="並べ替え">
         {SORTS.map((s) => (
-          <Chip key={s.key} label={s.label} clickable color={sort === s.key ? "primary" : "default"} variant={sort === s.key ? "filled" : "outlined"} onClick={() => setSort(s.key)} aria-pressed={sort === s.key} />
+          <FilterChip key={s.key} size="medium" label={s.label} pressed={sort === s.key} onClick={() => setSort(s.key)} />
         ))}
       </Stack>
       {res.error ? <ErrorNotice error={res.error} onRetry={res.reload} /> : null}

@@ -143,3 +143,20 @@ def test_note_permissions(client_for, viewer, outsider, artist, entity):
 def test_note_blank_body_rejected(client_for, artist, entity):
     res = client_for(artist).post(f"{BASE}/notes/", {"target_type": "entity", "target_id": entity.id, "body": "   "}, format="json")
     assert res.status_code == 400
+
+
+def test_version_status_filter_validated(client_for, artist, task):
+    assert client_for(artist).get(f"{BASE}/versions/?status=bogus").status_code == 400
+
+
+def test_notes_are_deleted_with_their_target(client_for, artist, entity, task):
+    """対象(アセット・タスク・版)を消しても、ノートが孤児として残らない。"""
+    from tracker.models import Note
+
+    version = VersionFactory.create(task)
+    c = client_for(artist)
+    for target_type, obj in (("entity", entity), ("task", task), ("version", version)):
+        c.post(f"{BASE}/notes/", {"target_type": target_type, "target_id": obj.id, "body": "x"}, format="json")
+    assert Note.objects.count() == 3
+    entity.delete()  # アセット → タスク → 版 と連鎖して消える
+    assert Note.objects.count() == 0

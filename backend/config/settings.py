@@ -25,7 +25,7 @@ if not SECRET_KEY:
         raise RuntimeError("DJANGO_SECRET_KEY が未設定です(開発時は DJANGO_DEBUG=1 を指定)。")
     SECRET_KEY = "insecure-dev-key-do-not-use-in-production"
 
-ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],web,testserver")
+ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1,[::1],web")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
 INSTALLED_APPS = [
@@ -120,6 +120,10 @@ CSRF_COOKIE_SAMESITE = "Lax"
 # Cloudflare Tunnel など TLS を終端するプロキシの背後で https を認識させる
 if env_bool("DJANGO_BEHIND_PROXY", False):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# 既定は無効(`manage.py check --deploy` の警告 W004 / W008)。https だけで公開する環境で有効にする。
+# HSTS は一度配ると戻しにくいので、短い値(例: 3600)から始めること。
+SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "0"))
+SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", False)
 
 # --- DRF ---
 # 認証の差し替え口(設計書 Phase 6): 認証クラスは環境変数で入れ替えられる。
@@ -136,6 +140,9 @@ REST_FRAMEWORK = {
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
     "EXCEPTION_HANDLER": "tracker.errors.exception_handler",
     "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
+    # ログインの総当たり対策。IP(X-Forwarded-For があればその値)ごと。キャッシュはプロセスごとなので、
+    # gunicorn のワーカー数だけ実質の上限は緩くなる(厳密な制限が要るなら共有キャッシュを使う)。
+    "DEFAULT_THROTTLE_RATES": {"login": os.environ.get("LOGIN_THROTTLE_RATE", "10/min")},
 }
 
 # --- アプリ固有の設定 ---

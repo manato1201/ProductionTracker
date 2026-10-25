@@ -21,6 +21,10 @@ export function ProjectFormDialog({ open, onClose, onCreated }: { open: boolean;
       onClose={onClose}
       onSubmit={async () => {
         const created = await projects.create({ code, name, start: start || null, due: due || null });
+        setCode("");
+        setName("");
+        setStart("");
+        setDue("");
         onCreated(created);
       }}
     >
@@ -76,11 +80,11 @@ export function TaskFormDialog({
 
   useEffect(() => {
     if (open) setEntityId(defaultEntityId ?? entityList[0]?.id ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 意図: 開いたときだけ初期値を入れる(entityList などが変わるたびに入力中の値を上書きしない)
   }, [open]);
   useEffect(() => {
     setStep(available[0]?.id ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // 意図: アセットを選び直した・開いた・工程が読み込まれたときだけ、工程の初期値を選び直す
   }, [entityId, open, steps.length]);
 
   return (

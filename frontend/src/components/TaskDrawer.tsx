@@ -27,7 +27,7 @@ interface Props {
 /** ドロワー(02): カードをクリックすると右からタスクの詳細(版・ノート・品質)。 */
 export function TaskDrawer({ taskId, project, onClose, onChanged }: Props) {
   return (
-    <Drawer anchor="right" open={taskId !== null} onClose={onClose} PaperProps={{ sx: { width: "min(520px, 100vw)" } }} sx={{ zIndex: (t) => t.zIndex.modal }}>
+    <Drawer anchor="right" open={taskId !== null} onClose={onClose} slotProps={{ paper: { sx: { width: "min(520px, 100vw)" } } }} sx={{ zIndex: (t) => t.zIndex.modal }}>
       {taskId !== null ? <DrawerBody key={taskId} taskId={taskId} project={project} onClose={onClose} onChanged={onChanged} /> : null}
     </Drawer>
   );

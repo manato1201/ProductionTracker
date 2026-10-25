@@ -19,7 +19,7 @@ import sqlite3
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 
 def _ident(name: str) -> str:
@@ -40,6 +40,7 @@ def build_quality_payload(
     defects_table: str = "defect_records",
     defect_run_column: str = "scan_run_id",
     path_column: str = "asset_path",
+    naive_offset: str | None = None,
 ) -> tuple[dict, int]:
     """(送信する本文, 元 DB の欠陥件数)を返す。scan_run_id 省略時は最新の実行。"""
     runs, run_id_col, scanned_col = _ident(runs_table), _ident(run_id_column), _ident(scanned_at_column)
@@ -64,18 +65,37 @@ def build_quality_payload(
     payload = {
         "project": project,
         "scan_run_id": int(run_id),
-        "scanned_at": _as_iso(scanned_at),
+        "scanned_at": _as_iso(scanned_at, naive_offset),
         "results": [{"asset_path": path, "defects": int(count)} for path, count in rows],
     }
     return payload, int(total)
 
 
-def _as_iso(value) -> str:
-    """ISO 8601 文字列か UNIX 秒を ISO 8601(タイムゾーン付き)にする。時刻帯の無い文字列は UTC とみなす。"""
+def _parse_offset(text: str) -> timezone:
+    """`+09:00` / `-05:30` / `Z` を timezone にする。"""
+    if text.upper() == "Z":
+        return timezone.utc
+    sign = -1 if text.startswith("-") else 1
+    hours, _, minutes = text.lstrip("+-").partition(":")
+    return timezone(sign * timedelta(hours=int(hours), minutes=int(minutes or 0)))
+
+
+def _as_iso(value, naive_offset: str | None = None) -> str:
+    """ISO 8601 文字列か UNIX 秒を、タイムゾーン付きの ISO 8601 にする。
+
+    タイムゾーンの無い文字列は、`naive_offset`(例 +09:00)で明示されたときだけ補う。
+    黙って UTC とみなすと、日本時間で記録された値が 9 時間ずれても気づけないため、指定が無ければエラーにする。
+    """
     if isinstance(value, (int, float)):
         return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
     dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
-    return (dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)).isoformat()
+    if dt.tzinfo is None:
+        if naive_offset is None:
+            raise ValueError(
+                f"scanned_at {value!r} にタイムゾーンがありません。--naive-offset(例: +09:00)で記録時の時差を指定してください。"
+            )
+        dt = dt.replace(tzinfo=_parse_offset(naive_offset))
+    return dt.isoformat()
 
 
 def post_json(url: str, api_key: str, payload: dict, timeout: float = 30.0) -> tuple[int, dict]:
@@ -101,6 +121,7 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--project", required=True, help="ProductionTracker のプロジェクトコード")
     p.add_argument("--url", default="http://localhost:8000/api/v1/ingest/quality/")
     p.add_argument("--scan-run-id", type=int, help="省略時は最新の実行")
+    p.add_argument("--naive-offset", help="scanned_at にタイムゾーンが無いときの時差(例: +09:00)。未指定でタイムゾーンが無ければエラー")
     p.add_argument("--dry-run", action="store_true", help="送信せず、本文の要約だけ表示する")
     for flag, default in [
         ("runs-table", "scan_runs"), ("run-id-column", "id"), ("scanned-at-column", "scanned_at"),
@@ -114,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
             args.db, args.project, args.scan_run_id,
             runs_table=args.runs_table, run_id_column=args.run_id_column, scanned_at_column=args.scanned_at_column,
             defects_table=args.defects_table, defect_run_column=args.defect_run_column, path_column=args.path_column,
+            naive_offset=args.naive_offset,
         )
     except (sqlite3.Error, LookupError, ValueError) as e:
         print(f"入力エラー: {e}", file=sys.stderr)

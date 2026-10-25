@@ -1,12 +1,13 @@
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import { Button, Chip, InputAdornment, Stack, Tab, Tabs, TextField } from "@mui/material";
+import { Button, InputAdornment, Stack, Tab, Tabs, TextField } from "@mui/material";
 import { useMemo, useState } from "react";
 import { Link as RouterLink, useNavigate, useSearchParams } from "react-router-dom";
 import { entities, tasks, versions } from "../api/endpoints";
 import type { Task, TaskStatus } from "../api/types";
 import { EntityFormDialog } from "../components/Dialogs";
 import { EmptyState, ErrorNotice, RowSkeletons, Section } from "../components/Feedback";
+import { FilterChip } from "../components/FilterChip";
 import { ProjectQualityPanel } from "../components/IntegrationPanels";
 import { StackedBar } from "../components/StackedBar";
 import { TaskDrawer } from "../components/TaskDrawer";
@@ -35,6 +36,8 @@ export default function OverviewPage() {
   const ents = useResource(() => entities.list(project.id), [project.id]);
   const [assetQuery, setAssetQuery] = useState("");
   const [adding, setAdding] = useState(false);
+  // ドロワーでタスクが変わったら、タスク一覧(タブ)も読み直す。件数の変化だけを見ていると、状態の変更を取りこぼす。
+  const [tasksRevision, setTasksRevision] = useState(0);
 
   const visibleEntities = useMemo(
     () => (ents.data?.items ?? []).filter((e) => e.name.toLowerCase().includes(assetQuery.toLowerCase())),
@@ -93,7 +96,7 @@ export default function OverviewPage() {
               </div>
             </Stack>
           ) : null}
-          {tab === "tasks" ? <ProjectTasks code={project.code} onOpen={(t) => setTaskId(t.id)} refreshKey={project.updated_at + project.task_counts.total} /> : null}
+          {tab === "tasks" ? <ProjectTasks code={project.code} onOpen={(t) => setTaskId(t.id)} refreshKey={tasksRevision} /> : null}
           {tab === "versions" ? <ProjectVersions /> : null}
           {tab === "quality" ? <ProjectQualityPanel projectCode={project.code} entities={ents.data?.items ?? []} /> : null}
         </div>
@@ -108,7 +111,7 @@ export default function OverviewPage() {
         <StackedBar counts={project.task_counts} />
       </Section>
 
-      <TaskDrawer taskId={taskId} project={project} onClose={() => setTaskId(null)} onChanged={() => void reloadProject()} />
+      <TaskDrawer taskId={taskId} project={project} onClose={() => setTaskId(null)} onChanged={() => { void reloadProject(); setTasksRevision((n) => n + 1); }} />
       <EntityFormDialog open={adding} project={project} onClose={() => setAdding(false)} onCreated={(e) => { void ents.reload(); navigate(`/projects/${project.code}/entities/${e.id}`); }} />
     </div>
   );
@@ -120,7 +123,7 @@ const ORDERINGS = [
   { key: "status", label: "状態順" },
 ] as const;
 
-function ProjectTasks({ code, onOpen, refreshKey }: { code: string; onOpen: (t: Task) => void; refreshKey: string | number }) {
+function ProjectTasks({ code, onOpen, refreshKey }: { code: string; onOpen: (t: Task) => void; refreshKey: number }) {
   const [statuses, setStatuses] = useState<TaskStatus[]>([]);
   const [mine, setMine] = useState(false);
   const [overdue, setOverdue] = useState(false);
@@ -137,17 +140,17 @@ function ProjectTasks({ code, onOpen, refreshKey }: { code: string; onOpen: (t: 
     <div>
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 1 }} role="group" aria-label="絞り込み">
         {TASK_STATUSES.map((s) => (
-          <Chip key={s} label={TASK_STATUS_META[s].label} size="small" clickable aria-pressed={statuses.includes(s)} color={statuses.includes(s) ? "primary" : "default"} variant={statuses.includes(s) ? "filled" : "outlined"} onClick={() => toggle(s)} />
+          <FilterChip key={s} label={TASK_STATUS_META[s].label} pressed={statuses.includes(s)} onClick={() => toggle(s)} />
         ))}
-        <Chip label="自分" size="small" clickable aria-pressed={mine} color={mine ? "primary" : "default"} variant={mine ? "filled" : "outlined"} onClick={() => setMine(!mine)} />
-        <Chip label="期限切れ" size="small" clickable aria-pressed={overdue} color={overdue ? "primary" : "default"} variant={overdue ? "filled" : "outlined"} onClick={() => setOverdue(!overdue)} />
-        {anyFilter ? <Chip label="条件をリセット" size="small" onClick={() => { setStatuses([]); setMine(false); setOverdue(false); setQ(""); }} /> : null}
+        <FilterChip label="自分" pressed={mine} onClick={() => setMine(!mine)} />
+        <FilterChip label="期限切れ" pressed={overdue} onClick={() => setOverdue(!overdue)} />
+        {anyFilter ? <FilterChip label="条件をリセット" pressed={false} onClick={() => { setStatuses([]); setMine(false); setOverdue(false); setQ(""); }} /> : null}
       </Stack>
       <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center" sx={{ mb: 1 }}>
         <TextField size="small" placeholder="タスクを検索" value={q} onChange={(e) => setQ(e.target.value)} inputProps={{ "aria-label": "タスクを検索" }} />
         <Stack direction="row" gap={0.5} role="group" aria-label="並べ替え">
           {ORDERINGS.map((o) => (
-            <Chip key={o.key} label={o.label} size="small" clickable aria-pressed={ordering === o.key} color={ordering === o.key ? "primary" : "default"} variant={ordering === o.key ? "filled" : "outlined"} onClick={() => setOrdering(o.key)} />
+            <FilterChip key={o.key} label={o.label} pressed={ordering === o.key} onClick={() => setOrdering(o.key)} />
           ))}
         </Stack>
       </Stack>

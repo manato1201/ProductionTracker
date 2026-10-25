@@ -15,7 +15,7 @@ export function useResource<T>(fetcher: () => Promise<T>, deps: unknown[]): Reso
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<ApiError>();
   const seq = useRef(0);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // 意図: fetcher は毎回新しい関数になるので依存に入れず、呼び出し側が渡す deps が変わったときだけ取り直す
   const run = useCallback(fetcher, deps);
 
   const reload = useCallback(async () => {

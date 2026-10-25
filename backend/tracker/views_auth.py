@@ -7,6 +7,7 @@ from rest_framework.authentication import BaseAuthentication, SessionAuthenticat
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from .serializers import UserSerializer
@@ -42,6 +43,8 @@ class LoginSerializer(serializers.Serializer):
 class LoginView(APIView):
     permission_classes = [AllowAny]
     authentication_classes = [CsrfOnlyAuthentication]
+    throttle_classes = [ScopedRateThrottle]  # 総当たり対策(レートは settings の DEFAULT_THROTTLE_RATES["login"])
+    throttle_scope = "login"
 
     def post(self, request):
         body = LoginSerializer(data=request.data)

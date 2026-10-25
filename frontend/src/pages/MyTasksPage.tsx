@@ -1,9 +1,10 @@
-import { Chip, Stack } from "@mui/material";
+import { Stack } from "@mui/material";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { projects, tasks } from "../api/endpoints";
 import type { Task } from "../api/types";
 import { EmptyState, ErrorNotice, RowSkeletons } from "../components/Feedback";
+import { FilterChip } from "../components/FilterChip";
 import { TaskDrawer } from "../components/TaskDrawer";
 import { TaskRow } from "../components/TaskRow";
 import { useResource } from "../hooks/useResource";
@@ -33,7 +34,7 @@ export default function MyTasksPage() {
       <h1 style={{ margin: "0 0 16px", fontSize: "1.4rem" }}>{view.title}</h1>
       {viewKey === "default" ? (
         <Stack direction="row" gap={1} sx={{ mb: 2 }}>
-          <Chip label="完了も表示" size="small" clickable aria-pressed={withDone} color={withDone ? "primary" : "default"} variant={withDone ? "filled" : "outlined"} onClick={() => setWithDone(!withDone)} />
+          <FilterChip label="完了も表示" pressed={withDone} onClick={() => setWithDone(!withDone)} />
         </Stack>
       ) : null}
       {res.error ? <ErrorNotice error={res.error} onRetry={res.reload} /> : null}

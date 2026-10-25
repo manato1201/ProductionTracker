@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from django.db import transaction
 
-from .models import Entity, QualityReport, Version, VisualResult
+from .models import Entity, Project, QualityReport, Version, VisualResult
 from .paths import match_entity, normalize_path
 
 
@@ -15,6 +15,9 @@ def ingest_quality(project, scan_run_id: int, scanned_at, rows: list[dict]) -> d
     アセットパスは Entity.path との前方一致で突き合わせる。一致しないものも
     `entity=None` で保存し、元データの件数と一致するようにする(unmatched として返す)。
     """
+    # 同じ (project, scan_run_id) の同時再送を直列化する(削除 → 再作成の間に割り込まれて一意制約違反になるのを防ぐ)
+    Project.objects.select_for_update().get(pk=project.pk)
+
     defects_by_path: dict[str, int] = defaultdict(int)
     for row in rows:
         defects_by_path[normalize_path(row["asset_path"])] += row["defects"]

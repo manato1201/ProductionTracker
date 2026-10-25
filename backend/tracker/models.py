@@ -5,11 +5,12 @@
 """
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.core.validators import RegexValidator
 from django.db import models, transaction
-from django.db.models import Max
+from django.db.models import Max, Q
+from django.db.models.functions import Lower
 
 from .errors import Forbidden, InvalidTransition, RuleViolation
 
@@ -30,24 +31,35 @@ class Project(models.Model):
     class Meta:
         verbose_name = "プロジェクト"
         verbose_name_plural = "プロジェクト"
+        constraints = [
+            # `demo` と `DEMO` を別物にしない(URL・取り込みの指定が曖昧になるため)
+            models.UniqueConstraint(Lower("code"), name="uniq_project_code_ci"),
+        ]
 
     def __str__(self):
         return f"{self.code} {self.name}"
 
     # --- 役割(ProjectMember.role)。管理者権限は Django 標準の is_staff ---
+    # 権限の判定はここ(can_write_as / can_review_as)だけに置く。シリアライザも同じ関数を使う。
+    @staticmethod
+    def can_write_as(role: str | None, is_staff: bool) -> bool:
+        return bool(is_staff or role in ProjectMember.WRITER_ROLES)
+
+    @staticmethod
+    def can_review_as(role: str | None) -> bool:
+        """承認できるのは、プロジェクトの「レビュアー」の役割を持つユーザーのみ(is_staff でも不可)。"""
+        return role == ProjectMember.Role.REVIEWER
+
     def role_for(self, user) -> str | None:
         if user is None or not getattr(user, "is_authenticated", False) or user.pk is None:
             return None
         return self.members.filter(user=user).values_list("role", flat=True).first()
 
     def can_write(self, user) -> bool:
-        if getattr(user, "is_staff", False):
-            return True
-        return self.role_for(user) in {ProjectMember.Role.ARTIST, ProjectMember.Role.REVIEWER}
+        return self.can_write_as(self.role_for(user), getattr(user, "is_staff", False))
 
     def can_review(self, user) -> bool:
-        """承認できるのは、プロジェクトの「レビュアー」の役割を持つユーザーのみ。"""
-        return self.role_for(user) == ProjectMember.Role.REVIEWER
+        return self.can_review_as(self.role_for(user))
 
 
 class ProjectMember(models.Model):
@@ -55,6 +67,8 @@ class ProjectMember(models.Model):
         REVIEWER = "reviewer", "レビュアー"
         ARTIST = "artist", "アーティスト"
         VIEWER = "viewer", "閲覧者"
+
+    WRITER_ROLES = frozenset({"reviewer", "artist"})  # 編集できる役割(viewer は閲覧のみ)
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="memberships")
@@ -105,6 +119,7 @@ class Entity(models.Model):
     path = models.CharField("パス", max_length=500, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    notes = GenericRelation("Note")  # 削除時にノートも道連れにする(孤児を残さない)
 
     class Meta:
         verbose_name = "アセット"
@@ -147,11 +162,17 @@ class Task(models.Model):
     estimate_h = models.FloatField("見積(時間)", null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    notes = GenericRelation("Note")
 
     class Meta:
         verbose_name = "タスク"
         verbose_name_plural = "タスク"
-        constraints = [models.UniqueConstraint(fields=["entity", "step"], name="uniq_task_per_step")]
+        constraints = [
+            models.UniqueConstraint(fields=["entity", "step"], name="uniq_task_per_step"),
+            models.CheckConstraint(
+                condition=Q(estimate_h__isnull=True) | Q(estimate_h__gte=0), name="task_estimate_non_negative"
+            ),
+        ]
         indexes = [models.Index(fields=["status"]), models.Index(fields=["due"])]
 
     def __str__(self):
@@ -214,6 +235,7 @@ class Version(models.Model):
     idempotency_key = models.CharField(max_length=200, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    notes = GenericRelation("Note")
 
     class Meta:
         verbose_name = "版"
@@ -333,4 +355,7 @@ class VisualResult(models.Model):
     class Meta:
         verbose_name = "画面差分の結果"
         verbose_name_plural = "画面差分の結果"
-        constraints = [models.UniqueConstraint(fields=["run_id", "version"], name="uniq_visual_run")]
+        constraints = [
+            models.UniqueConstraint(fields=["run_id", "version"], name="uniq_visual_run"),
+            models.CheckConstraint(condition=Q(diff_ratio__gte=0) & Q(diff_ratio__lte=1), name="visual_diff_ratio_0_1"),
+        ]

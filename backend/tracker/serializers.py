@@ -89,8 +89,13 @@ class ProjectSerializer(serializers.ModelSerializer):
         read_only_fields = ["created_at", "updated_at"]
 
     def validate_code(self, value):
-        if self.instance is not None and value != self.instance.code:
-            raise serializers.ValidationError("コードは作成後に変更できません。")
+        if self.instance is not None:
+            if value != self.instance.code:
+                raise serializers.ValidationError("コードは作成後に変更できません。")
+            return value
+        # DB の制約は大文字小文字を区別しない(demo と DEMO は同じ)。DRF は式の制約を検査しないので、ここで先に弾く。
+        if Project.objects.filter(code__iexact=value).exists():
+            raise serializers.ValidationError("このコードは既に使われています(大文字小文字の違いも同じ扱いです)。")
         return value
 
     def validate(self, attrs):
@@ -128,11 +133,10 @@ class ProjectSerializer(serializers.ModelSerializer):
         return self._role(obj)
 
     def get_can_write(self, obj):
-        user = self.context["request"].user
-        return bool(user.is_staff or self._role(obj) in {"artist", "reviewer"})
+        return Project.can_write_as(self._role(obj), self.context["request"].user.is_staff)
 
     def get_can_review(self, obj):
-        return self._role(obj) == "reviewer"
+        return Project.can_review_as(self._role(obj))
 
 
 # --- アセット ---
@@ -341,15 +345,29 @@ class VisualResultSerializer(serializers.ModelSerializer):
 
 
 # --- 取り込み(入力) ---
+class AwareDateTimeField(serializers.DateTimeField):
+    """タイムゾーン付きだけを受け付ける。無いと取り込み元と時刻がずれても気づけないため、黙って補わない。"""
+
+    def enforce_timezone(self, value):
+        if timezone.is_naive(value):
+            raise serializers.ValidationError("タイムゾーン付きで指定してください(例: 2026-10-11T09:00:00+09:00 または ...Z)。")
+        return super().enforce_timezone(value)
+
+
 class QualityRowSerializer(serializers.Serializer):
     asset_path = serializers.CharField(max_length=500)
     defects = serializers.IntegerField(min_value=0)
+
+    def validate_asset_path(self, value):
+        if not normalize_path(value):
+            raise serializers.ValidationError("アセットのパスが空です。")
+        return value
 
 
 class QualityIngestSerializer(serializers.Serializer):
     project = serializers.CharField(max_length=32)
     scan_run_id = serializers.IntegerField(min_value=0)
-    scanned_at = serializers.DateTimeField()
+    scanned_at = AwareDateTimeField()
     results = QualityRowSerializer(many=True, max_length=50000)
 
     def validate_project(self, value):
@@ -364,7 +382,7 @@ class VisualIngestSerializer(serializers.Serializer):
     version = serializers.IntegerField(min_value=1)
     verdict = serializers.ChoiceField(choices=VisualResult.Verdict.choices)
     diff_ratio = serializers.FloatField(min_value=0, max_value=1)  # 0〜1 の割合(%ではない)
-    captured_at = serializers.DateTimeField()
+    captured_at = AwareDateTimeField()
     conditions = serializers.DictField(required=False, default=dict)
 
     def validate_version(self, value):

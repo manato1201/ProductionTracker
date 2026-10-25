@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from . import serializers as s
 from .errors import Forbidden, IdempotencyConflict
 from .models import (
+    Entity,
     Note,
     ProjectMember,
     QualityReport,
@@ -37,6 +38,16 @@ def int_param(request, name):
         return int(raw)
     except ValueError:
         raise serializers.ValidationError({name: "整数で指定してください。"})
+
+
+def choice_param(request, name, choices):
+    """`?name=` は選択肢にある値だけ(それ以外は 400)。タイプミスが「0 件」に見えるのを防ぐ。"""
+    value = request.query_params.get(name)
+    if not value:
+        return None
+    if value not in choices:
+        raise serializers.ValidationError({name: f"{', '.join(choices)} のいずれかを指定してください。"})
+    return value
 
 
 def project_q(request, prefix=""):
@@ -161,9 +172,10 @@ class EntityViewSet(
         )
         req = self.request
         qs = qs.filter(project_q(req))
-        for name in ("kind", "status"):
-            if req.query_params.get(name):
-                qs = qs.filter(**{name: req.query_params[name]})
+        for name, choices in (("kind", Entity.Kind.values), ("status", Entity.Status.values)):
+            value = choice_param(req, name, choices)
+            if value:
+                qs = qs.filter(**{name: value})
         if req.query_params.get("q"):
             qs = qs.filter(name__icontains=req.query_params["q"])
         if self.action == "list":
@@ -224,7 +236,7 @@ class TaskViewSet(
                 raise serializers.ValidationError({"status": f"不正な状態: {', '.join(invalid)}"})
             qs = qs.filter(status__in=statuses)
 
-        priority = req.query_params.get("priority")
+        priority = choice_param(req, "priority", Task.Priority.values)
         if priority:
             qs = qs.filter(priority=priority)
         if req.query_params.get("overdue") in {"1", "true"}:
@@ -285,8 +297,9 @@ class VersionViewSet(
             qs = qs.filter(task_id=task)
         if entity is not None:
             qs = qs.filter(task__entity_id=entity)
-        if req.query_params.get("status"):
-            qs = qs.filter(status=req.query_params["status"])
+        status = choice_param(req, "status", Version.Status.values)
+        if status:
+            qs = qs.filter(status=status)
         if self.action == "list":
             qs = apply_ordering(req, qs, self.ORDERING, "-created_at")
         return qs

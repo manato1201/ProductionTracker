@@ -1,10 +1,11 @@
 import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
-import { Button, Chip, InputAdornment, Stack, TextField } from "@mui/material";
+import { Button, InputAdornment, Stack, TextField } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { entities, steps, tasks } from "../api/endpoints";
 import type { Priority, Task } from "../api/types";
 import { Board } from "../components/Board";
+import { FilterChip } from "../components/FilterChip";
 import { TaskFormDialog } from "../components/Dialogs";
 import { ErrorNotice } from "../components/Feedback";
 import { TaskDrawer } from "../components/TaskDrawer";
@@ -39,7 +40,7 @@ export default function BoardPage() {
   const patchTask = useCallback(
     (id: number, patch: Partial<Task> | ((t: Task) => Task)) =>
       res.setData((d) => d && { ...d, items: d.items.map((t) => (t.id === id ? (typeof patch === "function" ? patch(t) : { ...t, ...patch }) : t)) }),
-    [res.setData], // eslint-disable-line react-hooks/exhaustive-deps
+    [res.setData],
   );
 
   const transition = useTaskTransition({
@@ -78,13 +79,13 @@ export default function BoardPage() {
       </Stack>
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }} role="group" aria-label="絞り込み">
         {(["all", "me", "none"] as const).map((a) => (
-          <Chip key={a} size="small" clickable label={{ all: "担当: すべて", me: "担当: 自分", none: "担当: 未割当" }[a]} aria-pressed={assignee === a} color={assignee === a ? "primary" : "default"} variant={assignee === a ? "filled" : "outlined"} onClick={() => setAssignee(a)} />
+          <FilterChip key={a} label={{ all: "担当: すべて", me: "担当: 自分", none: "担当: 未割当" }[a]} pressed={assignee === a} onClick={() => setAssignee(a)} />
         ))}
         {PRIORITIES.map((p) => (
-          <Chip key={p} size="small" clickable label={`優先度: ${PRIORITY_META[p].label}`} aria-pressed={priorities.includes(p)} color={priorities.includes(p) ? "primary" : "default"} variant={priorities.includes(p) ? "filled" : "outlined"} onClick={() => setPriorities((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]))} />
+          <FilterChip key={p} label={`優先度: ${PRIORITY_META[p].label}`} pressed={priorities.includes(p)} onClick={() => setPriorities((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]))} />
         ))}
-        <Chip size="small" clickable label="期限切れ" aria-pressed={overdueOnly} color={overdueOnly ? "primary" : "default"} variant={overdueOnly ? "filled" : "outlined"} onClick={() => setOverdueOnly(!overdueOnly)} />
-        {anyFilter ? <Chip size="small" label="条件をリセット" onClick={() => { setAssignee("all"); setPriorities([]); setOverdueOnly(false); setQ(""); }} /> : null}
+        <FilterChip label="期限切れ" pressed={overdueOnly} onClick={() => setOverdueOnly(!overdueOnly)} />
+        {anyFilter ? <FilterChip label="条件をリセット" pressed={false} onClick={() => { setAssignee("all"); setPriorities([]); setOverdueOnly(false); setQ(""); }} /> : null}
       </Stack>
       <div className="muted" style={{ fontSize: "0.8125rem", marginBottom: 8 }} aria-live="polite">
         <span className="num">{filtered.length}</span> 件{anyFilter ? <> (全 <span className="num">{res.data?.count ?? 0}</span> 件中)</> : null}

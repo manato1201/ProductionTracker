@@ -35,12 +35,20 @@ def insight_db(tmp_path):
 
 
 def test_payload_uses_latest_run_and_counts_defects(insight_db):
-    payload, total = send_quality.build_quality_payload(insight_db, "DEMO")
+    payload, total = send_quality.build_quality_payload(insight_db, "DEMO", naive_offset="+09:00")
     assert payload["scan_run_id"] == 2 and total == 4
     assert {r["asset_path"]: r["defects"] for r in payload["results"]} == {
         "assets/props/crate/a.fbx": 2, "assets\\props\\crate\\b.fbx": 1, "assets/unknown/c.fbx": 1,
     }
-    assert payload["scanned_at"].endswith("+00:00")  # 時刻帯の無い値は UTC とみなす
+    assert payload["scanned_at"] == "2026-10-25T09:00:00+09:00"  # 時差を明示したときだけ補う
+
+
+def test_naive_timestamp_is_not_silently_assumed_utc(insight_db):
+    """タイムゾーンが無い時刻を黙って UTC にしない(JST 記録だと 9 時間ずれる)。"""
+    with pytest.raises(ValueError, match="naive-offset"):
+        send_quality.build_quality_payload(insight_db, "DEMO")  # 最新の実行は時刻帯なし
+    payload, _ = send_quality.build_quality_payload(insight_db, "DEMO", 1)  # 実行 1 は +09:00 付き
+    assert payload["scanned_at"] == "2026-10-24T09:00:00+09:00"
 
 
 def test_specific_run_and_missing_run(insight_db):
@@ -56,7 +64,7 @@ def test_identifiers_are_validated(insight_db):
 
 
 def test_ingested_total_matches_source_db(insight_db, project, entity):
-    payload, source_total = send_quality.build_quality_payload(insight_db, "DEMO")
+    payload, source_total = send_quality.build_quality_payload(insight_db, "DEMO", naive_offset="+09:00")
     res = APIClient().post("/api/v1/ingest/quality/", payload, format="json", HTTP_X_API_KEY="test-ingest-key")
     assert res.status_code == 201
     body = res.json()
