@@ -93,3 +93,14 @@ def test_sentry_debug_endpoint_raises_when_enabled(db, settings):
     c.force_authenticate(admin)
     with pytest.raises(RuntimeError):
         c.get("/api/v1/_debug/sentry/")
+
+
+def test_unexpected_error_returns_json_500_for_api(db, settings):
+    """想定外の例外でも、API は統一形式の JSON で 500 を返す(詳細は返さない)。"""
+    settings.SENTRY_DEBUG_ENDPOINT_ENABLED = True
+    admin = UserFactory(is_staff=True)
+    c = APIClient(raise_request_exception=False)
+    c.force_authenticate(admin)
+    res = c.get("/api/v1/_debug/sentry/")
+    assert res.status_code == 500
+    assert res.json() == {"code": "server_error", "detail": "サーバーでエラーが発生しました。"}

@@ -1,0 +1,21 @@
+// JS(MUI テーマ)へトークンを渡す。値の定義は _tokens.scss だけに置く。
+@use 'sass:map';
+@use 'tokens' as t;
+
+:export {
+  lightBg: map.get(t.$light, 'bg');
+  lightSurface: map.get(t.$light, 'surface');
+  lightText: map.get(t.$light, 'text');
+  lightTextMuted: map.get(t.$light, 'text-muted');
+  lightBorder: map.get(t.$light, 'border');
+  lightPrimary: map.get(t.$light, 'primary');
+  lightDanger: map.get(t.$light, 'danger');
+  darkBg: map.get(t.$dark, 'bg');
+  darkSurface: map.get(t.$dark, 'surface');
+  darkText: map.get(t.$dark, 'text');
+  darkTextMuted: map.get(t.$dark, 'text-muted');
+  darkBorder: map.get(t.$dark, 'border');
+  darkPrimary: map.get(t.$dark, 'primary');
+  darkDanger: map.get(t.$dark, 'danger');
+  fontSans: t.$font-sans;
+}

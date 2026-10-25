@@ -1,0 +1,260 @@
+@use 'tokens' as t;
+
+:root {
+  @include t.emit(t.$light);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include t.emit(t.$dark);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  @include t.emit(t.$dark);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--pt-bg);
+  color: var(--pt-text);
+  font-family: t.$font-sans;
+  overflow-x: hidden; // 幅 360px でも横スクロールを出さない(個別に min-width: 0 も付ける)
+}
+
+// 数字は等幅(P1)
+.num {
+  font-family: t.$font-mono;
+  font-variant-numeric: tabular-nums;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--pt-primary);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// --- 状態(色 + アイコン + 文字) ---
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space * 1.5;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  &--todo { color: var(--pt-status-todo); }
+  &--in_progress { color: var(--pt-status-in-progress); }
+  &--review { color: var(--pt-status-review); }
+  &--done { color: var(--pt-status-done); }
+  &--rejected { color: var(--pt-danger); }
+  &--approved { color: var(--pt-status-done); }
+}
+
+.overdue {
+  display: inline-flex;
+  align-items: center;
+  gap: t.$space;
+  color: var(--pt-danger);
+  font-weight: 700;
+}
+
+.muted { color: var(--pt-text-muted); }
+
+// --- ワークスペース(P6): 左 一覧 / 中央 タブ / 右 サマリ ---
+.workspace {
+  display: grid;
+  gap: t.$space * 4;
+  grid-template-columns: minmax(0, 1fr);
+
+  > * { min-width: 0; }
+
+  @media (min-width: 1100px) {
+    grid-template-columns: 240px minmax(0, 1fr) 280px;
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--pt-surface);
+  border: 1px solid var(--pt-border);
+  border-radius: t.$radius;
+  padding: t.$space * 4;
+}
+
+// --- 一覧の行: 記号 + 名前 + 副題 + 右端の値 ---
+.row {
+  display: flex;
+  align-items: center;
+  gap: t.$space * 3;
+  padding: t.$space * 3;
+  border-bottom: 1px solid var(--pt-border);
+  min-width: 0;
+  text-decoration: none;
+
+  &:last-child { border-bottom: 0; }
+  &__main { flex: 1; min-width: 0; }
+  &__title { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__sub { font-size: 0.8125rem; color: var(--pt-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  &__end { display: flex; align-items: center; gap: t.$space * 3; flex-shrink: 0; }
+}
+
+// タスクの行は右端の値が多いので、狭い幅では縦に積む(横スクロールを出さない)
+.row--task .row__end { flex-wrap: wrap; justify-content: flex-end; }
+
+@media (max-width: 600px) {
+  .row--task {
+    flex-direction: column;
+    align-items: flex-start;
+
+    .row__main { width: 100%; }
+    .row__end { flex-shrink: 1; justify-content: flex-start; }
+  }
+}
+
+a.row:hover,
+button.row:hover { background: var(--pt-surface-2); }
+
+button.row {
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.symbol {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: t.$radius;
+  background: var(--pt-surface-2);
+  color: var(--pt-primary);
+  font-weight: 700;
+  font-size: 0.75rem;
+  flex-shrink: 0;
+}
+
+// --- 積み上げバー(状態の内訳) ---
+.stack-bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--pt-surface-2);
+
+  &__seg { height: 100%; }
+  &__seg--todo { background: var(--pt-status-todo); }
+  &__seg--in_progress { background: var(--pt-status-in-progress); }
+  &__seg--review { background: var(--pt-status-review); }
+  &__seg--done { background: var(--pt-status-done); }
+}
+
+// 白黒で見ても区別できるよう、セグメントの境目に線を入れる
+.stack-bar__seg + .stack-bar__seg { border-left: 2px solid var(--pt-surface); }
+
+// --- かんばん ---
+.board {
+  display: grid;
+  gap: t.$space * 3;
+  grid-template-columns: minmax(0, 1fr); // 狭い幅では縦に積む(横スクロールなし)
+
+  @media (min-width: 900px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.column {
+  background: var(--pt-surface-2);
+  border: 2px solid transparent;
+  border-radius: t.$radius;
+  padding: t.$space * 2;
+  min-height: 96px;
+  transition: border-color 0.12s, background-color 0.12s;
+
+  &--over {
+    border-color: var(--pt-primary); // ドロップ先の強調
+    background: var(--pt-surface);
+  }
+
+  &__head {
+    display: flex;
+    align-items: center;
+    gap: t.$space * 2;
+    padding: t.$space t.$space * 1.5 t.$space * 2;
+  }
+
+  &__count { margin-left: auto; }
+  &__cards { display: grid; gap: t.$space * 2; }
+}
+
+.card {
+  position: relative;
+  background: var(--pt-surface);
+  border: 1px solid var(--pt-border);
+  border-radius: t.$radius;
+  padding: t.$space * 3;
+  min-width: 0;
+  touch-action: manipulation;
+  cursor: grab;
+
+  &__title { font-weight: 600; padding-right: 32px; overflow-wrap: anywhere; }
+  &__sub { font-size: 0.8125rem; color: var(--pt-text-muted); overflow-wrap: anywhere; }
+  &__meta { display: flex; flex-wrap: wrap; align-items: center; gap: t.$space * 2 t.$space * 3; margin-top: t.$space * 2; font-size: 0.8125rem; }
+  &__menu { position: absolute; top: 2px; right: 2px; }
+
+  &--ghost { opacity: 0.35; }
+
+  // ドラッグ中の見た目: 少し傾き、影が付いて浮く
+  &--dragging {
+    box-shadow: var(--pt-drag-shadow);
+    transform: rotate(2deg);
+    cursor: grabbing;
+  }
+
+  // 初回表示のスタッガー(1 回だけ)
+  &--stagger {
+    animation: card-in 0.28s ease-out both;
+    animation-delay: calc(var(--i, 0) * 40ms);
+  }
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card--dragging { transform: none; } // 傾けない(影は残す)
+  .card--stagger { animation: none; }
+  .column { transition: none; }
+}

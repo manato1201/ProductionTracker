@@ -1,0 +1,50 @@
+// デザイントークン(唯一の出どころ)。
+// - CSS 変数 `--pt-*` として出力し、ライト/ダークを data-theme または OS 設定で切り替える。
+// - MUI のテーマは tokens.module.scss の :export 経由で同じ値を使う。
+// 状態は「色 + アイコン + 文字」で示す。色だけに頼らないので、ここの色は補助(コントラスト 4.5:1 以上)。
+@use 'sass:map';
+
+$light: (
+  'bg': #f4f6f9,
+  'surface': #ffffff,
+  'surface-2': #eceff4,
+  'text': #1b1f27,
+  'text-muted': #4f5a6b,
+  'border': #ccd2dc,
+  'primary': #2150c4,
+  'on-primary': #ffffff,
+  'danger': #b3261e,
+  'status-todo': #525c6e,
+  'status-in-progress': #1b5fc9,
+  'status-review': #85550a,
+  'status-done': #17743a,
+  'drag-shadow': '0 12px 28px rgb(20 30 50 / 28%)',
+);
+
+$dark: (
+  'bg': #12151b,
+  'surface': #1b2029,
+  'surface-2': #252b36,
+  'text': #e8ebf1,
+  'text-muted': #aab3c2,
+  'border': #3a4252,
+  'primary': #8fb0ff,
+  'on-primary': #0d1b3d,
+  'danger': #ff9a92,
+  'status-todo': #b4bdcd,
+  'status-in-progress': #86b4ff,
+  'status-review': #f0c36d,
+  'status-done': #6fd195,
+  'drag-shadow': '0 12px 28px rgb(0 0 0 / 60%)',
+);
+
+@mixin emit($tokens) {
+  @each $name, $value in $tokens {
+    --pt-#{$name}: #{$value};
+  }
+}
+
+$space: 4px;
+$radius: 8px;
+$font-sans: 'Hiragino Sans', 'Noto Sans JP', 'Yu Gothic UI', system-ui, sans-serif;
+$font-mono: ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
