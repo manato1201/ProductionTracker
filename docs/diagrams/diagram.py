@@ -191,7 +191,7 @@ class Diagram:
 
     # --- 出力 ---------------------------------------------------------------
     def svg(self) -> str:
-        colors = {BLUE, RED, MUTED, "#8a94a6", "#3da86a", "#e08a3c"}
+        colors = sorted({BLUE, RED, MUTED, "#8a94a6", "#3da86a", "#e08a3c"})  # 順序を固定(生成のたびに差分が出ないように)
         defs = "".join(
             f'<marker id="arrow-{c.lstrip("#")}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">'
             f'<path d="M0 0 L10 5 L0 10 Z" fill="{c}"/></marker>'

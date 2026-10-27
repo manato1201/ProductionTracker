@@ -26,6 +26,16 @@ describe("Board", () => {
     expect(within(screen.getByRole("region", { name: "進行中の列" })).getByText("タスクはありません")).toBeInTheDocument();
   });
 
+  it("空の列には、状態に対応した植物のモチーフを飾りとして出す(読み上げ対象外)", () => {
+    render(<Board {...base} canWrite tasks={[task(1, "done")]} />);
+    const todo = screen.getByRole("region", { name: "未着手の列" });
+    const plant = within(todo).getByTestId("ascii-plant");
+    expect(plant).toHaveAttribute("aria-hidden", "true");
+    expect(plant).toHaveClass("ascii-motif--todo");
+    // タスクがある列(完了)には出さない
+    expect(within(screen.getByRole("region", { name: "完了の列" })).queryByTestId("ascii-plant")).not.toBeInTheDocument();
+  });
+
   it("カードに題名・副題(アセット名)・優先度・期日が出る", () => {
     render(<Board {...base} canWrite tasks={[task(1, "todo", { due: "2026-10-01", is_overdue: true, priority: "urgent", assignee_name: "alice" })]} />);
     const card = screen.getByRole("article");

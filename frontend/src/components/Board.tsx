@@ -4,6 +4,7 @@ import { useState, type KeyboardEvent } from "react";
 import type { Task, TaskStatus } from "../api/types";
 import { adjacentStatus, TASK_STATUS_META, TASK_STATUSES } from "../domain/status";
 import { DueText } from "./DueText";
+import { AsciiPlant } from "./AsciiPlant";
 import { CardSkeletons, EmptyState } from "./Feedback";
 import { PriorityLabel } from "./StatusLabel";
 import { StatusMenu } from "./StatusMenu";
@@ -69,7 +70,7 @@ function Column({ status, tasks, loading, canWrite, intro, activeId, onOpen, onM
       <div className="column__cards">
         {loading && tasks.length === 0 ? <CardSkeletons count={2} /> : null}
         {!loading && tasks.length === 0 ? (
-          <EmptyState message="タスクはありません" actionLabel={status === "todo" && canWrite && onAddTask ? "タスクを追加" : undefined} onAction={onAddTask} />
+          <EmptyState motif={<AsciiPlant status={status} />} message="タスクはありません" actionLabel={status === "todo" && canWrite && onAddTask ? "タスクを追加" : undefined} onAction={onAddTask} />
         ) : null}
         {tasks.map((task, i) => (
           <DraggableCard key={task.id} task={task} index={i} canWrite={canWrite} intro={intro} ghost={activeId === task.id} onOpen={onOpen} onMove={onMove} />

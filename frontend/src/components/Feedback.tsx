@@ -4,10 +4,16 @@ import type { ReactNode } from "react";
 import type { ApiError } from "../api/client";
 
 /** エンプティステート(24): 理由 + 次の操作。 */
-export function EmptyState({ message, actionLabel, onAction }: { message: string; actionLabel?: string; onAction?: () => void }) {
+export function EmptyState({
+  message, actionLabel, onAction, motif,
+}: {
+  message: string; actionLabel?: string; onAction?: () => void;
+  /** 飾り(ASCII モチーフなど)。指定すると既定のアイコンの代わりに出す */
+  motif?: ReactNode;
+}) {
   return (
     <Stack alignItems="center" spacing={1.5} sx={{ py: 4, color: "text.secondary", textAlign: "center" }}>
-      <InboxOutlinedIcon aria-hidden />
+      {motif ?? <InboxOutlinedIcon aria-hidden />}
       <div>{message}</div>
       {actionLabel && onAction ? (
         <Button size="small" variant="outlined" onClick={onAction}>

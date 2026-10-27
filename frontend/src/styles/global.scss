@@ -181,6 +181,22 @@ button.row {
 // 白黒で見ても区別できるよう、セグメントの境目に線を入れる
 .stack-bar__seg + .stack-bar__seg { border-left: 2px solid var(--pt-surface); }
 
+// --- ASCII モチーフ(植物の成長。空・待機の状態だけの飾り) ---
+.ascii-motif {
+  margin: 0;
+  font-family: t.$font-mono;
+  font-size: 0.8125rem;
+  line-height: 1.15;
+  white-space: pre;
+  user-select: none; // 本文ではないので、選択・コピーの対象にしない
+  pointer-events: none;
+
+  &--todo { color: var(--pt-status-todo); }
+  &--in_progress { color: var(--pt-status-in-progress); }
+  &--review { color: var(--pt-status-review); }
+  &--done { color: var(--pt-status-done); }
+}
+
 // --- かんばん ---
 .board {
   display: grid;

@@ -5,7 +5,7 @@
 ## 実行
 ```bash
 cd backend
-pytest -q                          # 全件(SQLite。約 1 秒)
+pytest -q                          # 全件(SQLite。約 3 秒)
 pytest -q -x                       # 最初の失敗で止める
 pytest -q -k transition            # 名前で絞る
 pytest -q tracker/tests/test_task_transitions.py::test_only_reviewer_can_approve

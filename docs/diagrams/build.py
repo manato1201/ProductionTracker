@@ -282,7 +282,7 @@ def code_map() -> str:
 
     gx, gw = 1230, 310
     d.box(gx, 170, gw, 70, "context/", ["Auth · Toast · ThemeMode"], "gray")
-    d.box(gx, 270, gw, 90, "domain/", ["状態の文言・アイコン・日付の整形", "(ルールは持たない。表示だけ)"], "gray")
+    d.box(gx, 270, gw, 90, "domain/", ["状態の文言・アイコン・日付の整形・モチーフ", "(ルールは持たない。表示だけ)"], "gray")
     d.box(gx, 390, gw, 110, "styles/", ["_tokens.scss が色・余白の唯一の出どころ", "→ CSS 変数 + MUI テーマ(tokens.module.scss)"], "gray")
     d.box(gx, 530, gw, 70, "*.test.ts(x)", ["Vitest + Testing Library"], "gray")
     d.note(gx, 640, "遷移の可否はサーバーが決める。\n画面は結果(409 / 403 と理由)を\n表示するだけ。", size=12.5)

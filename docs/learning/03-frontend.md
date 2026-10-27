@@ -76,6 +76,7 @@ styles/_tokens.scss     色・余白・フォントの唯一の出どころ($lig
 | `StatusLabel` / `PriorityLabel` / `DueText` | `components/` | 状態・優先度・期日の表示(色 + アイコン + 文字) |
 | `Feedback`(`EmptyState` / `ErrorNotice` / スケルトン) | `components/Feedback.tsx` | 読み込み中・空・失敗の 3 状態 |
 | `VersionsList` / `NotesPanel` / `IntegrationPanels` | `components/` | 版・ノート・品質・画面差分 |
+| `AsciiPlant` | `components/AsciiPlant.tsx` | 空の列の飾り(植物の成長)。`EmptyState` の `motif` に渡す。`aria-hidden`・動きを減らす設定で静止画 |
 
 どの画面も **「読み込み中 → 空 → 失敗 → 通常」の 4 状態** を必ず作る(`Feedback.tsx` の部品を使う)。
 

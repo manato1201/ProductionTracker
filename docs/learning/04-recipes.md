@@ -39,7 +39,7 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 
 ## B. タスクの状態を 1 つ足す(例: 「保留 `blocked`」)
 遷移ルールをモデルに集約し、**状態の一覧は 1 か所から導く**ようにしてあるので、変更は少ない。
-(実際に使い捨てのコピーで実行した結果: サーバーでは `models.py` を直すだけで、落ちたのは下の「テスト」の 4 件だけ。フロントでは `tsc` が 4 か所を指摘した。)
+(使い捨てのコピーで実行した結果: サーバーでは `models.py` を直すだけで、落ちたのは下の「テスト」の 4 件だけ。フロントでは `tsc` が数か所を指摘する。ASCII モチーフの追加後は、`domain/motif.ts` の対応表も `Record` なので指摘される。)
 
 **サーバー**
 1. `models.py` — `Task.Status` に `BLOCKED = "blocked", "保留"`。`Task.TRANSITIONS` に、**行き先と戻り先の両方**を足す(例: 進行中 → 保留、保留 → 進行中)。`next_statuses` は表から自動で出る
@@ -51,8 +51,9 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 **フロント**
 4. `api/types.ts` — `TaskStatus` と `TaskCounts` に `blocked`
 5. `domain/status.tsx` — `TASK_STATUS_META`(文言とアイコン)に足す。**`TASK_STATUSES`(並び順 = かんばんの列順 = Shift+←/→ の隣)は META の定義順から自動で決まる**ので、**入れたい位置に書く**(`Record<TaskStatus, …>` なので、書き忘れると型エラー)
+5b. `domain/motif.ts` — `GROWTH_STAGE_OF_STATUS`(`Record<TaskStatus, …>`)に、空の列に出す植物の段階を足す(**書き忘れると型エラー**。段階を増やすなら `GROWTH_FRAMES` に 2 コマ追加。寸法は幅 9 × 高さ 4)
 6. `styles/_tokens.scss` — `status-blocked` を **ライトとダークの両方**に(背景に対し 4.5:1 以上)
-7. `styles/global.scss` — `.status--blocked` と `.stack-bar__seg--blocked`、かんばんの `grid-template-columns: repeat(4, …)` を **列数に合わせる**
+7. `styles/global.scss` — `.status--blocked` と `.stack-bar__seg--blocked` と `.ascii-motif--blocked`、かんばんの `grid-template-columns: repeat(4, …)` を **列数に合わせる**
 8. `pages/MyTasksPage.tsx` — 既定ビューの `status` 一覧に入れるか決める
 
 > **型が教えてくれないもの**(手で探す): 6・7 の SCSS、8 の文字列。`grep -rn "in_progress" frontend/src backend/tracker` で同じ書かれ方をしている場所を洗い出す。
