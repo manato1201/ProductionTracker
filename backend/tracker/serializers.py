@@ -19,6 +19,24 @@ from .permissions import visible_entities, visible_projects, visible_tasks
 User = get_user_model()
 
 
+MAX_ID = 2**63 - 1
+
+
+def reject_nul(value, path="値"):
+    """文字列(キーも値も)に NUL 文字を含めない。PostgreSQL は text / jsonb に NUL を保存できず、500 になるため。"""
+    if isinstance(value, str):
+        if "\x00" in value:
+            raise serializers.ValidationError(f"{path}に NUL 文字(\\x00)は使えません。")
+    elif isinstance(value, dict):
+        for k, v in value.items():
+            reject_nul(k, f"{path} のキー")
+            reject_nul(v, path)
+    elif isinstance(value, (list, tuple)):
+        for v in value:
+            reject_nul(v, path)
+    return value
+
+
 def display_name(user) -> str:
     if user is None:
         return ""
@@ -279,7 +297,7 @@ class VersionSerializer(serializers.ModelSerializer):
     def validate_dcc(self, value):
         if not isinstance(value, dict):
             raise serializers.ValidationError("dcc はオブジェクトで指定してください。")
-        return value
+        return reject_nul(value, "dcc")
 
     def get_created_by_name(self, obj):
         return display_name(obj.created_by)
@@ -305,7 +323,7 @@ class NoteSerializer(serializers.ModelSerializer):
 
 class NoteCreateSerializer(serializers.Serializer):
     target_type = serializers.ChoiceField(choices=list(Note.TARGET_MODELS))
-    target_id = serializers.IntegerField(min_value=1)
+    target_id = serializers.IntegerField(min_value=1, max_value=MAX_ID)
     body = serializers.CharField(max_length=5000)
 
     def validate_body(self, value):
@@ -353,7 +371,7 @@ class AwareDateTimeField(serializers.DateTimeField):
 
 class QualityRowSerializer(serializers.Serializer):
     asset_path = serializers.CharField(max_length=500)
-    defects = serializers.IntegerField(min_value=0)
+    defects = serializers.IntegerField(min_value=0, max_value=10**12)
 
     def validate_asset_path(self, value):
         if not normalize_path(value):
@@ -363,7 +381,7 @@ class QualityRowSerializer(serializers.Serializer):
 
 class QualityIngestSerializer(serializers.Serializer):
     project = serializers.CharField(max_length=32)
-    scan_run_id = serializers.IntegerField(min_value=0)
+    scan_run_id = serializers.IntegerField(min_value=0, max_value=MAX_ID)
     scanned_at = AwareDateTimeField()
     results = QualityRowSerializer(many=True, max_length=50000)
 
@@ -376,11 +394,14 @@ class QualityIngestSerializer(serializers.Serializer):
 
 class VisualIngestSerializer(serializers.Serializer):
     run_id = serializers.CharField(max_length=64)
-    version = serializers.IntegerField(min_value=1)
+    version = serializers.IntegerField(min_value=1, max_value=MAX_ID)
     verdict = serializers.ChoiceField(choices=VisualResult.Verdict.choices)
     diff_ratio = serializers.FloatField(min_value=0, max_value=1)  # 0〜1 の割合(%ではない)
     captured_at = AwareDateTimeField()
     conditions = serializers.DictField(required=False, default=dict)
+
+    def validate_conditions(self, value):
+        return reject_nul(value, "conditions")
 
     def validate_version(self, value):
         try:

@@ -321,7 +321,7 @@ class QualityReport(models.Model):
     )
     scan_run_id = models.BigIntegerField()
     asset_path = models.CharField(max_length=500)
-    defects = models.PositiveIntegerField()
+    defects = models.PositiveBigIntegerField()  # 同じパスの行を合算するので bigint
     scanned_at = models.DateTimeField()
     ingested_at = models.DateTimeField(auto_now=True)
 

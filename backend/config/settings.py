@@ -42,6 +42,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "tracker.middleware.RejectNulMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -138,6 +139,8 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": ["rest_framework.permissions.IsAuthenticated"],
     "DEFAULT_PAGINATION_CLASS": "tracker.pagination.StandardPagination",
     "DEFAULT_RENDERER_CLASSES": ["rest_framework.renderers.JSONRenderer"],
+    # 画面・スクリプトは JSON だけを送る。フォーム / multipart は受け付けない(415)
+    "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "EXCEPTION_HANDLER": "tracker.errors.exception_handler",
     "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
     # ログインの総当たり対策。IP(X-Forwarded-For があればその値)ごと。キャッシュはプロセスごとなので、
