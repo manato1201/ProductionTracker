@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="f38c2625b243c0375bef">
+<title>学習資料 ― 保守・拡張できるようになるために — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="../lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="../lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="../lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="../lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="../lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="../lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="../lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="../lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="../lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="../lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="../lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="../lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="../lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="../lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="../lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="../lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="../lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="../lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="../lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="../lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="README.html" aria-current="page" class="current">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="01-overview.html">1. 全体像</a></li><li><a href="02-backend.html">2. バックエンドの道案内</a></li><li><a href="03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="04-recipes.html">4. 拡張レシピ</a></li><li><a href="05-testing.html">5. テストの書き方</a></li><li><a href="06-troubleshooting.html">6. 困ったとき</a></li><li><a href="07-exercises.html">7. 演習と確認問題</a></li><li><a href="08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../learning/README.md"><code>docs/learning/README.md</code></a></p>
+    <article class="doc"><h1 id="学習資料--保守・拡張できるようになるために">学習資料 ― 保守・拡張できるようになるために</h1>
+<p>ProductionTracker を <strong>自分で直せる・足せる</strong> ようになるための資料です。
+先に読むと速い順に並べました。各章の最後に「確認」(手を動かす課題)があります。</p>
+<blockquote>
+<p><strong>基礎から学びたいときは <a href="../lectures/README.html">講義資料</a></strong> (L00〜L17。Web・Python・DB・Django・React・アルゴリズム・テスト・運用)へ。
+この「実践ガイド」は、手順書(レシピ・困ったとき)として使い分けてください。</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>順</th>
+<th>章</th>
+<th>目的</th>
+<th>目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><a href="01-overview.html">全体像</a></td>
+<td>何がどこにあるかを言える。用語と 5 つの原則を知る</td>
+<td>30 分</td>
+</tr>
+<tr>
+<td>2</td>
+<td><a href="02-backend.html">バックエンドの道案内</a></td>
+<td>1 本のリクエストが通る道を、コードで追える</td>
+<td>60 分</td>
+</tr>
+<tr>
+<td>3</td>
+<td><a href="03-frontend.html">フロントエンドの道案内</a></td>
+<td>画面・データ取得・かんばんの仕組みを追える</td>
+<td>60 分</td>
+</tr>
+<tr>
+<td>4</td>
+<td><a href="04-recipes.html">拡張レシピ</a></td>
+<td>項目・状態・API・画面・取り込み口を足す手順</td>
+<td>必要なとき</td>
+</tr>
+<tr>
+<td>5</td>
+<td><a href="05-testing.html">テストの書き方</a></td>
+<td>変更に自信を持つ。バグを再現してから直す</td>
+<td>40 分</td>
+</tr>
+<tr>
+<td>6</td>
+<td><a href="06-troubleshooting.html">困ったとき</a></td>
+<td>症状から原因をたどる</td>
+<td>必要なとき</td>
+</tr>
+<tr>
+<td>7</td>
+<td><a href="07-exercises.html">演習と確認問題</a></td>
+<td>理解の確認。足場のある練習問題</td>
+<td>数時間</td>
+</tr>
+<tr>
+<td>8</td>
+<td><a href="08-security-and-database.html">セキュリティとデータベースの見方</a></td>
+<td>点検をテストにする。401/403/404 の選び方、索引と実行計画</td>
+<td>40 分</td>
+</tr>
+</tbody>
+</table>
+<h2 id="まず-30-分で動かす">まず 30 分で動かす</h2>
+<ol>
+<li><a href="../README.html">README</a> の「Docker なしで動かす」で、バックエンドとフロントを起動する。</li>
+<li><code>python manage.py seed_demo --password &lt;パスワード&gt;</code> でデモデータを入れ、<code>demo_reviewer</code> でログインする。</li>
+<li>かんばんで「進行中」のカードを「完了」へドラッグする。<strong>拒否されて元に戻り、理由が出る</strong>ことを見る。</li>
+<li>その 1 回の操作が通る道を、<a href="../../diagrams/transition-flow.svg">状態遷移の流れ</a>(図)で確認する。</li>
+<li><code>cd backend &amp;&amp; pytest -q</code> を実行する(約 12 秒で 877 件。うち約 280 件は、文書内のコードを実際に動かして確かめるテスト)。</li>
+</ol>
+<h2 id="読むときの約束">読むときの約束</h2>
+<ul>
+<li><strong>コードを開きながら読む</strong>。この資料はファイル名と関数名で場所を示す。行番号は書かない(すぐ古くなるため)。</li>
+<li>「なぜそうしたか」は <a href="../decisions.html">decisions.md</a>、「どこで詰まったか」は <a href="../learning-log.html">learning-log.md</a> にある。</li>
+<li>図は <a href="../diagrams/README.html">docs/diagrams/</a>。直すときは <code>build.py</code> を編集して再生成する。</li>
+<li>迷ったら、<strong>テストが仕様書</strong>。<code>backend/tracker/tests/</code> を読むと、期待する挙動(ステータスコード・エラーコード)が分かる。</li>
+</ul>
+<h2 id="資料の保守">資料の保守</h2>
+<p>コードを変えたら、変えた場所を指している資料も直す。特に次の 3 つは古くなりやすい。</p>
+<ol>
+<li><a href="04-recipes.html">04-recipes.md</a> の「変更する場所」の一覧(ファイル名・関数名)
+(新しい API を足したら、<a href="../security.html">security.md</a> の認可の表と、<a href="../database.html">database.md</a> の索引の表も)</li>
+<li><a href="../er.html">docs/er.md</a>(モデル・制約)と <a href="../integration.html">docs/integration.md</a>(API の契約)</li>
+<li><code>docs/diagrams/build.py</code> の図(タイルの名前・矢印のラベル)</li>
+</ol>
+</article>
+    <nav class="pager"><span></span><a class="next" href="01-overview.html"><span>次へ →</span>1. 全体像</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#まず-30-分で動かす">まず 30 分で動かす</a></li><li class="lvl2"><a href="#読むときの約束">読むときの約束</a></li><li class="lvl2"><a href="#資料の保守">資料の保守</a></li></ul></nav>
+</div>
+</body>
+</html>

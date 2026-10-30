@@ -26,6 +26,24 @@ ShotGrid(Flow Production Tracking)の「何を管理する道具か」を、自�
 4. **取り込みは冪等**。同じものを再送しても重複しない(`scan_run_id` / `run_id` / `Idempotency-Key`)。
 5. **状態は「色 + アイコン + 文字」**。色だけで区別しない(色覚・グレースケール・ダークでも読める)。
 
+```mermaid
+flowchart TB
+    subgraph FE["frontend/src(React)"]
+        PG[pages] --> CP[components]
+        CP --> HK[hooks]
+        HK --> API[api/client.ts · endpoints.ts]
+    end
+    subgraph BE["backend/tracker(Django + DRF)"]
+        U[config/urls.py] --> V[views.py]
+        V --> S[serializers.py]
+        S --> M["models.py<br/>(ルールはここだけ)"]
+        V -.使う.-> PM[permissions.py]
+        V -.使う.-> ER[errors.py]
+    end
+    API -->|"/api/v1"| U
+    M --> DB[("PostgreSQL")]
+```
+
 ## 1 本の操作の旅
 かんばんで列を動かしたときの流れ(9 手順)。各手順を **コードのどこが担当するか** は [02](02-backend.md)・[03](03-frontend.md) で追う。
 

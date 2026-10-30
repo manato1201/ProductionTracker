@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="283425ee302b43505a95">
+<title>UI の決めごと表 — ProductionTracker</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="learning/01-overview.html">1. 全体像</a></li><li><a href="learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="learning/05-testing.html">5. テストの書き方</a></li><li><a href="learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="ui-rules.html" aria-current="page" class="current">UI の決めごと表</a></li><li><a href="er.html">ER 図(実装済みモデル)</a></li><li><a href="integration.html">既存ツールとの連携</a></li><li><a href="auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="database.html">データベースの点検(SQL の指針)</a></li><li><a href="operations.html">運用手順(Phase 7)</a></li><li><a href="decisions.html">実装時の判断記録</a></li><li><a href="learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../ui-rules.md"><code>docs/ui-rules.md</code></a></p>
+    <article class="doc"><h1 id="ui-の決めごと表">UI の決めごと表</h1>
+<p>設計書(§3.1・カンバン追補)の決めごとを、実装した値で固定する。値の出どころは
+<a href="../../frontend/src/styles/_tokens.scss"><code>frontend/src/styles/_tokens.scss</code></a>(Sass → CSS 変数 <code>--pt-*</code>)。MUI のテーマも同じ値を使う。</p>
+<blockquote>
+<p>注: 設計書が参照している <code>UI_DESIGN_PRINCIPLES_2026-10.md</code>(P1〜P10)はこのリポジトリに無く、中身を確認できていない。
+ここでは設計書本文に書かれている P1・P6・P9 と、パーツ番号(01 モーダル・02 ドロワー・03 スタッガー・08 トースト・13 チップ・21 スケルトン・23 バッジ・24 エンプティステート)の記述だけを根拠にしている。</p>
+</blockquote>
+<h2 id="基本p1">基本(P1)</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>決め</th>
+<th>実装</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>アイコン</td>
+<td><code>@mui/icons-material</code> の 1 セットのみ</td>
+<td><code>domain/status.tsx</code></td>
+</tr>
+<tr>
+<td>状態の表示</td>
+<td><strong>色 + アイコン + 文字</strong>の 3 点セット(色は補助)</td>
+<td><code>StatusLabel</code> / <code>VersionStatusLabel</code></td>
+</tr>
+<tr>
+<td>日付</td>
+<td><code>2026-10-11</code>(日時は <code>2026-10-11 09:30</code>)</td>
+<td><code>domain/format.ts</code></td>
+</tr>
+<tr>
+<td>数字</td>
+<td>等幅(<code>.num</code>: <code>ui-monospace</code> + <code>tabular-nums</code>)</td>
+<td><code>global.scss</code></td>
+</tr>
+<tr>
+<td>余白</td>
+<td>4px 単位</td>
+<td><code>$space</code></td>
+</tr>
+<tr>
+<td>角丸</td>
+<td>8px</td>
+<td><code>$radius</code></td>
+</tr>
+<tr>
+<td>フォント</td>
+<td>日本語の OS 標準 → system-ui(外部フォントは読み込まない)</td>
+<td><code>$font-sans</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="状態">状態</h2>
+<table>
+<thead>
+<tr>
+<th>状態</th>
+<th>文字</th>
+<th>アイコン</th>
+<th>色トークン(ライト → ダーク)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>todo</td>
+<td>未着手</td>
+<td>RadioButtonUnchecked</td>
+<td><code>status-todo</code> #525c6e → #b4bdcd</td>
+</tr>
+<tr>
+<td>in_progress</td>
+<td>進行中</td>
+<td>PlayCircleOutline</td>
+<td><code>status-in-progress</code> #1b5fc9 → #86b4ff</td>
+</tr>
+<tr>
+<td>review</td>
+<td>レビュー待ち</td>
+<td>HourglassTop</td>
+<td><code>status-review</code> #85550a → #f0c36d</td>
+</tr>
+<tr>
+<td>done</td>
+<td>完了</td>
+<td>CheckCircle</td>
+<td><code>status-done</code> #17743a → #6fd195</td>
+</tr>
+<tr>
+<td>期限切れ</td>
+<td>「期限切れ」+ 日付</td>
+<td>ErrorOutline</td>
+<td><code>danger</code> #b3261e → #ff9a92</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>版の状態: 作成中(EditNote)/ 提出済み(Send)/ 承認(CheckCircle)/ 却下(Cancel)。</li>
+<li>優先度: 緊急(KeyboardDoubleArrowUp)/ 高(KeyboardArrowUp)/ 中(Remove)/ 低(KeyboardArrowDown)。アイコン + 文字。</li>
+<li>積み上げバーはセグメントの境目に線を入れ、凡例に件数を併記する(色を消しても読める)。</li>
+</ul>
+<h2 id="色とコントラスト">色とコントラスト</h2>
+<p>全ての文字色・状態色は、背景(<code>bg</code> / <code>surface</code> / <code>surface-2</code>)に対して <strong>4.5:1 以上</strong>(WCAG AA)。
+ライト・ダークとも計算で確認済み(実装時に 8 色 × 3 背景 × 2 テーマを計算)。</p>
+<table>
+<thead>
+<tr>
+<th>トークン</th>
+<th>ライト</th>
+<th>ダーク</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bg</td>
+<td>#f4f6f9</td>
+<td>#12151b</td>
+</tr>
+<tr>
+<td>surface</td>
+<td>#ffffff</td>
+<td>#1b2029</td>
+</tr>
+<tr>
+<td>surface-2</td>
+<td>#eceff4</td>
+<td>#252b36</td>
+</tr>
+<tr>
+<td>text</td>
+<td>#1b1f27</td>
+<td>#e8ebf1</td>
+</tr>
+<tr>
+<td>text-muted</td>
+<td>#4f5a6b</td>
+<td>#aab3c2</td>
+</tr>
+<tr>
+<td>border</td>
+<td>#ccd2dc</td>
+<td>#3a4252</td>
+</tr>
+<tr>
+<td>primary</td>
+<td>#2150c4</td>
+<td>#8fb0ff</td>
+</tr>
+</tbody>
+</table>
+<h2 id="テーマ">テーマ</h2>
+<ul>
+<li>ライト / ダーク / OS に合わせる(既定)。ヘッダーのボタンで順に切り替え、<code>localStorage</code> に保存(使えない環境でも動く)。</li>
+<li>切り替えは <code>&lt;html data-theme=&quot;light|dark&quot;&gt;</code>。「OS に合わせる」では属性を外し、<code>prefers-color-scheme</code> で決まる。</li>
+</ul>
+<h2 id="画面構成p6-ワークスペース型">画面構成(P6 ワークスペース型)</h2>
+<ul>
+<li>≥1100px: 左 アセット一覧(240px)/ 中央 タブ / 右 サマリ(280px)。それ未満は縦に積む。</li>
+<li>かんばん: ≥900px で 4 列、それ未満は 1 列に積む(<strong>幅 360px でも横スクロールなし</strong>を全画面で確認)。</li>
+<li>一覧の行 = 記号(プロジェクトは頭 2 文字)+ 名前 + 副題(期日など)+ 右端に値。</li>
+</ul>
+<h2 id="パーツ・動き">パーツ・動き</h2>
+<table>
+<thead>
+<tr>
+<th>種別</th>
+<th>使い方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ドロワー(02)</td>
+<td>カード/行をクリック → 右からタスク詳細(版・ノート・品質)。URL <code>?task=ID</code> で共有でき、Esc / 戻るで閉じる</td>
+</tr>
+<tr>
+<td>チップ(13)</td>
+<td>担当・優先度・期限切れの絞り込み。押下状態を <code>aria-pressed</code> で示す。「条件をリセット」付き</td>
+</tr>
+<tr>
+<td>バッジ(23)</td>
+<td>列ごとの件数、ナビの「自分の期限切れ」件数</td>
+</tr>
+<tr>
+<td>トースト(08)</td>
+<td>遷移の成功と、<strong>拒否された理由</strong>(サーバーの <code>detail</code> をそのまま表示)</td>
+</tr>
+<tr>
+<td>モーダル(01)</td>
+<td>「完了」にする前の確認。版が無ければ警告</td>
+</tr>
+<tr>
+<td>スケルトン(21)</td>
+<td>読み込み中。本物の行/カードと同じ形の灰色の枠</td>
+</tr>
+<tr>
+<td>エンプティステート(24)</td>
+<td>「〜はありません」+ 次の操作ボタン</td>
+</tr>
+<tr>
+<td>スタッガー(03)</td>
+<td>かんばんの初回表示のカード(1 回だけ。0.8 秒後に解除)</td>
+</tr>
+<tr>
+<td>ドラッグ中</td>
+<td>傾き 2° + 影、元の位置は半透明、ドロップ先の列は枠線で強調。<code>prefers-reduced-motion</code> では傾けない</td>
+</tr>
+</tbody>
+</table>
+<h2 id="ascii-モチーフ植物の成長設計書-追補-2026-10-27">ASCII モチーフ「植物の成長」(設計書 追補 2026-10-27)</h2>
+<p>工程の状態を、植物の成長(種 → 芽 → 花 → 実)に対応づけた、<strong>空・待機の状態だけの飾り</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>状態</th>
+<th>段階</th>
+<th>絵(2 コマの 1 コマ目)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>未着手</td>
+<td>種</td>
+<td><code>   o   </code></td>
+</tr>
+<tr>
+<td>進行中</td>
+<td>芽</td>
+<td><code>  \ /  </code> / `</td>
+</tr>
+<tr>
+<td>レビュー待ち</td>
+<td>花</td>
+<td><code>  (*)  </code> / `</td>
+</tr>
+<tr>
+<td>完了</td>
+<td>実</td>
+<td><code>  |/  </code> / `  o-</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>決め</th>
+<th>実装</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>出す場所</td>
+<td><strong>空の列</strong>(かんばん)だけ。<code>EmptyState</code> の <code>motif</code> に渡す。本文・操作部品・見出し・ナビには出さない</td>
+</tr>
+<tr>
+<td>色</td>
+<td>既存の状態トークンのみ(<code>--pt-status-*</code>)。<strong>新色は足さない</strong></td>
+</tr>
+<tr>
+<td>読み上げ</td>
+<td>飾りなので <code>aria-hidden</code>。意味は隣の文字(「タスクはありません」)が持つ。選択・クリックの対象にしない</td>
+</tr>
+<tr>
+<td>動き</td>
+<td>2 コマを 0.9 秒ごとに切り替え(揺れる / 脈打つ)。<strong><code>prefers-reduced-motion</code> では静止画 1 枚</strong>。タブが隠れている間は止める</td>
+</tr>
+<tr>
+<td>文字</td>
+<td>ASCII のみ(絵文字・全角なし)。全コマ 幅 9 × 高さ 4 でそろえ、揺れても位置が動かない</td>
+</tr>
+<tr>
+<td>場所</td>
+<td><code>domain/motif.ts</code>(コマと対応表)、<code>components/AsciiPlant.tsx</code></td>
+</tr>
+</tbody>
+</table>
+<p><img src="../screenshots/board-empty.png" alt="空の列のモチーフ" /></p>
+<h2 id="かんばんの操作の流れ">かんばんの操作の流れ</h2>
+<figure class="diagram"><svg id="m56bbb08ed47782d0" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 849.00390625px;" viewBox="0 0 849.00390625 1074.859375" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m56bbb08ed47782d0{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m56bbb08ed47782d0 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m56bbb08ed47782d0 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m56bbb08ed47782d0 .error-icon{fill:#552222;}#m56bbb08ed47782d0 .error-text{fill:#552222;stroke:#552222;}#m56bbb08ed47782d0 .edge-thickness-normal{stroke-width:1px;}#m56bbb08ed47782d0 .edge-thickness-thick{stroke-width:3.5px;}#m56bbb08ed47782d0 .edge-pattern-solid{stroke-dasharray:0;}#m56bbb08ed47782d0 .edge-thickness-invisible{stroke-width:0;fill:none;}#m56bbb08ed47782d0 .edge-pattern-dashed{stroke-dasharray:3;}#m56bbb08ed47782d0 .edge-pattern-dotted{stroke-dasharray:2;}#m56bbb08ed47782d0 .marker{fill:#666;stroke:#666;}#m56bbb08ed47782d0 .marker.cross{stroke:#666;}#m56bbb08ed47782d0 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m56bbb08ed47782d0 p{margin:0;}#m56bbb08ed47782d0 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m56bbb08ed47782d0 .cluster-label text{fill:#333;}#m56bbb08ed47782d0 .cluster-label span{color:#333;}#m56bbb08ed47782d0 .cluster-label span p{background-color:transparent;}#m56bbb08ed47782d0 .label text,#m56bbb08ed47782d0 span{fill:#000000;color:#000000;}#m56bbb08ed47782d0 .node rect,#m56bbb08ed47782d0 .node circle,#m56bbb08ed47782d0 .node ellipse,#m56bbb08ed47782d0 .node polygon,#m56bbb08ed47782d0 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m56bbb08ed47782d0 .rough-node .label text,#m56bbb08ed47782d0 .node .label text,#m56bbb08ed47782d0 .image-shape .label,#m56bbb08ed47782d0 .icon-shape .label{text-anchor:middle;}#m56bbb08ed47782d0 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m56bbb08ed47782d0 .rough-node .label,#m56bbb08ed47782d0 .node .label,#m56bbb08ed47782d0 .image-shape .label,#m56bbb08ed47782d0 .icon-shape .label{text-align:center;}#m56bbb08ed47782d0 .node.clickable{cursor:pointer;}#m56bbb08ed47782d0 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m56bbb08ed47782d0 .arrowheadPath{fill:#333333;}#m56bbb08ed47782d0 .edgePaths .path{stroke:#666;stroke-width:1px;}#m56bbb08ed47782d0 .flowchart-link{stroke:#666;fill:none;}#m56bbb08ed47782d0 .edgeLabel{background-color:white;text-align:center;}#m56bbb08ed47782d0 .edgeLabel p{background-color:white;}#m56bbb08ed47782d0 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m56bbb08ed47782d0 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m56bbb08ed47782d0 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m56bbb08ed47782d0 .cluster text{fill:#333;}#m56bbb08ed47782d0 .cluster span{color:#333;}#m56bbb08ed47782d0 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m56bbb08ed47782d0 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m56bbb08ed47782d0 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m56bbb08ed47782d0 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m56bbb08ed47782d0 rect.text{fill:none;stroke-width:0;}#m56bbb08ed47782d0 .icon-shape,#m56bbb08ed47782d0 .image-shape{background-color:white;text-align:center;}#m56bbb08ed47782d0 .icon-shape p,#m56bbb08ed47782d0 .image-shape p{background-color:white;padding:2px;}#m56bbb08ed47782d0 .icon-shape .label rect,#m56bbb08ed47782d0 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m56bbb08ed47782d0 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m56bbb08ed47782d0 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m56bbb08ed47782d0 .node .neo-node{stroke:#999;}#m56bbb08ed47782d0 [data-look="neo"].node rect,#m56bbb08ed47782d0 [data-look="neo"].cluster rect,#m56bbb08ed47782d0 [data-look="neo"].node polygon{stroke:url(#m56bbb08ed47782d0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m56bbb08ed47782d0 [data-look="neo"].swimlane.cluster rect{filter:none;}#m56bbb08ed47782d0 [data-look="neo"].node path{stroke:url(#m56bbb08ed47782d0-gradient);stroke-width:1px;}#m56bbb08ed47782d0 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m56bbb08ed47782d0 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m56bbb08ed47782d0 [data-look="neo"].node circle{stroke:url(#m56bbb08ed47782d0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m56bbb08ed47782d0 [data-look="neo"].node circle .state-start{fill:#000000;}#m56bbb08ed47782d0 [data-look="neo"].icon-shape .icon{fill:url(#m56bbb08ed47782d0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m56bbb08ed47782d0 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m56bbb08ed47782d0-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m56bbb08ed47782d0 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m56bbb08ed47782d0_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m56bbb08ed47782d0_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m56bbb08ed47782d0_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m56bbb08ed47782d0_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m56bbb08ed47782d0_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m56bbb08ed47782d0_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m56bbb08ed47782d0_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M138,110L138,114.167C138,118.333,138,126.667,172.642,136.728C207.285,146.789,276.569,158.579,311.211,164.474L345.854,170.368" id="m56bbb08ed47782d0-L_D_M_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_M_0" data-points="W3sieCI6MTM4LCJ5IjoxMTB9LHsieCI6MTM4LCJ5IjoxMzV9LHsieCI6MzQ5Ljc5Njg3NSwieSI6MTcxLjAzOTQ3MjMzODY4NDkzfV0=" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M443.594,86L443.594,94.167C443.594,102.333,443.594,118.667,443.594,130.333C443.594,142,443.594,149,443.594,152.5L443.594,156" id="m56bbb08ed47782d0-L_K_M_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_K_M_0" data-points="W3sieCI6NDQzLjU5Mzc1LCJ5Ijo4Nn0seyJ4Ijo0NDMuNTkzNzUsInkiOjEzNX0seyJ4Ijo0NDMuNTkzNzUsInkiOjE2MH1d" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M723.258,86L723.258,94.167C723.258,102.333,723.258,118.667,692.935,132.471C662.613,146.276,601.968,157.552,571.646,163.19L541.323,168.828" id="m56bbb08ed47782d0-L_N_M_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_N_M_0" data-points="W3sieCI6NzIzLjI1NzgxMjUsInkiOjg2fSx7IngiOjcyMy4yNTc4MTI1LCJ5IjoxMzV9LHsieCI6NTM3LjM5MDYyNSwieSI6MTY5LjU1OTY1NTgzNzA4MTMyfV0=" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M443.594,214L443.594,218.167C443.594,222.333,443.594,230.667,443.594,238.333C443.594,246,443.594,253,443.594,256.5L443.594,260" id="m56bbb08ed47782d0-L_M_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M_C_0" data-points="W3sieCI6NDQzLjU5Mzc1LCJ5IjoyMTR9LHsieCI6NDQzLjU5Mzc1LCJ5IjoyMzl9LHsieCI6NDQzLjU5Mzc1LCJ5IjoyNjR9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M414.847,364.987L406.125,375.945C397.404,386.903,379.962,408.819,371.241,425.277C362.52,441.734,362.52,452.734,362.52,458.234L362.52,463.734" id="m56bbb08ed47782d0-L_C_MD_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_MD_0" data-points="W3sieCI6NDE0Ljg0NjUzMTY1OTAzMzEzLCJ5IjozNjQuOTg3MTU2NjU5MDMzMTN9LHsieCI6MzYyLjUxOTUzMTI1LCJ5Ijo0MzAuNzM0Mzc1fSx7IngiOjM2Mi41MTk1MzEyNSwieSI6NDY3LjczNDM3NX1d" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M335.45,545.734L331.17,551.901C326.89,558.068,318.33,570.401,314.05,584.068C309.77,597.734,309.77,612.734,309.77,620.234L309.77,627.734" id="m56bbb08ed47782d0-L_MD_X_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MD_X_0" data-points="W3sieCI6MzM1LjQ1MDQ1MjMwMjYzMTU2LCJ5Ijo1NDUuNzM0Mzc1fSx7IngiOjMwOS43Njk1MzEyNSwieSI6NTgyLjczNDM3NX0seyJ4IjozMDkuNzY5NTMxMjUsInkiOjYzMS43MzQzNzV9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M420.204,545.734L429.325,551.901C438.446,558.068,456.688,570.401,472.921,582.315C489.153,594.23,503.377,605.725,510.489,611.472L517.601,617.22" id="m56bbb08ed47782d0-L_MD_R_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MD_R_0" data-points="W3sieCI6NDIwLjIwMzY5MDM3ODI4OTUsInkiOjU0NS43MzQzNzV9LHsieCI6NDc0LjkyOTY4NzUsInkiOjU4Mi43MzQzNzV9LHsieCI6NTIwLjcxMTg2MjY2NDQ3MzYsInkiOjYxOS43MzQzNzV9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M481.552,355.777L499.174,368.27C516.796,380.763,552.041,405.748,569.663,430.908C587.285,456.068,587.285,481.401,587.285,506.734C587.285,532.068,587.285,557.401,585.955,575.586C584.625,593.771,581.965,604.809,580.635,610.327L579.305,615.846" id="m56bbb08ed47782d0-L_C_R_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_R_0" data-points="W3sieCI6NDgxLjU1MTUyMzEyODY2ODcsInkiOjM1NS43NzY2MDE4NzEzMzEzfSx7IngiOjU4Ny4yODUxNTYyNSwieSI6NDMwLjczNDM3NX0seyJ4Ijo1ODcuMjg1MTU2MjUsInkiOjUwNi43MzQzNzV9LHsieCI6NTg3LjI4NTE1NjI1LCJ5Ijo1ODIuNzM0Mzc1fSx7IngiOjU3OC4zNjc5NTg0NzAzOTQ3LCJ5Ijo2MTkuNzM0Mzc1fV0=" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M568.969,697.734L568.969,701.901C568.969,706.068,568.969,714.401,568.969,722.068C568.969,729.734,568.969,736.734,568.969,740.234L568.969,743.734" id="m56bbb08ed47782d0-L_R_S_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_R_S_0" data-points="W3sieCI6NTY4Ljk2ODc1LCJ5Ijo2OTcuNzM0Mzc1fSx7IngiOjU2OC45Njg3NSwieSI6NzIyLjczNDM3NX0seyJ4Ijo1NjguOTY4NzUsInkiOjc0Ny43MzQzNzV9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M520.323,866.214L500.437,880.488C480.55,894.762,440.777,923.311,420.89,943.085C401.004,962.859,401.004,973.859,401.004,979.359L401.004,984.859" id="m56bbb08ed47782d0-L_S_OK_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_OK_0" data-points="W3sieCI6NTIwLjMyMzIzMTQzODYwOTQsInkiOjg2Ni4yMTM4NTY0Mzg2MDk0fSx7IngiOjQwMS4wMDM5MDYyNSwieSI6OTUxLjg1OTM3NX0seyJ4Ijo0MDEuMDAzOTA2MjUsInkiOjk4OC44NTkzNzV9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path><path d="M614.166,869.662L630.306,883.361C646.446,897.061,678.725,924.46,694.864,943.66C711.004,962.859,711.004,973.859,711.004,979.359L711.004,984.859" id="m56bbb08ed47782d0-L_S_NG_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_NG_0" data-points="W3sieCI6NjE0LjE2NjQ2MDExNTI4NDUsInkiOjg2OS42NjE2NjQ4ODQ3MTU1fSx7IngiOjcxMS4wMDM5MDYyNSwieSI6OTUxLjg1OTM3NX0seyJ4Ijo3MTEuMDAzOTA2MjUsInkiOjk4OC44NTkzNzV9XQ==" data-look="classic" marker-end="url(#m56bbb08ed47782d0_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_D_M_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_K_M_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_N_M_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_M_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(362.51953125, 430.734375)"><g class="label" data-id="L_C_MD_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">はい</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(309.76953125, 582.734375)"><g class="label" data-id="L_MD_X_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-42.9375" y="-2" width="85.875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">キャンセル</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(471.9491, 580.71921)"><g class="label" data-id="L_MD_R_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-42.5625" y="-2" width="85.125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">完了にする</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(587.28515625, 506.734375)"><g class="label" data-id="L_C_R_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-26.5625" y="-2" width="53.125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">いいえ</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_R_S_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(401.00390625, 951.859375)"><g class="label" data-id="L_S_OK_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-16.9765625" y="-2" width="33.953125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">200</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(711.00390625, 951.859375)"><g class="label" data-id="L_S_NG_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-39.71875" y="-2" width="79.4375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">409</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> /</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> 403</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="m56bbb08ed47782d0-flowchart-D-0" data-look="classic" transform="translate(138, 59)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>ドラッグ&amp;ドロップ<br>(マウス 6px / タッチ 200ms 長押し)</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-M-1" data-look="classic" transform="translate(443.59375, 187)"><rect class="basic label-container" style="" x="-93.796875" y="-27" width="187.59375" height="54"></rect><g class="label" style="" transform="translate(-63.796875, -12)"><rect></rect><foreignObject width="127.59375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>onMove(task, to)</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-K-2" data-look="classic" transform="translate(443.59375, 59)"><rect class="basic label-container" style="" x="-125.59375" y="-27" width="251.1875" height="54"></rect><g class="label" style="" transform="translate(-95.59375, -12)"><rect></rect><foreignObject width="191.1875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>フォーカス + Shift + ←/→</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-N-4" data-look="classic" transform="translate(723.2578125, 59)"><rect class="basic label-container" style="" x="-104.0703125" y="-27" width="208.140625" height="54"></rect><g class="label" style="" transform="translate(-74.0703125, -12)"><rect></rect><foreignObject width="148.140625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>「⋮」→ 状態を変更</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-C-7" data-look="classic" transform="translate(443.59375, 328.8671875)"><polygon points="64.8671875,0 129.734375,-64.8671875 64.8671875,-129.734375 0,-64.8671875" class="label-container" transform="translate(-64.3671875, 64.8671875)"></polygon><g class="label" style="" transform="translate(-37.8671875, -12)"><rect></rect><foreignObject width="75.734375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>to は完了?</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-MD-9" data-look="classic" transform="translate(362.51953125, 506.734375)"><rect class="basic label-container" style="" x="-100.5859375" y="-39" width="201.171875" height="78"></rect><g class="label" style="" transform="translate(-70.5859375, -24)"><rect></rect><foreignObject width="141.171875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>確認モーダル<br>(版が無ければ警告)</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-X-11" data-look="classic" transform="translate(309.76953125, 658.734375)"><rect class="basic label-container" style="" x="-70.75" y="-27" width="141.5" height="54"></rect><g class="label" style="" transform="translate(-40.75, -12)"><rect></rect><foreignObject width="81.5" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>何もしない</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-R-13" data-look="classic" transform="translate(568.96875, 658.734375)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>画面を先に動かす → POST transition</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-S-17" data-look="classic" transform="translate(568.96875, 831.296875)"><polygon points="83.5625,0 167.125,-83.5625 83.5625,-167.125 0,-83.5625" class="label-container" transform="translate(-83.0625, 83.5625)"></polygon><g class="label" style="" transform="translate(-56.5625, -12)"><rect></rect><foreignObject width="113.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>サーバーの応答</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-OK-19" data-look="classic" transform="translate(401.00390625, 1027.859375)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>最新のタスクで置き換え + 成功トースト</p></span></div></foreignObject></g></g><g class="node default" id="m56bbb08ed47782d0-flowchart-NG-21" data-look="classic" transform="translate(711.00390625, 1027.859375)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>元の列へ戻す + 理由のトースト</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m56bbb08ed47782d0-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m56bbb08ed47782d0-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m56bbb08ed47782d0-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h2 id="ドラッグに頼らない操作">ドラッグに頼らない操作</h2>
+<ul>
+<li>カードの「⋮」→「状態を変更」メニュー(タッチ・キーボード・スクリーンリーダー向け)。</li>
+<li>カードにフォーカス → <code>Shift + ←/→</code> で隣の列へ、<code>Enter</code> で詳細。</li>
+<li>どの操作も同じ処理に流れ、遷移の可否はサーバーが判断する。拒否されたら元の列へ戻してトーストで理由を出す。</li>
+</ul>
+<h2 id="注記p9">注記(P9)</h2>
+<p>品質・画面差分のタブには「取得日時」を固定表示する(スキャン実行の日時と取り込み日時)。画面差分は撮影条件(解像度・固定時刻・シード)も固定表示する。</p>
+</article>
+    <nav class="pager"><span></span><a class="next" href="er.html"><span>次へ →</span>ER 図(実装済みモデル)</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#基本p1">基本(P1)</a></li><li class="lvl2"><a href="#状態">状態</a></li><li class="lvl2"><a href="#色とコントラスト">色とコントラスト</a></li><li class="lvl2"><a href="#テーマ">テーマ</a></li><li class="lvl2"><a href="#画面構成p6-ワークスペース型">画面構成(P6 ワークスペース型)</a></li><li class="lvl2"><a href="#パーツ・動き">パーツ・動き</a></li><li class="lvl2"><a href="#ascii-モチーフ植物の成長設計書-追補-2026-10-27">ASCII モチーフ「植物の成長」(設計書 追補 2026-10-27)</a></li><li class="lvl2"><a href="#かんばんの操作の流れ">かんばんの操作の流れ</a></li><li class="lvl2"><a href="#ドラッグに頼らない操作">ドラッグに頼らない操作</a></li><li class="lvl2"><a href="#注記p9">注記(P9)</a></li></ul></nav>
+</div>
+</body>
+</html>

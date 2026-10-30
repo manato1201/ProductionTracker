@@ -1,0 +1,430 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="f96f4b156ab2cff3c6c5">
+<title>L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html" aria-current="page" class="current">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L12-ui-css.md"><code>docs/lectures/L12-ui-css.md</code></a></p>
+    <article class="doc"><h1 id="l12-画面づくり--css・sass・デザイントークン・アクセシビリティ">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>CSS の「カスケード・ボックス・レイアウト(Flex/Grid)」を説明できる</li>
+<li><strong>CSS 変数</strong>と<strong>デザイントークン</strong>で、色や間隔を 1 か所で管理する理由を説明できる</li>
+<li>Sass がこのアプリで担う仕事(トークンの出力・MUI への受け渡し)を追える</li>
+<li><strong>コントラスト比</strong>を自分で計算し、トークンが基準(4.5:1)を満たすか確かめられる</li>
+<li>「色だけに頼らない」「動きを減らす」「キーボードで操作できる」の実装を読める</li>
+</ul>
+<p>前提: <a href="L11-react.html">L11</a>。</p>
+<hr />
+<h2 id="1-css-の最低限--3-つの考え方">1. CSS の最低限 ― 3 つの考え方</h2>
+<h3 id="1-1-カスケードどの指定が勝つか">1-1. カスケード(どの指定が勝つか)</h3>
+<p>同じ要素に複数の指定が当たったとき、<strong>詳細度(specificity)が高い方、同じなら後に書いた方</strong>が勝ちます。</p>
+<table>
+<thead>
+<tr>
+<th>セレクタ</th>
+<th>詳細度の目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>p</code>(要素)</td>
+<td>低い</td>
+</tr>
+<tr>
+<td><code>.card</code>(クラス)</td>
+<td>中</td>
+</tr>
+<tr>
+<td><code>#main</code>(ID)</td>
+<td>高い</td>
+</tr>
+<tr>
+<td><code>style=&quot;…&quot;</code>(インライン)</td>
+<td>もっと高い</td>
+</tr>
+</tbody>
+</table>
+<p><strong>運用上のコツ</strong>: クラスだけで書く(ID は使わない)。詳細度を競わせない。<code>!important</code> は最後の手段。</p>
+<h3 id="1-2-ボックスモデル">1-2. ボックスモデル</h3>
+<p>すべての要素は箱で、内側から <strong>content → padding → border → margin</strong> です。</p>
+<figure class="diagram"><svg id="maf90805f146e1e9c" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 391.953125px;" viewBox="0 0 391.953125 365" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#maf90805f146e1e9c{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#maf90805f146e1e9c .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#maf90805f146e1e9c .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#maf90805f146e1e9c .error-icon{fill:#552222;}#maf90805f146e1e9c .error-text{fill:#552222;stroke:#552222;}#maf90805f146e1e9c .edge-thickness-normal{stroke-width:1px;}#maf90805f146e1e9c .edge-thickness-thick{stroke-width:3.5px;}#maf90805f146e1e9c .edge-pattern-solid{stroke-dasharray:0;}#maf90805f146e1e9c .edge-thickness-invisible{stroke-width:0;fill:none;}#maf90805f146e1e9c .edge-pattern-dashed{stroke-dasharray:3;}#maf90805f146e1e9c .edge-pattern-dotted{stroke-dasharray:2;}#maf90805f146e1e9c .marker{fill:#666;stroke:#666;}#maf90805f146e1e9c .marker.cross{stroke:#666;}#maf90805f146e1e9c svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#maf90805f146e1e9c p{margin:0;}#maf90805f146e1e9c .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#maf90805f146e1e9c .cluster-label text{fill:#333;}#maf90805f146e1e9c .cluster-label span{color:#333;}#maf90805f146e1e9c .cluster-label span p{background-color:transparent;}#maf90805f146e1e9c .label text,#maf90805f146e1e9c span{fill:#000000;color:#000000;}#maf90805f146e1e9c .node rect,#maf90805f146e1e9c .node circle,#maf90805f146e1e9c .node ellipse,#maf90805f146e1e9c .node polygon,#maf90805f146e1e9c .node path{fill:#eee;stroke:#999;stroke-width:1px;}#maf90805f146e1e9c .rough-node .label text,#maf90805f146e1e9c .node .label text,#maf90805f146e1e9c .image-shape .label,#maf90805f146e1e9c .icon-shape .label{text-anchor:middle;}#maf90805f146e1e9c .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#maf90805f146e1e9c .rough-node .label,#maf90805f146e1e9c .node .label,#maf90805f146e1e9c .image-shape .label,#maf90805f146e1e9c .icon-shape .label{text-align:center;}#maf90805f146e1e9c .node.clickable{cursor:pointer;}#maf90805f146e1e9c .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#maf90805f146e1e9c .arrowheadPath{fill:#333333;}#maf90805f146e1e9c .edgePaths .path{stroke:#666;stroke-width:1px;}#maf90805f146e1e9c .flowchart-link{stroke:#666;fill:none;}#maf90805f146e1e9c .edgeLabel{background-color:white;text-align:center;}#maf90805f146e1e9c .edgeLabel p{background-color:white;}#maf90805f146e1e9c .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#maf90805f146e1e9c .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#maf90805f146e1e9c .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#maf90805f146e1e9c .cluster text{fill:#333;}#maf90805f146e1e9c .cluster span{color:#333;}#maf90805f146e1e9c .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#maf90805f146e1e9c .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#maf90805f146e1e9c div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#maf90805f146e1e9c .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#maf90805f146e1e9c rect.text{fill:none;stroke-width:0;}#maf90805f146e1e9c .icon-shape,#maf90805f146e1e9c .image-shape{background-color:white;text-align:center;}#maf90805f146e1e9c .icon-shape p,#maf90805f146e1e9c .image-shape p{background-color:white;padding:2px;}#maf90805f146e1e9c .icon-shape .label rect,#maf90805f146e1e9c .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#maf90805f146e1e9c .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#maf90805f146e1e9c .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#maf90805f146e1e9c .node .neo-node{stroke:#999;}#maf90805f146e1e9c [data-look="neo"].node rect,#maf90805f146e1e9c [data-look="neo"].cluster rect,#maf90805f146e1e9c [data-look="neo"].node polygon{stroke:url(#maf90805f146e1e9c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#maf90805f146e1e9c [data-look="neo"].swimlane.cluster rect{filter:none;}#maf90805f146e1e9c [data-look="neo"].node path{stroke:url(#maf90805f146e1e9c-gradient);stroke-width:1px;}#maf90805f146e1e9c [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#maf90805f146e1e9c [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#maf90805f146e1e9c [data-look="neo"].node circle{stroke:url(#maf90805f146e1e9c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#maf90805f146e1e9c [data-look="neo"].node circle .state-start{fill:#000000;}#maf90805f146e1e9c [data-look="neo"].icon-shape .icon{fill:url(#maf90805f146e1e9c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#maf90805f146e1e9c [data-look="neo"].icon-shape .icon-neo path{stroke:url(#maf90805f146e1e9c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#maf90805f146e1e9c :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="maf90805f146e1e9c_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="maf90805f146e1e9c_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="maf90805f146e1e9c_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="maf90805f146e1e9c_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="maf90805f146e1e9c_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="maf90805f146e1e9c_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="maf90805f146e1e9c_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="root" transform="translate(0, 0)"><g class="clusters"><g class="cluster" id="maf90805f146e1e9c-margin" data-look="classic"><rect style="" x="8" y="8" width="375.953125" height="349"></rect><g class="cluster-label" transform="translate(124, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">margin(外側の余白)</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="root" transform="translate(37.5, 35)"><g class="clusters"><g class="cluster" id="maf90805f146e1e9c-border" data-look="classic"><rect style="" x="8" y="8" width="300.953125" height="279"></rect><g class="cluster-label" transform="translate(119.4921875, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">border(枠)</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="root" transform="translate(35, 50)"><g class="clusters"><g class="cluster" id="maf90805f146e1e9c-padding" data-look="classic"><rect style="" x="8" y="8" width="230.953125" height="179"></rect><g class="cluster-label" transform="translate(46.6171875, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">padding(内側の余白)</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="node default" id="maf90805f146e1e9c-flowchart-content-0" data-look="classic" transform="translate(123.4765625, 97.5)"><rect class="basic label-container" style="" x="-80.4765625" y="-27" width="160.953125" height="54"></rect><g class="label" style="" transform="translate(-50.4765625, -12)"><rect></rect><foreignObject width="100.953125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>content(中身)</p></span></div></foreignObject></g></g></g></g></g></g></g></g></g></g></g><defs><filter id="maf90805f146e1e9c-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="maf90805f146e1e9c-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="maf90805f146e1e9c-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p>このアプリは <code>* { box-sizing: border-box; }</code> を指定しています。<strong><code>width</code> に padding と border を含める</strong>ので、計算が直感どおりになります(<code>width: 100%</code> と <code>padding</code> を足しても、はみ出さない)。</p>
+<h3 id="1-3-レイアウト--flexbox-と-grid">1-3. レイアウト ― Flexbox と Grid</h3>
+<table>
+<thead>
+<tr>
+<th>使い分け</th>
+<th>道具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>一方向</strong>に並べる(横 1 列・縦 1 列、ボタンの列)</td>
+<td>Flexbox(<code>display: flex</code>)</td>
+</tr>
+<tr>
+<td><strong>縦横の格子</strong>(かんばんの列、カード一覧)</td>
+<td>Grid(<code>display: grid</code>)</td>
+</tr>
+</tbody>
+</table>
+<pre class="highlight"><code class="language-css"><span class="p">.</span><span class="nc">board</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">display</span><span class="p">:</span><span class="w"> </span><span class="k">grid</span><span class="p">;</span>
+<span class="w">  </span><span class="k">grid-template-columns</span><span class="p">:</span><span class="w"> </span><span class="nf">repeat</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="w"> </span><span class="nf">minmax</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="n">fr</span><span class="p">));</span><span class="w">  </span><span class="c">/* 4 列。minmax(0, …) で中身に押されて広がるのを防ぐ */</span>
+<span class="w">  </span><span class="k">gap</span><span class="p">:</span><span class="w"> </span><span class="mi">12</span><span class="kt">px</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>minmax(0, 1fr)</code> の <code>0</code> は<strong>重要</strong>です。Grid/Flex の子は、既定では「中身の最小幅」より小さくならない(<code>min-width: auto</code>)ので、長い文字列があると列が<strong>はみ出します</strong>。<code>0</code> や <code>min-width: 0</code> で「縮んでよい」と伝えます(このアプリで幅 360px でも横スクロールが出ない理由)。</p>
+<h2 id="2-css-変数--実行時に切り替えられる値">2. CSS 変数 ― 実行時に切り替えられる値</h2>
+<pre class="highlight"><code class="language-css"><span class="p">:</span><span class="nd">root</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">--pt-primary</span><span class="p">:</span><span class="w"> </span><span class="mh">#2150c4</span><span class="p">;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">.</span><span class="nc">button</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="k">background</span><span class="p">:</span><span class="w"> </span><span class="nf">var</span><span class="p">(</span><span class="nv">--pt-primary</span><span class="p">);</span><span class="w"> </span><span class="p">}</span>
+<span class="p">:</span><span class="nd">root</span><span class="o">[</span><span class="nt">data-theme</span><span class="o">=</span><span class="s1">'dark'</span><span class="o">]</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nv">--pt-primary</span><span class="p">:</span><span class="w"> </span><span class="mh">#8fb0ff</span><span class="p">;</span><span class="w"> </span><span class="p">}</span><span class="w">   </span><span class="c">/* 値だけ差し替え → すべての利用箇所が追従 */</span>
+</code></pre>
+
+<p>Sass の変数(<code>$x</code>)は<strong>ビルド時に消える</strong>のに対し、CSS 変数(<code>--x</code>)は<strong>ブラウザが実行時に解決</strong>します。だから、ライト/ダークのような<strong>切り替え</strong>に使えます。</p>
+<h2 id="3-デザイントークン--意味のある名前で値を持つ">3. デザイントークン ― 「意味のある名前」で値を持つ</h2>
+<p><strong>トークン</strong>は、「<code>#2150c4</code>」ではなく「<code>primary</code>(主要色)」という<strong>役割の名前</strong>で値を管理する考え方です。</p>
+<table>
+<thead>
+<tr>
+<th>良くない</th>
+<th>良い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>color: #85550a;</code> を各所に直書き</td>
+<td><code>color: var(--pt-status-review);</code></td>
+</tr>
+<tr>
+<td>色を変えるたびに全ファイルを検索</td>
+<td>トークンの 1 行を変える</td>
+</tr>
+<tr>
+<td>ダークモードで全部書き直し</td>
+<td>変数の値の組を切り替えるだけ</td>
+</tr>
+</tbody>
+</table>
+<p>このアプリのトークンは <code>frontend/src/styles/_tokens.scss</code> に<strong>唯一の出どころ</strong>として定義されています。</p>
+<!-- excerpt: frontend/src/styles/_tokens.scss -->
+<pre class="highlight"><code class="language-scss"><span class="nv">$light</span><span class="o">:</span><span class="w"> </span><span class="p">(</span>
+<span class="w">  </span><span class="s1">'bg'</span><span class="o">:</span><span class="w"> </span><span class="mh">#f4f6f9</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'surface'</span><span class="o">:</span><span class="w"> </span><span class="mh">#ffffff</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'surface-2'</span><span class="o">:</span><span class="w"> </span><span class="mh">#eceff4</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'text'</span><span class="o">:</span><span class="w"> </span><span class="mh">#1b1f27</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'text-muted'</span><span class="o">:</span><span class="w"> </span><span class="mh">#4f5a6b</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'border'</span><span class="o">:</span><span class="w"> </span><span class="mh">#ccd2dc</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'primary'</span><span class="o">:</span><span class="w"> </span><span class="mh">#2150c4</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'on-primary'</span><span class="o">:</span><span class="w"> </span><span class="mh">#ffffff</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'danger'</span><span class="o">:</span><span class="w"> </span><span class="mh">#b3261e</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'status-todo'</span><span class="o">:</span><span class="w"> </span><span class="mh">#525c6e</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'status-in-progress'</span><span class="o">:</span><span class="w"> </span><span class="mh">#1b5fc9</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'status-review'</span><span class="o">:</span><span class="w"> </span><span class="mh">#85550a</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'status-done'</span><span class="o">:</span><span class="w"> </span><span class="mh">#17743a</span><span class="o">,</span>
+<span class="w">  </span><span class="s1">'drag-shadow'</span><span class="o">:</span><span class="w"> </span><span class="s1">'0 12px 28px rgb(20 30 50 / 28%)'</span><span class="o">,</span>
+<span class="p">);</span>
+</code></pre>
+
+<h2 id="4-sass-の役割--同じ値を複数の場所へ">4. Sass の役割 ― 「同じ値を、複数の場所へ」</h2>
+<p>このアプリでは、Sass は次の仕事だけをします(使いすぎない)。</p>
+<figure class="diagram"><svg id="m17a0df919bbb6581" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 879.328125px;" viewBox="0 0 879.328125 246" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m17a0df919bbb6581{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m17a0df919bbb6581 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m17a0df919bbb6581 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m17a0df919bbb6581 .error-icon{fill:#552222;}#m17a0df919bbb6581 .error-text{fill:#552222;stroke:#552222;}#m17a0df919bbb6581 .edge-thickness-normal{stroke-width:1px;}#m17a0df919bbb6581 .edge-thickness-thick{stroke-width:3.5px;}#m17a0df919bbb6581 .edge-pattern-solid{stroke-dasharray:0;}#m17a0df919bbb6581 .edge-thickness-invisible{stroke-width:0;fill:none;}#m17a0df919bbb6581 .edge-pattern-dashed{stroke-dasharray:3;}#m17a0df919bbb6581 .edge-pattern-dotted{stroke-dasharray:2;}#m17a0df919bbb6581 .marker{fill:#666;stroke:#666;}#m17a0df919bbb6581 .marker.cross{stroke:#666;}#m17a0df919bbb6581 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m17a0df919bbb6581 p{margin:0;}#m17a0df919bbb6581 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m17a0df919bbb6581 .cluster-label text{fill:#333;}#m17a0df919bbb6581 .cluster-label span{color:#333;}#m17a0df919bbb6581 .cluster-label span p{background-color:transparent;}#m17a0df919bbb6581 .label text,#m17a0df919bbb6581 span{fill:#000000;color:#000000;}#m17a0df919bbb6581 .node rect,#m17a0df919bbb6581 .node circle,#m17a0df919bbb6581 .node ellipse,#m17a0df919bbb6581 .node polygon,#m17a0df919bbb6581 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m17a0df919bbb6581 .rough-node .label text,#m17a0df919bbb6581 .node .label text,#m17a0df919bbb6581 .image-shape .label,#m17a0df919bbb6581 .icon-shape .label{text-anchor:middle;}#m17a0df919bbb6581 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m17a0df919bbb6581 .rough-node .label,#m17a0df919bbb6581 .node .label,#m17a0df919bbb6581 .image-shape .label,#m17a0df919bbb6581 .icon-shape .label{text-align:center;}#m17a0df919bbb6581 .node.clickable{cursor:pointer;}#m17a0df919bbb6581 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m17a0df919bbb6581 .arrowheadPath{fill:#333333;}#m17a0df919bbb6581 .edgePaths .path{stroke:#666;stroke-width:1px;}#m17a0df919bbb6581 .flowchart-link{stroke:#666;fill:none;}#m17a0df919bbb6581 .edgeLabel{background-color:white;text-align:center;}#m17a0df919bbb6581 .edgeLabel p{background-color:white;}#m17a0df919bbb6581 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m17a0df919bbb6581 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m17a0df919bbb6581 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m17a0df919bbb6581 .cluster text{fill:#333;}#m17a0df919bbb6581 .cluster span{color:#333;}#m17a0df919bbb6581 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m17a0df919bbb6581 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m17a0df919bbb6581 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m17a0df919bbb6581 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m17a0df919bbb6581 rect.text{fill:none;stroke-width:0;}#m17a0df919bbb6581 .icon-shape,#m17a0df919bbb6581 .image-shape{background-color:white;text-align:center;}#m17a0df919bbb6581 .icon-shape p,#m17a0df919bbb6581 .image-shape p{background-color:white;padding:2px;}#m17a0df919bbb6581 .icon-shape .label rect,#m17a0df919bbb6581 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m17a0df919bbb6581 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m17a0df919bbb6581 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m17a0df919bbb6581 .node .neo-node{stroke:#999;}#m17a0df919bbb6581 [data-look="neo"].node rect,#m17a0df919bbb6581 [data-look="neo"].cluster rect,#m17a0df919bbb6581 [data-look="neo"].node polygon{stroke:url(#m17a0df919bbb6581-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m17a0df919bbb6581 [data-look="neo"].swimlane.cluster rect{filter:none;}#m17a0df919bbb6581 [data-look="neo"].node path{stroke:url(#m17a0df919bbb6581-gradient);stroke-width:1px;}#m17a0df919bbb6581 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m17a0df919bbb6581 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m17a0df919bbb6581 [data-look="neo"].node circle{stroke:url(#m17a0df919bbb6581-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m17a0df919bbb6581 [data-look="neo"].node circle .state-start{fill:#000000;}#m17a0df919bbb6581 [data-look="neo"].icon-shape .icon{fill:url(#m17a0df919bbb6581-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m17a0df919bbb6581 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m17a0df919bbb6581-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m17a0df919bbb6581 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m17a0df919bbb6581_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m17a0df919bbb6581_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m17a0df919bbb6581_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m17a0df919bbb6581_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m17a0df919bbb6581_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m17a0df919bbb6581_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m17a0df919bbb6581_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M181.063,92.773L194.508,87.145C207.953,81.516,234.844,70.258,261.068,64.629C287.292,59,312.849,59,325.628,59L338.406,59" id="m17a0df919bbb6581-L_T_G_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T_G_0" data-points="W3sieCI6MTgxLjA2MjUsInkiOjkyLjc3MzQ3OTExNDEwMTQ5fSx7IngiOjI2MS43MzQzNzUsInkiOjU5fSx7IngiOjM0Mi40MDYyNSwieSI6NTl9XQ==" data-look="classic" marker-end="url(#m17a0df919bbb6581_flowchart-v2-pointEnd)"></path><path d="M181.063,165.227L194.508,170.855C207.953,176.484,234.844,187.742,263.191,193.371C291.539,199,321.344,199,336.246,199L351.148,199" id="m17a0df919bbb6581-L_T_M_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_T_M_0" data-points="W3sieCI6MTgxLjA2MjUsInkiOjE2NS4yMjY1MjA4ODU4OTg1fSx7IngiOjI2MS43MzQzNzUsInkiOjE5OX0seyJ4IjozNTUuMTQ4NDM3NSwieSI6MTk5fV0=" data-look="classic" marker-end="url(#m17a0df919bbb6581_flowchart-v2-pointEnd)"></path><path d="M565.242,199L571.533,199C577.823,199,590.404,199,608.48,199C626.557,199,650.13,199,661.917,199L673.703,199" id="m17a0df919bbb6581-L_M_MUI_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M_MUI_0" data-points="W3sieCI6NTY1LjI0MjE4NzUsInkiOjE5OX0seyJ4Ijo2MDIuOTg0Mzc1LCJ5IjoxOTl9LHsieCI6Njc3LjcwMzEyNSwieSI6MTk5fV0=" data-look="classic" marker-end="url(#m17a0df919bbb6581_flowchart-v2-pointEnd)"></path><path d="M577.984,59L582.151,59C586.318,59,594.651,59,602.318,59C609.984,59,616.984,59,620.484,59L623.984,59" id="m17a0df919bbb6581-L_G_CSS_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_G_CSS_0" data-points="W3sieCI6NTc3Ljk4NDM3NSwieSI6NTl9LHsieCI6NjAyLjk4NDM3NSwieSI6NTl9LHsieCI6NjI3Ljk4NDM3NSwieSI6NTl9XQ==" data-look="classic" marker-end="url(#m17a0df919bbb6581_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(261.734375, 59)"><g class="label" data-id="L_T_G_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-55.671875" y="-2" width="111.34375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">@include</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> emit</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(261.734375, 199)"><g class="label" data-id="L_T_M_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-28.609375" y="-2" width="57.21875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">:export</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_M_MUI_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_G_CSS_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m17a0df919bbb6581-flowchart-T-0" data-look="classic" transform="translate(94.53125, 129)"><rect class="basic label-container" style="" x="-86.53125" y="-51" width="173.0625" height="102"></rect><g class="label" style="" transform="translate(-56.53125, -36)"><rect></rect><foreignObject width="113.0625" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>_tokens.scss<br>Sass の map<br>($light / $dark)</p></span></div></foreignObject></g></g><g class="node default" id="m17a0df919bbb6581-flowchart-G-2" data-look="classic" transform="translate(460.1953125, 59)"><rect class="basic label-container" style="" x="-117.7890625" y="-51" width="235.578125" height="102"></rect><g class="label" style="" transform="translate(-87.7890625, -36)"><rect></rect><foreignObject width="175.578125" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>global.scss<br>→ CSS 変数 --pt-*<br>(ライト/ダーク/OS設定)</p></span></div></foreignObject></g></g><g class="node default" id="m17a0df919bbb6581-flowchart-M-4" data-look="classic" transform="translate(460.1953125, 199)"><rect class="basic label-container" style="" x="-105.046875" y="-39" width="210.09375" height="78"></rect><g class="label" style="" transform="translate(-75.046875, -24)"><rect></rect><foreignObject width="150.09375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>tokens.module.scss<br>→ JS から読める値</p></span></div></foreignObject></g></g><g class="node default" id="m17a0df919bbb6581-flowchart-MUI-6" data-look="classic" transform="translate(749.65625, 199)"><rect class="basic label-container" style="" x="-71.953125" y="-39" width="143.90625" height="78"></rect><g class="label" style="" transform="translate(-41.953125, -24)"><rect></rect><foreignObject width="83.90625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>MUI テーマ<br>(theme.ts)</p></span></div></foreignObject></g></g><g class="node default" id="m17a0df919bbb6581-flowchart-CSS-8" data-look="classic" transform="translate(749.65625, 59)"><rect class="basic label-container" style="" x="-121.671875" y="-39" width="243.34375" height="78"></rect><g class="label" style="" transform="translate(-91.671875, -24)"><rect></rect><foreignObject width="183.34375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>各コンポーネントの CSS<br>var(--pt-…)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m17a0df919bbb6581-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m17a0df919bbb6581-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m17a0df919bbb6581-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<ul>
+<li><strong>map</strong>(<code>$light: ( 'bg': #f4f6f9, … )</code>)は、名前 → 値の辞書。</li>
+<li><strong>mixin</strong>(<code>@mixin emit($tokens)</code>)は、map を <code>--pt-名前: 値;</code> に展開する。</li>
+</ul>
+<!-- excerpt: frontend/src/styles/_tokens.scss -->
+<pre class="highlight"><code class="language-scss"><span class="k">@mixin</span><span class="nf"> emit</span><span class="p">(</span><span class="nv">$tokens</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@each</span><span class="w"> </span><span class="nv">$name</span><span class="o">,</span><span class="w"> </span><span class="nv">$value</span><span class="w"> </span><span class="nt">in</span><span class="w"> </span><span class="nv">$tokens</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">--pt-</span><span class="nn">#</span><span class="p">{</span><span class="nv">$name</span><span class="p">}</span><span class="nd">:</span><span class="w"> </span><span class="nn">#</span><span class="p">{</span><span class="nv">$value</span><span class="p">}</span><span class="o">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<ul>
+<li><code>#{ … }</code> は<strong>補間</strong>(文字列に値を埋め込む)。</li>
+<li><code>global.scss</code> が、ライト・ダーク・「OS がダークのとき(明示でライトにしていなければ)」の 3 通りに出し分けます。</li>
+</ul>
+<!-- excerpt: frontend/src/styles/global.scss -->
+<pre class="highlight"><code class="language-scss"><span class="nd">:root</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@include</span><span class="nd"> t</span><span class="o">.</span><span class="nf">emit</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="nv">$light</span><span class="p">);</span>
+<span class="w">  </span><span class="nt">color-scheme</span><span class="nd">:</span><span class="w"> </span><span class="nt">light</span><span class="o">;</span>
+<span class="p">}</span>
+
+<span class="k">@media</span><span class="w"> </span><span class="p">(</span><span class="n">prefers-color-scheme</span><span class="o">:</span><span class="w"> </span><span class="n">dark</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nd">:root:not</span><span class="o">([</span><span class="nt">data-theme</span><span class="o">=</span><span class="s1">'light'</span><span class="o">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">@include</span><span class="nd"> t</span><span class="o">.</span><span class="nf">emit</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="nv">$dark</span><span class="p">);</span>
+<span class="w">    </span><span class="nt">color-scheme</span><span class="nd">:</span><span class="w"> </span><span class="nt">dark</span><span class="o">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nd">:root</span><span class="o">[</span><span class="nt">data-theme</span><span class="o">=</span><span class="s1">'dark'</span><span class="o">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">@include</span><span class="nd"> t</span><span class="o">.</span><span class="nf">emit</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="nv">$dark</span><span class="p">);</span>
+<span class="w">  </span><span class="nt">color-scheme</span><span class="nd">:</span><span class="w"> </span><span class="nt">dark</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<p>読み解き(優先順位):</p>
+<ol>
+<li>既定はライト。</li>
+<li>OS の設定がダークで、かつ利用者が<strong>明示的にライトを選んでいない</strong>なら、ダーク。</li>
+<li>利用者が <code>data-theme='dark'</code> を明示したら、ダーク(OS の設定に関わらず)。</li>
+</ol>
+<p>→ 「<strong>OS に従う</strong> + <strong>手動で上書き</strong>できる」。利用者の選択は <code>localStorage</code> に保存します(L10)。</p>
+<h3 id="トークンを足す手順">トークンを足す手順</h3>
+<ol>
+<li><code>_tokens.scss</code> の <code>$light</code> と <code>$dark</code> の<strong>両方</strong>に、同じ名前で足す。</li>
+<li>使う側で <code>var(--pt-新しい名前)</code>。</li>
+<li>MUI で使うなら <code>tokens.module.scss</code> の <code>:export</code> にも足す。</li>
+<li><strong>コントラスト</strong>を確かめる(次の節)。</li>
+</ol>
+<h2 id="5-アクセシビリティa11y-誰でも使える">5. アクセシビリティ(a11y)― 誰でも使える</h2>
+<h3 id="5-1-コントラスト比を計算する">5-1. コントラスト比を計算する</h3>
+<p>WCAG は、文字と背景の<strong>輝度の比</strong>で読みやすさを測ります。通常の文字は <strong>4.5:1 以上</strong>が基準です。計算は次のとおり。</p>
+<ol>
+<li>各色(0〜255)を 0〜1 にして、<strong>ガンマ補正を外す</strong>(線形化):
+<code>c ≤ 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4</code></li>
+<li><strong>相対輝度</strong> <code>L = 0.2126·R + 0.7152·G + 0.0722·B</code>(緑が一番明るく感じる、という目の特性)</li>
+<li><strong>コントラスト比</strong> <code>(明るい方の L + 0.05) / (暗い方の L + 0.05)</code></li>
+</ol>
+<p>実際に、このアプリのトークンを <code>_tokens.scss</code> から<strong>読み込んで</strong>計算してみます。</p>
+<!-- test:node -->
+<pre class="highlight"><code class="language-javascript"><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">readFileSync</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:fs"</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">scss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">readFileSync</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">URL</span><span class="p">(</span><span class="s2">"../../frontend/src/styles/_tokens.scss"</span><span class="p">,</span><span class="w"> </span><span class="k">import</span><span class="p">.</span><span class="nx">meta</span><span class="p">.</span><span class="nx">url</span><span class="p">),</span><span class="w"> </span><span class="s2">"utf8"</span><span class="p">);</span>
+
+<span class="c1">// $light: ( ... ); / $dark: ( ... ); の中の 'name': #rrggbb を取り出す</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">readMap</span><span class="p">(</span><span class="nx">name</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">body</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">scss</span><span class="p">.</span><span class="nx">match</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nb">RegExp</span><span class="p">(</span><span class="sb">`\\$</span><span class="si">${</span><span class="nx">name</span><span class="si">}</span><span class="sb">: \\(([\\s\\S]*?)\\n\\);`</span><span class="p">))[</span><span class="mf">1</span><span class="p">];</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nb">Object</span><span class="p">.</span><span class="nx">fromEntries</span><span class="p">([...</span><span class="nx">body</span><span class="p">.</span><span class="nx">matchAll</span><span class="p">(</span><span class="sr">/'([\w-]+)':\s*(#[0-9a-fA-F]{6})/g</span><span class="p">)].</span><span class="nx">map</span><span class="p">((</span><span class="nx">m</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">[</span><span class="nx">m</span><span class="p">[</span><span class="mf">1</span><span class="p">],</span><span class="w"> </span><span class="nx">m</span><span class="p">[</span><span class="mf">2</span><span class="p">]]));</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">channel</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">c</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">/=</span><span class="w"> </span><span class="mf">255</span><span class="p">;</span><span class="w"> </span><span class="k">return</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">&lt;=</span><span class="w"> </span><span class="mf">0.03928</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">c</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">12.92</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="p">((</span><span class="nx">c</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.055</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="mf">1.055</span><span class="p">)</span><span class="w"> </span><span class="o">**</span><span class="w"> </span><span class="mf">2.4</span><span class="p">;</span><span class="w"> </span><span class="p">};</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">luminance</span><span class="p">(</span><span class="nx">hex</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">r</span><span class="p">,</span><span class="w"> </span><span class="nx">g</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="mf">3</span><span class="p">,</span><span class="w"> </span><span class="mf">5</span><span class="p">].</span><span class="nx">map</span><span class="p">((</span><span class="nx">i</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">channel</span><span class="p">(</span><span class="nb">parseInt</span><span class="p">(</span><span class="nx">hex</span><span class="p">.</span><span class="nx">slice</span><span class="p">(</span><span class="nx">i</span><span class="p">,</span><span class="w"> </span><span class="nx">i</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">2</span><span class="p">),</span><span class="w"> </span><span class="mf">16</span><span class="p">)));</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="mf">0.2126</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">r</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.7152</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">g</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.0722</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="nx">b</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="kd">function</span><span class="w"> </span><span class="nx">contrast</span><span class="p">(</span><span class="nx">a</span><span class="p">,</span><span class="w"> </span><span class="nx">b</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">hi</span><span class="p">,</span><span class="w"> </span><span class="nx">lo</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="nx">luminance</span><span class="p">(</span><span class="nx">a</span><span class="p">),</span><span class="w"> </span><span class="nx">luminance</span><span class="p">(</span><span class="nx">b</span><span class="p">)].</span><span class="nx">sort</span><span class="p">((</span><span class="nx">x</span><span class="p">,</span><span class="w"> </span><span class="nx">y</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">y</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nx">x</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="nx">hi</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.05</span><span class="p">)</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="p">(</span><span class="nx">lo</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">0.05</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"白 と 黒:"</span><span class="p">,</span><span class="w"> </span><span class="nx">contrast</span><span class="p">(</span><span class="s2">"#ffffff"</span><span class="p">,</span><span class="w"> </span><span class="s2">"#000000"</span><span class="p">).</span><span class="nx">toFixed</span><span class="p">(</span><span class="mf">2</span><span class="p">));</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">pairs</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"text"</span><span class="p">,</span><span class="w"> </span><span class="s2">"text-muted"</span><span class="p">,</span><span class="w"> </span><span class="s2">"primary"</span><span class="p">,</span><span class="w"> </span><span class="s2">"danger"</span><span class="p">,</span><span class="w"> </span><span class="s2">"status-todo"</span><span class="p">,</span><span class="w"> </span><span class="s2">"status-in-progress"</span><span class="p">,</span><span class="w"> </span><span class="s2">"status-review"</span><span class="p">,</span><span class="w"> </span><span class="s2">"status-done"</span><span class="p">];</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">theme</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s2">"light"</span><span class="p">,</span><span class="w"> </span><span class="s2">"dark"</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">readMap</span><span class="p">(</span><span class="nx">theme</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`[</span><span class="si">${</span><span class="nx">theme</span><span class="si">}</span><span class="sb">]`</span><span class="p">);</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">key</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">pairs</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">ratio</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">contrast</span><span class="p">(</span><span class="nx">t</span><span class="p">[</span><span class="nx">key</span><span class="p">],</span><span class="w"> </span><span class="nx">t</span><span class="p">.</span><span class="nx">surface</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`  </span><span class="si">${</span><span class="nx">key</span><span class="p">.</span><span class="nx">padEnd</span><span class="p">(</span><span class="mf">20</span><span class="p">)</span><span class="si">}</span><span class="sb"> </span><span class="si">${</span><span class="nx">ratio</span><span class="p">.</span><span class="nx">toFixed</span><span class="p">(</span><span class="mf">2</span><span class="p">)</span><span class="si">}</span><span class="sb">  </span><span class="si">${</span><span class="nx">ratio</span><span class="w"> </span><span class="o">&gt;=</span><span class="w"> </span><span class="mf">4.5</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s2">"OK"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">"NG"</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">白 と 黒: 21.00
+[light]
+  text                 16.51  OK
+  text-muted           6.98  OK
+  primary              6.98  OK
+  danger               6.54  OK
+  status-todo          6.74  OK
+  status-in-progress   5.95  OK
+  status-review        6.36  OK
+  status-done          5.84  OK
+[dark]
+  text                 13.68  OK
+  text-muted           7.73  OK
+  primary              7.64  OK
+  danger               8.01  OK
+  status-todo          8.64  OK
+  status-in-progress   7.77  OK
+  status-review        9.91  OK
+  status-done          8.74  OK
+</code></pre>
+
+<p>どれも <strong>4.5 以上(OK)</strong>。<strong>この確認を自動化</strong>しておけば、色を変えたときに基準割れへ気づけます(演習 L17 で、これをテストにします)。</p>
+<blockquote>
+<p><strong>ポイント</strong>: 「白と黒」は最大の <strong>21:1</strong>。色がありそうでなさそうでも、<strong>数値で確かめる</strong>。見た目の印象は当てになりません。</p>
+</blockquote>
+<h3 id="5-2-色だけに頼らない">5-2. 色だけに頼らない</h3>
+<p>色覚の違い(色の見え方)や、白黒の画面・印刷でも伝わるよう、<strong>状態は「色 + アイコン + 文字」の 3 点セット</strong>で示します(<code>StatusLabel</code>、L11)。</p>
+<figure class="diagram"><svg id="m808a24c60c276a45" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 741.265625px;" viewBox="0 0 741.265625 198" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m808a24c60c276a45{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m808a24c60c276a45 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m808a24c60c276a45 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m808a24c60c276a45 .error-icon{fill:#552222;}#m808a24c60c276a45 .error-text{fill:#552222;stroke:#552222;}#m808a24c60c276a45 .edge-thickness-normal{stroke-width:1px;}#m808a24c60c276a45 .edge-thickness-thick{stroke-width:3.5px;}#m808a24c60c276a45 .edge-pattern-solid{stroke-dasharray:0;}#m808a24c60c276a45 .edge-thickness-invisible{stroke-width:0;fill:none;}#m808a24c60c276a45 .edge-pattern-dashed{stroke-dasharray:3;}#m808a24c60c276a45 .edge-pattern-dotted{stroke-dasharray:2;}#m808a24c60c276a45 .marker{fill:#666;stroke:#666;}#m808a24c60c276a45 .marker.cross{stroke:#666;}#m808a24c60c276a45 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m808a24c60c276a45 p{margin:0;}#m808a24c60c276a45 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m808a24c60c276a45 .cluster-label text{fill:#333;}#m808a24c60c276a45 .cluster-label span{color:#333;}#m808a24c60c276a45 .cluster-label span p{background-color:transparent;}#m808a24c60c276a45 .label text,#m808a24c60c276a45 span{fill:#000000;color:#000000;}#m808a24c60c276a45 .node rect,#m808a24c60c276a45 .node circle,#m808a24c60c276a45 .node ellipse,#m808a24c60c276a45 .node polygon,#m808a24c60c276a45 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m808a24c60c276a45 .rough-node .label text,#m808a24c60c276a45 .node .label text,#m808a24c60c276a45 .image-shape .label,#m808a24c60c276a45 .icon-shape .label{text-anchor:middle;}#m808a24c60c276a45 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m808a24c60c276a45 .rough-node .label,#m808a24c60c276a45 .node .label,#m808a24c60c276a45 .image-shape .label,#m808a24c60c276a45 .icon-shape .label{text-align:center;}#m808a24c60c276a45 .node.clickable{cursor:pointer;}#m808a24c60c276a45 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m808a24c60c276a45 .arrowheadPath{fill:#333333;}#m808a24c60c276a45 .edgePaths .path{stroke:#666;stroke-width:1px;}#m808a24c60c276a45 .flowchart-link{stroke:#666;fill:none;}#m808a24c60c276a45 .edgeLabel{background-color:white;text-align:center;}#m808a24c60c276a45 .edgeLabel p{background-color:white;}#m808a24c60c276a45 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m808a24c60c276a45 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m808a24c60c276a45 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m808a24c60c276a45 .cluster text{fill:#333;}#m808a24c60c276a45 .cluster span{color:#333;}#m808a24c60c276a45 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m808a24c60c276a45 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m808a24c60c276a45 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m808a24c60c276a45 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m808a24c60c276a45 rect.text{fill:none;stroke-width:0;}#m808a24c60c276a45 .icon-shape,#m808a24c60c276a45 .image-shape{background-color:white;text-align:center;}#m808a24c60c276a45 .icon-shape p,#m808a24c60c276a45 .image-shape p{background-color:white;padding:2px;}#m808a24c60c276a45 .icon-shape .label rect,#m808a24c60c276a45 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m808a24c60c276a45 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m808a24c60c276a45 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m808a24c60c276a45 .node .neo-node{stroke:#999;}#m808a24c60c276a45 [data-look="neo"].node rect,#m808a24c60c276a45 [data-look="neo"].cluster rect,#m808a24c60c276a45 [data-look="neo"].node polygon{stroke:url(#m808a24c60c276a45-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m808a24c60c276a45 [data-look="neo"].swimlane.cluster rect{filter:none;}#m808a24c60c276a45 [data-look="neo"].node path{stroke:url(#m808a24c60c276a45-gradient);stroke-width:1px;}#m808a24c60c276a45 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m808a24c60c276a45 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m808a24c60c276a45 [data-look="neo"].node circle{stroke:url(#m808a24c60c276a45-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m808a24c60c276a45 [data-look="neo"].node circle .state-start{fill:#000000;}#m808a24c60c276a45 [data-look="neo"].icon-shape .icon{fill:url(#m808a24c60c276a45-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m808a24c60c276a45 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m808a24c60c276a45-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m808a24c60c276a45 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m808a24c60c276a45_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m808a24c60c276a45_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m808a24c60c276a45_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m808a24c60c276a45_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m808a24c60c276a45_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m808a24c60c276a45_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m808a24c60c276a45_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M237.305,35L263.171,35C289.036,35,340.768,35,398.557,35C456.346,35,520.193,35,552.116,35L584.039,35" id="m808a24c60c276a45-L_A_X_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_X_0" data-points="W3sieCI6MjM3LjMwNDY4NzUsInkiOjM1fSx7IngiOjM5Mi41LCJ5IjozNX0seyJ4Ijo1ODguMDM5MDYyNSwieSI6MzV9XQ==" data-look="classic" marker-end="url(#m808a24c60c276a45_flowchart-v2-pointEnd)"></path><path d="M268,151L288.75,151C309.5,151,351,151,391.833,151C432.667,151,472.833,151,492.917,151L513,151" id="m808a24c60c276a45-L_B_Y_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_Y_0" data-points="W3sieCI6MjY4LCJ5IjoxNTF9LHsieCI6MzkyLjUsInkiOjE1MX0seyJ4Ijo1MTcsInkiOjE1MX1d" data-look="classic" marker-end="url(#m808a24c60c276a45_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel" transform="translate(392.5, 35)"><g class="label" data-id="L_A_X_0" transform="translate(0, -18.799999237060547)"><g><rect class="background" style="" x="-99.5" y="-2" width="199" height="41.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">色が見分けられない人には</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">伝わらない</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_B_Y_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m808a24c60c276a45-flowchart-A-0" data-look="classic" transform="translate(138, 35)"><rect class="basic label-container" style="" x="-99.3046875" y="-27" width="198.609375" height="54"></rect><g class="label" style="" transform="translate(-69.3046875, -12)"><rect></rect><foreignObject width="138.609375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>悪い例: 赤い点だけ</p></span></div></foreignObject></g></g><g class="node default" id="m808a24c60c276a45-flowchart-X-1" data-look="classic" transform="translate(625.1328125, 35)"><rect class="basic label-container" style="" x="-37.09375" y="-27" width="74.1875" height="54"></rect><g class="label" style="" transform="translate(-7.09375, -12)"><rect></rect><foreignObject width="14.1875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>✗</p></span></div></foreignObject></g></g><g class="node default" id="m808a24c60c276a45-flowchart-B-2" data-look="classic" transform="translate(138, 151)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>良い例: 赤 + ⚠ アイコン + 「期限超過」の文字</p></span></div></foreignObject></g></g><g class="node default" id="m808a24c60c276a45-flowchart-Y-3" data-look="classic" transform="translate(625.1328125, 151)"><rect class="basic label-container" style="" x="-108.1328125" y="-27" width="216.265625" height="54"></rect><g class="label" style="" transform="translate(-78.1328125, -12)"><rect></rect><foreignObject width="156.265625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>○ どれか1つで伝わる</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m808a24c60c276a45-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m808a24c60c276a45-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m808a24c60c276a45-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h3 id="5-3-キーボードだけで操作できる">5-3. キーボードだけで操作できる</h3>
+<ul>
+<li>ボタンは <code>&lt;button&gt;</code>、リンクは <code>&lt;a&gt;</code> を使う(<code>&lt;div onClick&gt;</code> は <strong>Tab で届かない・Enter で押せない</strong>)。</li>
+<li>フォーカスが見えること:</li>
+</ul>
+<!-- excerpt: frontend/src/styles/global.scss -->
+<pre class="highlight"><code class="language-scss"><span class="nd">:focus-visible</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nt">outline</span><span class="nd">:</span><span class="w"> </span><span class="nt">2px</span><span class="w"> </span><span class="nt">solid</span><span class="w"> </span><span class="nt">var</span><span class="o">(</span><span class="nt">--pt-primary</span><span class="o">);</span>
+<span class="w">  </span><span class="nt">outline-offset</span><span class="nd">:</span><span class="w"> </span><span class="nt">2px</span><span class="o">;</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>:focus-visible</code> は、<strong>キーボード操作のときだけ</strong>枠を出します(マウスのクリックでは出ない)。</p>
+<ul>
+<li>ドラッグ操作には、<strong>キーボードの代替</strong>を必ず用意する(<a href="L13-kanban.html">L13</a>)。</li>
+<li>装飾は読み上げ対象から外す: <code>aria-hidden</code>(アイコンや ASCII モチーフ)。画面に出さず読み上げだけ欲しい文字は <code>.visually-hidden</code>。</li>
+</ul>
+<h3 id="5-4-動きを減らす">5-4. 動きを減らす</h3>
+<p>動きで気分が悪くなる人がいます。OS の「視覚効果を減らす」を、CSS と JS の両方で尊重します。</p>
+<!-- excerpt: frontend/src/styles/global.scss -->
+<pre class="highlight"><code class="language-scss"><span class="k">@media</span><span class="w"> </span><span class="p">(</span><span class="n">prefers-reduced-motion</span><span class="o">:</span><span class="w"> </span><span class="n">reduce</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nc">.card--dragging</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">transform</span><span class="nd">:</span><span class="w"> </span><span class="nt">none</span><span class="o">;</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="c1">// 傾けない(影は残す)</span>
+<span class="w">  </span><span class="nc">.card--stagger</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">animation</span><span class="nd">:</span><span class="w"> </span><span class="nt">none</span><span class="o">;</span><span class="w"> </span><span class="p">}</span>
+<span class="w">  </span><span class="nc">.column</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nt">transition</span><span class="nd">:</span><span class="w"> </span><span class="nt">none</span><span class="o">;</span><span class="w"> </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre>
+
+<ul>
+<li>CSS では <code>@media (prefers-reduced-motion: reduce)</code> で、アニメーションを止める。</li>
+<li>JS では <code>usePrefersReducedMotion</code>(L11)で、ASCII モチーフを静止画にする。</li>
+</ul>
+<h2 id="6-ascii-モチーフをデータとして読む">6. ASCII モチーフを「データ」として読む</h2>
+<p>植物の成長モチーフ(種 → 芽 → 花 → 実)は、<strong>画像でなく文字列の配列</strong>です。</p>
+<!-- test:node -->
+<pre class="highlight"><code class="language-javascript"><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">GROWTH_FRAMES</span><span class="p">,</span><span class="w"> </span><span class="nx">GROWTH_STAGE_OF_STATUS</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../../frontend/src/domain/motif.ts"</span><span class="p">;</span>
+
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s2">"状態 → 段階:"</span><span class="p">,</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">(</span><span class="nx">GROWTH_STAGE_OF_STATUS</span><span class="p">));</span>
+<span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">stage</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="p">[</span><span class="s2">"seed"</span><span class="p">,</span><span class="w"> </span><span class="s2">"sprout"</span><span class="p">,</span><span class="w"> </span><span class="s2">"flower"</span><span class="p">,</span><span class="w"> </span><span class="s2">"fruit"</span><span class="p">])</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`--- </span><span class="si">${</span><span class="nx">stage</span><span class="si">}</span><span class="sb"> (コマ 0) ---`</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">GROWTH_FRAMES</span><span class="p">[</span><span class="nx">stage</span><span class="p">][</span><span class="mf">0</span><span class="p">].</span><span class="nx">join</span><span class="p">(</span><span class="s2">"\n"</span><span class="p">));</span>
+<span class="p">}</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">状態 → 段階: {&quot;todo&quot;:&quot;seed&quot;,&quot;in_progress&quot;:&quot;sprout&quot;,&quot;review&quot;:&quot;flower&quot;,&quot;done&quot;:&quot;fruit&quot;}
+--- seed (コマ 0) ---
+         
+         
+    o    
+~~~~~~~~~
+--- sprout (コマ 0) ---
+         
+   \ /   
+    |    
+~~~~~~~~~
+--- flower (コマ 0) ---
+   (*)   
+    |    
+   \|/   
+~~~~~~~~~
+--- fruit (コマ 0) ---
+   \|/   
+  o-|-o  
+    |    
+~~~~~~~~~
+</code></pre>
+
+<ul>
+<li>状態(<code>todo/in_progress/review/done</code>)→ 段階への対応は <code>Record</code> 型。<strong>状態を足して書き忘れると、型エラー</strong>になる(<a href="L06-state-machine.html">L06</a> と同じ「網羅性」の発想)。</li>
+<li>幅 9 文字・高さ 4 行にそろえる(ずれると列がガタつく)→ これもテストで守っています(<code>motif.test.ts</code>)。</li>
+<li>等幅フォント(<code>$font-mono</code>)で表示する。画像と違い、<strong>テーマの色にそのまま追従</strong>し、軽い。</li>
+</ul>
+<h2 id="7-mui-との付き合い方">7. MUI との付き合い方</h2>
+<p>MUI は、ボタンやダイアログなどの<strong>部品の集まり</strong>です。このアプリでは、次の方針です。</p>
+<table>
+<thead>
+<tr>
+<th>方針</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>色・フォントは<strong>トークンから</strong>テーマに渡す(<code>theme.ts</code>)</td>
+<td>見た目の唯一の出どころを保つ</td>
+</tr>
+<tr>
+<td>独自のスタイルは、<strong>クラス + <code>var(--pt-…)</code></strong> で書く</td>
+<td>ダーク/ライトが自動で追従</td>
+</tr>
+<tr>
+<td>MUI の部品は、既定のアクセシビリティ(フォーカス・ARIA)を活かす</td>
+<td>ゼロから作らない</td>
+</tr>
+</tbody>
+</table>
+<h2 id="よくある間違い">よくある間違い</h2>
+<table>
+<thead>
+<tr>
+<th>間違い</th>
+<th>正しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>色を <code>#xxxxxx</code> で各所に直書き</td>
+<td>トークン(<code>var(--pt-…)</code>)を使う</td>
+</tr>
+<tr>
+<td>ライトだけトークンを足す</td>
+<td><code>$light</code> と <code>$dark</code> の<strong>両方</strong>に足す</td>
+</tr>
+<tr>
+<td>Grid/Flex の子が、長い文字でレイアウトを壊す</td>
+<td><code>min-width: 0</code> / <code>minmax(0, 1fr)</code></td>
+</tr>
+<tr>
+<td>状態を色だけで示す</td>
+<td>色 + アイコン + 文字</td>
+</tr>
+<tr>
+<td><code>&lt;div onClick&gt;</code> をボタン代わりにする</td>
+<td><code>&lt;button&gt;</code> を使う</td>
+</tr>
+<tr>
+<td><code>outline: none</code> でフォーカス枠を消す</td>
+<td>消すなら、代わりの目印を必ず用意する</td>
+</tr>
+<tr>
+<td>コントラストを目で見て判断する</td>
+<td>計算して、4.5:1 以上を確かめる</td>
+</tr>
+</tbody>
+</table>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li><code>box-sizing: border-box</code> は、何を変えるか。</li>
+<li>Sass の変数と CSS 変数の違いは。ダークモードに使えるのはどちらか。</li>
+<li>このアプリのトークンの、唯一の出どころはどこか。新しいトークンを足す手順は。</li>
+<li>コントラスト比の計算の手順を 3 段階で述べよ。通常の文字の基準は。</li>
+<li><code>:focus-visible</code> は、<code>:focus</code> と何が違うか。</li>
+<li>状態を「色だけ」で示してはいけないのは、なぜか。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li><code>width</code>/<code>height</code> に padding と border を<strong>含める</strong>ようになる(足し算で、はみ出さない)。</li>
+<li>Sass の変数はビルド時に消える。CSS 変数はブラウザが実行時に解決する。ダークモードの切り替えには CSS 変数。</li>
+<li><code>frontend/src/styles/_tokens.scss</code>。<code>$light</code> と <code>$dark</code> の両方に足す → <code>var(--pt-名前)</code> で使う → MUI なら <code>:export</code> にも足す → コントラストを確かめる。</li>
+<li>①各色を 0〜1 にして線形化 ②<code>L = 0.2126R + 0.7152G + 0.0722B</code> ③<code>(明るい L + 0.05) / (暗い L + 0.05)</code>。基準は <strong>4.5:1</strong>。</li>
+<li><code>:focus-visible</code> は、キーボード操作などで「枠が必要なとき」だけ出す(マウスのクリックでは出さない)。</li>
+<li>色の見え方が違う人、白黒の画面・印刷では、伝わらないから。アイコンと文字を併用する。</li>
+</ol>
+<h2 id="次へ">次へ</h2>
+<p><a href="L13-kanban.html">L13 かんばん</a> ― イベント・ドラッグ&amp;ドロップ・楽観的更新。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L11-react.html"><span>← 前へ</span>L11 React の基礎 ― コンポーネント・state・effect・フック</a><a class="next" href="L13-kanban.html"><span>次へ →</span>L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-css-の最低限--3-つの考え方">1. CSS の最低限 ― 3 つの考え方</a></li><li class="lvl3"><a href="#1-1-カスケードどの指定が勝つか">1-1. カスケード(どの指定が勝つか)</a></li><li class="lvl3"><a href="#1-2-ボックスモデル">1-2. ボックスモデル</a></li><li class="lvl3"><a href="#1-3-レイアウト--flexbox-と-grid">1-3. レイアウト ― Flexbox と Grid</a></li><li class="lvl2"><a href="#2-css-変数--実行時に切り替えられる値">2. CSS 変数 ― 実行時に切り替えられる値</a></li><li class="lvl2"><a href="#3-デザイントークン--意味のある名前で値を持つ">3. デザイントークン ― 「意味のある名前」で値を持つ</a></li><li class="lvl2"><a href="#4-sass-の役割--同じ値を複数の場所へ">4. Sass の役割 ― 「同じ値を、複数の場所へ」</a></li><li class="lvl3"><a href="#トークンを足す手順">トークンを足す手順</a></li><li class="lvl2"><a href="#5-アクセシビリティa11y-誰でも使える">5. アクセシビリティ(a11y)― 誰でも使える</a></li><li class="lvl3"><a href="#5-1-コントラスト比を計算する">5-1. コントラスト比を計算する</a></li><li class="lvl3"><a href="#5-2-色だけに頼らない">5-2. 色だけに頼らない</a></li><li class="lvl3"><a href="#5-3-キーボードだけで操作できる">5-3. キーボードだけで操作できる</a></li><li class="lvl3"><a href="#5-4-動きを減らす">5-4. 動きを減らす</a></li><li class="lvl2"><a href="#6-ascii-モチーフをデータとして読む">6. ASCII モチーフを「データ」として読む</a></li><li class="lvl2"><a href="#7-mui-との付き合い方">7. MUI との付き合い方</a></li><li class="lvl2"><a href="#よくある間違い">よくある間違い</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#次へ">次へ</a></li></ul></nav>
+</div>
+</body>
+</html>

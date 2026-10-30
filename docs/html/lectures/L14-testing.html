@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="ade60fb4ad4622c436ab">
+<title>L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest) — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html" aria-current="page" class="current">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L14-testing.md"><code>docs/lectures/L14-testing.md</code></a></p>
+    <article class="doc"><h1 id="l14-テスト--何を・どう守るかpytest・fixture・パラメータ化・ファズ・vitest">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>「テストは何のためにあるか」を説明できる</li>
+<li><code>assert</code>・fixture・パラメータ化・<code>pytest.raises</code> の仕組みを、最小の例で理解する</li>
+<li>このアプリのテストの<strong>層</strong>(単体・API・性質・ファズ・文書)を区別し、新しい機能に<strong>どの層のテストを足すか</strong>決められる</li>
+<li>ファズ(でたらめな入力)テストの考え方を説明できる</li>
+<li>フロントエンド(Vitest + Testing Library)のテストの読み書きができる</li>
+</ul>
+<p>前提: <a href="L02-python.html">L02 Python</a>・<a href="L05-drf.html">L05 DRF</a>・<a href="L06-state-machine.html">L06 状態遷移</a>。</p>
+<hr />
+<h2 id="1-テストは何のためにあるか">1. テストは何のためにあるか</h2>
+<table>
+<thead>
+<tr>
+<th>目的</th>
+<th>説明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>仕様の記録</strong></td>
+<td>「こう動くべき」を、実行できる形で残す。文書は古びるが、テストは落ちて教えてくれる</td>
+</tr>
+<tr>
+<td><strong>変更の安全網</strong></td>
+<td>リファクタリングや機能追加で、壊したことにすぐ気づける</td>
+</tr>
+<tr>
+<td><strong>設計の圧力</strong></td>
+<td>テストしにくいコードは、たいてい責務が混ざっている(L06 の「ルールを 1 か所に」)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>テストが守るべき順序</strong>(価値が高い順):</p>
+<ol>
+<li>壊れると<strong>被害が大きい</strong>もの(権限・認証・データの整合性・状態遷移)</li>
+<li><strong>一度バグが出た</strong>ところ(同じ穴に二度落ちない=回帰テスト)</li>
+<li>仕様が複雑で<strong>人間の頭で追いにくい</strong>もの</li>
+</ol>
+<blockquote>
+<p>すべてを同じ密度でテストしない。<strong>リスクの大きさに比例</strong>させる。</p>
+</blockquote>
+<h2 id="2-層で考えるテストのピラミッド">2. 層で考える(テストのピラミッド)</h2>
+<figure class="diagram"><svg id="m06dc95fc932ec94c" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 707.26171875px;" viewBox="0 0 707.26171875 784" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m06dc95fc932ec94c{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m06dc95fc932ec94c .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m06dc95fc932ec94c .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m06dc95fc932ec94c .error-icon{fill:#552222;}#m06dc95fc932ec94c .error-text{fill:#552222;stroke:#552222;}#m06dc95fc932ec94c .edge-thickness-normal{stroke-width:1px;}#m06dc95fc932ec94c .edge-thickness-thick{stroke-width:3.5px;}#m06dc95fc932ec94c .edge-pattern-solid{stroke-dasharray:0;}#m06dc95fc932ec94c .edge-thickness-invisible{stroke-width:0;fill:none;}#m06dc95fc932ec94c .edge-pattern-dashed{stroke-dasharray:3;}#m06dc95fc932ec94c .edge-pattern-dotted{stroke-dasharray:2;}#m06dc95fc932ec94c .marker{fill:#666;stroke:#666;}#m06dc95fc932ec94c .marker.cross{stroke:#666;}#m06dc95fc932ec94c svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m06dc95fc932ec94c p{margin:0;}#m06dc95fc932ec94c .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m06dc95fc932ec94c .cluster-label text{fill:#333;}#m06dc95fc932ec94c .cluster-label span{color:#333;}#m06dc95fc932ec94c .cluster-label span p{background-color:transparent;}#m06dc95fc932ec94c .label text,#m06dc95fc932ec94c span{fill:#000000;color:#000000;}#m06dc95fc932ec94c .node rect,#m06dc95fc932ec94c .node circle,#m06dc95fc932ec94c .node ellipse,#m06dc95fc932ec94c .node polygon,#m06dc95fc932ec94c .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m06dc95fc932ec94c .rough-node .label text,#m06dc95fc932ec94c .node .label text,#m06dc95fc932ec94c .image-shape .label,#m06dc95fc932ec94c .icon-shape .label{text-anchor:middle;}#m06dc95fc932ec94c .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m06dc95fc932ec94c .rough-node .label,#m06dc95fc932ec94c .node .label,#m06dc95fc932ec94c .image-shape .label,#m06dc95fc932ec94c .icon-shape .label{text-align:center;}#m06dc95fc932ec94c .node.clickable{cursor:pointer;}#m06dc95fc932ec94c .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m06dc95fc932ec94c .arrowheadPath{fill:#333333;}#m06dc95fc932ec94c .edgePaths .path{stroke:#666;stroke-width:1px;}#m06dc95fc932ec94c .flowchart-link{stroke:#666;fill:none;}#m06dc95fc932ec94c .edgeLabel{background-color:white;text-align:center;}#m06dc95fc932ec94c .edgeLabel p{background-color:white;}#m06dc95fc932ec94c .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m06dc95fc932ec94c .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m06dc95fc932ec94c .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m06dc95fc932ec94c .cluster text{fill:#333;}#m06dc95fc932ec94c .cluster span{color:#333;}#m06dc95fc932ec94c .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m06dc95fc932ec94c .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m06dc95fc932ec94c div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m06dc95fc932ec94c .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m06dc95fc932ec94c rect.text{fill:none;stroke-width:0;}#m06dc95fc932ec94c .icon-shape,#m06dc95fc932ec94c .image-shape{background-color:white;text-align:center;}#m06dc95fc932ec94c .icon-shape p,#m06dc95fc932ec94c .image-shape p{background-color:white;padding:2px;}#m06dc95fc932ec94c .icon-shape .label rect,#m06dc95fc932ec94c .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m06dc95fc932ec94c .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m06dc95fc932ec94c .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m06dc95fc932ec94c .node .neo-node{stroke:#999;}#m06dc95fc932ec94c [data-look="neo"].node rect,#m06dc95fc932ec94c [data-look="neo"].cluster rect,#m06dc95fc932ec94c [data-look="neo"].node polygon{stroke:url(#m06dc95fc932ec94c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06dc95fc932ec94c [data-look="neo"].swimlane.cluster rect{filter:none;}#m06dc95fc932ec94c [data-look="neo"].node path{stroke:url(#m06dc95fc932ec94c-gradient);stroke-width:1px;}#m06dc95fc932ec94c [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06dc95fc932ec94c [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m06dc95fc932ec94c [data-look="neo"].node circle{stroke:url(#m06dc95fc932ec94c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06dc95fc932ec94c [data-look="neo"].node circle .state-start{fill:#000000;}#m06dc95fc932ec94c [data-look="neo"].icon-shape .icon{fill:url(#m06dc95fc932ec94c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06dc95fc932ec94c [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m06dc95fc932ec94c-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06dc95fc932ec94c :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m06dc95fc932ec94c_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m06dc95fc932ec94c_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06dc95fc932ec94c_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06dc95fc932ec94c_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06dc95fc932ec94c_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06dc95fc932ec94c_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m06dc95fc932ec94c_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M169.711,156L169.711,160.167C169.711,164.333,169.711,172.667,172.772,180.489C175.833,188.311,181.956,195.622,185.017,199.278L188.078,202.933" id="m06dc95fc932ec94c-L_top_mid_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_top_mid_0" data-points="W3sieCI6MTY5LjcxMDkzNzUsInkiOjE1Nn0seyJ4IjoxNjkuNzEwOTM3NSwieSI6MTgxfSx7IngiOjE5MC42NDY0NTMwNDE0NDM4NiwieSI6MjA2fV0=" data-look="classic" marker-end="url(#m06dc95fc932ec94c_flowchart-v2-pointEnd)"></path><path d="M326.309,530L326.309,534.167C326.309,538.333,326.309,546.667,330.797,554.573C335.285,562.48,344.262,569.96,348.75,573.699L353.238,577.439" id="m06dc95fc932ec94c-L_mid_low_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_mid_low_0" data-points="W3sieCI6MzI2LjMwODU5Mzc1LCJ5Ijo1MzB9LHsieCI6MzI2LjMwODU5Mzc1LCJ5Ijo1NTV9LHsieCI6MzU2LjMxMTI5MzE5MTA1NjksInkiOjU4MH1d" data-look="classic" marker-end="url(#m06dc95fc932ec94c_flowchart-v2-pointEnd)"></path><path d="M482.906,121L482.906,131C482.906,141,482.906,161,479.845,174.656C476.784,188.311,470.661,195.622,467.6,199.278L464.539,202.933" id="m06dc95fc932ec94c-L_F_mid_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_mid_0" data-points="W3sieCI6NDgyLjkwNjI1LCJ5IjoxMjF9LHsieCI6NDgyLjkwNjI1LCJ5IjoxODF9LHsieCI6NDYxLjk3MDczNDQ1ODU1NjE0LCJ5IjoyMDZ9XQ==" data-look="classic" marker-end="url(#m06dc95fc932ec94c_flowchart-v2-pointEnd)"></path><path d="M621.535,407L621.535,431.667C621.535,456.333,621.535,505.667,617.047,534.073C612.559,562.48,603.582,569.96,599.094,573.699L594.605,577.439" id="m06dc95fc932ec94c-L_D_low_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_low_0" data-points="W3sieCI6NjIxLjUzNTE1NjI1LCJ5Ijo0MDd9LHsieCI6NjIxLjUzNTE1NjI1LCJ5Ijo1NTV9LHsieCI6NTkxLjUzMjQ1NjgwODk0MzIsInkiOjU4MH1d" data-look="classic" marker-end="url(#m06dc95fc932ec94c_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_top_mid_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_mid_low_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_F_mid_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_D_low_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="root" transform="translate(298.421875, 572)"><g class="clusters"><g class="cluster" id="m06dc95fc932ec94c-low" data-look="classic"><rect style="" x="8" y="8" width="335" height="196"></rect><g class="cluster-label" transform="translate(110.9375, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">多く・速く・狭く</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="node default" id="m06dc95fc932ec94c-flowchart-U-3" data-look="classic" transform="translate(175.5, 106)"><rect class="basic label-container" style="" x="-130" y="-63" width="260" height="126"></rect><g class="label" style="" transform="translate(-100, -48)"><rect></rect><foreignObject width="200" height="96"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>単体テスト<br>(1 つの関数・モデル)<br>test_paths.py / test_task_transitions.py</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(150.80859375, 198)"><g class="clusters"><g class="cluster" id="m06dc95fc932ec94c-mid" data-look="classic"><rect style="" x="8" y="8" width="335" height="324"></rect><g class="cluster-label" transform="translate(142.9375, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">中くらい</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="node default" id="m06dc95fc932ec94c-flowchart-A-1" data-look="classic" transform="translate(175.5, 94)"><rect class="basic label-container" style="" x="-121.2890625" y="-51" width="242.578125" height="102"></rect><g class="label" style="" transform="translate(-91.2890625, -36)"><rect></rect><foreignObject width="182.578125" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>API テスト<br>(HTTP の入口〜DB まで)<br>test_api_*.py</p></span></div></foreignObject></g></g><g class="node default" id="m06dc95fc932ec94c-flowchart-P-2" data-look="classic" transform="translate(175.5, 246)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>性質・監査テスト<br>test_security_audit.py / test_query_plans.py</p></span></div></foreignObject></g></g></g></g><g class="root" transform="translate(0, 0)"><g class="clusters"><g class="cluster" id="m06dc95fc932ec94c-top" data-look="classic"><rect style="" x="8" y="8" width="323.421875" height="148"></rect><g class="cluster-label" transform="translate(96.9609375, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">少なく・遅く・広く</tspan></tspan></text></g></g></g></g><g class="edgePaths"></g><g class="edgeLabels"></g><g class="nodes"><g class="node default" id="m06dc95fc932ec94c-flowchart-E-0" data-look="classic" transform="translate(169.7109375, 82)"><rect class="basic label-container" style="" x="-124.2109375" y="-39" width="248.421875" height="78"></rect><g class="label" style="" transform="translate(-94.2109375, -24)"><rect></rect><foreignObject width="188.421875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>E2E(ブラウザを通す)<br>手元で確認(自動化は最小)</p></span></div></foreignObject></g></g></g></g><g class="node default" id="m06dc95fc932ec94c-flowchart-F-4" data-look="classic" transform="translate(482.90625, 82)"><rect class="basic label-container" style="" x="-101.484375" y="-39" width="202.96875" height="78"></rect><g class="label" style="" transform="translate(-71.484375, -24)"><rect></rect><foreignObject width="142.96875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ファズ・堅牢性<br>test_robustness.py</p></span></div></foreignObject></g></g><g class="node default" id="m06dc95fc932ec94c-flowchart-D-5" data-look="classic" transform="translate(621.53515625, 368)"><rect class="basic label-container" style="" x="-77.7265625" y="-39" width="155.453125" height="78"></rect><g class="label" style="" transform="translate(-47.7265625, -24)"><rect></rect><foreignObject width="95.453125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>文書テスト<br>test_docs.py</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m06dc95fc932ec94c-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m06dc95fc932ec94c-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m06dc95fc932ec94c-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<table>
+<thead>
+<tr>
+<th>層</th>
+<th>何を確かめるか</th>
+<th>このアプリの例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>単体</td>
+<td>1 つの関数・メソッドの入出力</td>
+<td><code>normalize_path</code>(<code>test_paths.py</code>)、<code>Task.transition_to</code>(<code>test_task_transitions.py</code>)</td>
+</tr>
+<tr>
+<td>API</td>
+<td>HTTP の入口から DB まで通して、ステータスコード・JSON・権限</td>
+<td><code>test_api_entities_tasks.py</code> ほか</td>
+</tr>
+<tr>
+<td>監査</td>
+<td>設計上の約束を、表で横断検査(OWASP API Top 10 など)</td>
+<td><code>test_security_audit.py</code>、<code>test_query_plans.py</code>(索引が使われるか)</td>
+</tr>
+<tr>
+<td>ファズ</td>
+<td>でたらめな入力で <strong>500 を出さない</strong></td>
+<td><code>test_robustness.py</code></td>
+</tr>
+<tr>
+<td>文書</td>
+<td>文書内のコードが<strong>本当に動き</strong>、出力が一致する</td>
+<td><code>test_docs.py</code>(この講義資料も対象)</td>
+</tr>
+<tr>
+<td>フロント単体</td>
+<td>画面部品の振る舞い</td>
+<td><code>*.test.tsx</code>(Vitest)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-pytest-の最小の仕組み">3. pytest の最小の仕組み</h2>
+<h3 id="3-1-assert-と失敗の読み方">3-1. <code>assert</code> と、失敗の読み方</h3>
+<p>pytest は、<strong><code>test_</code> で始まる関数</strong>を見つけて実行し、<code>assert</code> が偽なら失敗とします。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># 外側の Django 設定(DJANGO_SETTINGS_MODULE など)を引き継がない、まっさらな環境で pytest を動かす</span>
+<span class="n">CLEAN_ENV</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"DJANGO"</span><span class="p">,</span> <span class="s2">"PYTEST"</span><span class="p">))}</span>
+
+<span class="n">CODE</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">def add(a, b):</span>
+<span class="s1">    return a + b</span>
+
+<span class="s1">def test_add_ok():</span>
+<span class="s1">    assert add(2, 3) == 5</span>
+
+<span class="s1">def test_add_wrong_on_purpose():</span>
+<span class="s1">    assert add(2, 3) == 6</span>
+<span class="s1">'''</span>
+
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"test_sample.py"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">CODE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">run</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pytest"</span><span class="p">,</span> <span class="s2">"-q"</span><span class="p">,</span> <span class="s2">"--no-header"</span><span class="p">,</span> <span class="s2">"-p"</span><span class="p">,</span> <span class="s2">"no:cacheprovider"</span><span class="p">,</span> <span class="s2">"--rootdir"</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">tmp</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">CLEAN_ENV</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="c1"># 実行時間などの毎回変わる行を除いて、読むべき部分だけ出す</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">run</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"E "</span><span class="p">,</span> <span class="s2">"&gt;"</span><span class="p">,</span> <span class="s2">"FAILED"</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">"passed"</span> <span class="ow">in</span> <span class="n">line</span> <span class="ow">and</span> <span class="s2">"failed"</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" in "</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="s2">" in "</span> <span class="ow">in</span> <span class="n">line</span> <span class="k">else</span> <span class="n">line</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">&gt;       assert add(2, 3) == 6
+E       assert 5 == 6
+E        +  where 5 = add(2, 3)
+FAILED test_sample.py::test_add_wrong_on_purpose - assert 5 == 6
+1 failed, 1 passed
+</code></pre>
+
+<ul>
+<li><code>&gt;</code> の行が<strong>失敗した行</strong>、<code>E</code> の行が<strong>何と何が食い違ったか</strong>(<code>assert 5 == 6</code>)。</li>
+<li>2 つのテストの片方だけ失敗し、もう片方は通る(<strong>テストは互いに独立</strong>)。</li>
+</ul>
+<h3 id="3-2-fixture--準備を共有する">3-2. fixture ― 「準備」を共有する</h3>
+<p>テストの<strong>前準備</strong>(ユーザー作成・DB のデータ)は、<strong>fixture</strong>(<code>@pytest.fixture</code>)として名前を付けて共有します。テスト関数は、<strong>引数の名前</strong>で欲しい fixture を指定します(依存性の注入)。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># 外側の Django 設定(DJANGO_SETTINGS_MODULE など)を引き継がない、まっさらな環境で pytest を動かす</span>
+<span class="n">CLEAN_ENV</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"DJANGO"</span><span class="p">,</span> <span class="s2">"PYTEST"</span><span class="p">))}</span>
+
+<span class="n">CODE</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">import pytest</span>
+
+<span class="s1">@pytest.fixture</span>
+<span class="s1">def project():</span>
+<span class="s1">    print("[準備] project を作る")</span>
+<span class="s1">    yield {"code": "DEMO"}          # yield の前が準備、後が後片付け</span>
+<span class="s1">    print("[後片付け] project を消す")</span>
+
+<span class="s1">@pytest.fixture</span>
+<span class="s1">def artist(project):                # fixture が別の fixture を使える</span>
+<span class="s1">    return {"name": "alice", "project": project["code"]}</span>
+
+<span class="s1">def test_artist_belongs_to_project(artist):</span>
+<span class="s1">    assert artist["project"] == "DEMO"</span>
+<span class="s1">'''</span>
+
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"test_fx.py"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">CODE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">run</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pytest"</span><span class="p">,</span> <span class="s2">"-q"</span><span class="p">,</span> <span class="s2">"-s"</span><span class="p">,</span> <span class="s2">"--no-header"</span><span class="p">,</span> <span class="s2">"-p"</span><span class="p">,</span> <span class="s2">"no:cacheprovider"</span><span class="p">,</span> <span class="s2">"--rootdir"</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">tmp</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">CLEAN_ENV</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">run</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">():</span>
+    <span class="k">if</span> <span class="s2">"["</span> <span class="ow">in</span> <span class="n">line</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">"["</span><span class="p">):])</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">[準備] project を作る
+[後片付け] project を消す
+</code></pre>
+
+<p>実際の <code>conftest.py</code>(全テストで共有する fixture の置き場)を読みましょう。</p>
+<!-- excerpt: backend/tracker/tests/conftest.py -->
+<pre class="highlight"><code class="language-python"><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">project</span><span class="p">(</span><span class="n">db</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ProjectFactory</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">"DEMO"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"デモ"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_client_for</span><span class="p">(</span><span class="n">user</span><span class="p">):</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">APIClient</span><span class="p">()</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">force_authenticate</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">client</span>
+
+
+<span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_user</span><span class="p">(</span><span class="n">project</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""プロジェクトに `role` で参加するユーザーと、そのログイン済みクライアントを作る。"""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">make</span><span class="p">(</span><span class="n">role</span><span class="o">=</span><span class="s2">"artist"</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">user</span> <span class="o">=</span> <span class="n">UserFactory</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">role</span><span class="p">:</span>
+            <span class="n">MemberFactory</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">user</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">role</span><span class="o">=</span><span class="n">role</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">user</span>
+
+    <span class="k">return</span> <span class="n">make</span>
+</code></pre>
+
+<p>読み解き:</p>
+<ol>
+<li><code>db</code> fixture(pytest-django 提供)— 「このテストは DB を使う」宣言。テストごとに<strong>トランザクションを巻き戻す</strong>ので、テスト同士が汚し合わない。</li>
+<li><code>make_user</code> は<strong>ファクトリを返す fixture</strong>(関数を返す)。テストの中で <code>make_user(&quot;reviewer&quot;)</code> のように、役割を変えて何人でも作れる。</li>
+<li><code>reviewer</code>・<code>artist</code>・<code>viewer</code> は、これを呼ぶだけの小さな fixture。テストは <code>def test_...(task, reviewer)</code> と<strong>書くだけで</strong>状況が揃う。</li>
+</ol>
+<h3 id="3-3-ファクトリfactory_boy-テストデータを手短に作る">3-3. ファクトリ(factory_boy)― テストデータを手短に作る</h3>
+<p>モデルを毎回 <code>Model.objects.create(...)</code> で作ると、必須の項目が増えるたびに全テストを直すことになります。<strong>ファクトリ</strong>に必要な既定値を持たせ、テストでは<strong>関心のある値だけ</strong>を指定します。</p>
+<!-- excerpt: backend/tracker/tests/factories.py -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">UserFactory</span><span class="p">(</span><span class="n">factory</span><span class="o">.</span><span class="n">django</span><span class="o">.</span><span class="n">DjangoModelFactory</span><span class="p">):</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">User</span>
+
+    <span class="n">username</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">Sequence</span><span class="p">(</span><span class="k">lambda</span> <span class="n">n</span><span class="p">:</span> <span class="sa">f</span><span class="s2">"user</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">password</span> <span class="o">=</span> <span class="s2">"pass-12345"</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_create</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_class</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># パスワードをハッシュ化して保存する(ログインのテストで使う)</span>
+        <span class="k">return</span> <span class="n">model_class</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create_user</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</code></pre>
+
+<ul>
+<li><code>Sequence(lambda n: f&quot;user{n}&quot;)</code> — 呼ぶたびに <code>user0</code>, <code>user1</code>…と<strong>重複しない名前</strong>を作る(一意制約に引っかからない)。</li>
+<li><code>_create</code> を上書き — 素の <code>objects.create(password=...)</code> は<strong>平文のまま保存</strong>してしまうので、<code>create_user</code>(ハッシュ化する)を使う。これは過去に実際にあった落とし穴です。</li>
+</ul>
+<h3 id="3-4-パラメータ化--表から大量のテストを作る">3-4. パラメータ化 ― 表から大量のテストを作る</h3>
+<p><strong>同じ検査を、入力だけ変えて繰り返す</strong>ときは <code>@pytest.mark.parametrize</code>。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">sys</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">tempfile</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="c1"># 外側の Django 設定(DJANGO_SETTINGS_MODULE など)を引き継がない、まっさらな環境で pytest を動かす</span>
+<span class="n">CLEAN_ENV</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">((</span><span class="s2">"DJANGO"</span><span class="p">,</span> <span class="s2">"PYTEST"</span><span class="p">))}</span>
+
+<span class="n">CODE</span> <span class="o">=</span> <span class="s1">'''</span>
+<span class="s1">import pytest</span>
+
+<span class="s1">ALLOWED = {("todo", "in_progress"), ("in_progress", "review"), ("review", "in_progress"), ("review", "done"), ("done", "in_progress")}</span>
+<span class="s1">STATUSES = ["todo", "in_progress", "review", "done"]</span>
+<span class="s1">ALL_PAIRS = [(a, b) for a in STATUSES for b in STATUSES]</span>
+
+<span class="s1">def can_move(src, dst):</span>
+<span class="s1">    return (src, dst) in ALLOWED</span>
+
+<span class="s1">@pytest.mark.parametrize("src,dst", ALL_PAIRS)</span>
+<span class="s1">def test_every_pair(src, dst):</span>
+<span class="s1">    assert can_move(src, dst) == ((src, dst) in ALLOWED)</span>
+<span class="s1">'''</span>
+
+<span class="k">with</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span> <span class="k">as</span> <span class="n">tmp</span><span class="p">:</span>
+    <span class="n">Path</span><span class="p">(</span><span class="n">tmp</span><span class="p">,</span> <span class="s2">"test_pairs.py"</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">CODE</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">"utf-8"</span><span class="p">)</span>
+    <span class="n">run</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">sys</span><span class="o">.</span><span class="n">executable</span><span class="p">,</span> <span class="s2">"-m"</span><span class="p">,</span> <span class="s2">"pytest"</span><span class="p">,</span> <span class="s2">"-q"</span><span class="p">,</span> <span class="s2">"--no-header"</span><span class="p">,</span> <span class="s2">"-p"</span><span class="p">,</span> <span class="s2">"no:cacheprovider"</span><span class="p">,</span> <span class="s2">"--rootdir"</span><span class="p">,</span> <span class="n">tmp</span><span class="p">,</span> <span class="n">tmp</span><span class="p">],</span>
+        <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">tmp</span><span class="p">,</span> <span class="n">env</span><span class="o">=</span><span class="n">CLEAN_ENV</span><span class="p">,</span>
+    <span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">run</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">splitlines</span><span class="p">()[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">" in "</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">16 passed
+</code></pre>
+
+<p>4×4 = <strong>16 通りが 1 つの関数で 16 個のテスト</strong>になりました。このアプリの本物は、遷移の<strong>全組み合わせ</strong>を検査しています。</p>
+<!-- excerpt: backend/tracker/tests/test_task_transitions.py -->
+<pre class="highlight"><code class="language-python"><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">parametrize</span><span class="p">(</span><span class="s2">"src,dst"</span><span class="p">,</span> <span class="n">ALL_PAIRS</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">test_transition_table_matches_design</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""4x4 の全組み合わせ。表にあるものだけ通り、他は InvalidTransition。"""</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">src</span>
+    <span class="n">task</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+    <span class="n">VersionFactory</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>  <span class="c1"># 「完了」の条件(版が1つ以上)を満たしておく</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">dst</span><span class="p">)</span> <span class="ow">in</span> <span class="n">ALLOWED</span><span class="p">:</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">transition_to</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">)</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">dst</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="n">InvalidTransition</span><span class="p">):</span>
+            <span class="n">task</span><span class="o">.</span><span class="n">transition_to</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">)</span>
+        <span class="n">task</span><span class="o">.</span><span class="n">refresh_from_db</span><span class="p">()</span>
+        <span class="k">assert</span> <span class="n">task</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">src</span>
+</code></pre>
+
+<p>読み解き:</p>
+<ul>
+<li><code>ALLOWED</code> は、<strong>テスト側に持つ「正解の表」</strong>。実装の <code>Task.TRANSITIONS</code> と<strong>別に</strong>書くのが肝(同じ表を読み込んだら、両方間違っていても通ってしまう)。<strong>設計書を写した独立の表</strong>と実装を突き合わせる。</li>
+<li>許されない組み合わせでは <code>pytest.raises(InvalidTransition)</code> で<strong>例外が出ること</strong>を確かめ、そのあと <code>refresh_from_db()</code> で<strong>状態が変わっていない</strong>ことも確かめる(失敗してもデータが壊れない)。</li>
+</ul>
+<h3 id="3-5-pytestraises--失敗することをテストする">3-5. <code>pytest.raises</code> ― 「失敗すること」をテストする</h3>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">divide</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">a</span> <span class="o">/</span> <span class="n">b</span>
+
+<span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ZeroDivisionError</span><span class="p">)</span> <span class="k">as</span> <span class="n">info</span><span class="p">:</span>
+    <span class="n">divide</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"例外が出た:"</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="s2">"-"</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+<span class="c1"># 例外が出なかったら、テストが失敗する(Failed)ことの確認</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">pytest</span><span class="o">.</span><span class="n">raises</span><span class="p">(</span><span class="ne">ZeroDivisionError</span><span class="p">):</span>
+        <span class="n">divide</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">except</span> <span class="n">pytest</span><span class="o">.</span><span class="n">fail</span><span class="o">.</span><span class="n">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"出なかったので失敗:"</span><span class="p">,</span> <span class="n">e</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">例外が出た: ZeroDivisionError - division by zero
+出なかったので失敗: DID NOT RAISE ZeroDivisionError
+</code></pre>
+
+<h2 id="4-何を-assert-するかの型">4. 「何を assert するか」の型</h2>
+<p>良いテストは、<strong>結果</strong>だけでなく<strong>副作用がないこと</strong>も確かめます。</p>
+<table>
+<thead>
+<tr>
+<th>確かめること</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>戻り値・ステータスコード</td>
+<td><code>assert res.status_code == 409</code></td>
+</tr>
+<tr>
+<td>応答の形</td>
+<td><code>assert res.json()[&quot;code&quot;] == &quot;invalid_transition&quot;</code></td>
+</tr>
+<tr>
+<td><strong>データが変わっていない</strong>(拒否時)</td>
+<td><code>task.refresh_from_db(); assert task.status == src</code></td>
+</tr>
+<tr>
+<td><strong>件数</strong>(重複や漏れ)</td>
+<td><code>assert Task.objects.count() == 1</code></td>
+</tr>
+<tr>
+<td><strong>クエリ数</strong>(N+1 でない)</td>
+<td><code>django_assert_num_queries(3)</code>(<a href="L04-django.html">L04</a>)</td>
+</tr>
+<tr>
+<td>ログ・通知に<strong>秘密が出ない</strong></td>
+<td><code>assert &quot;password&quot; not in caplog.text</code></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>コツ</strong>: テスト名は「何が・どうなる」を日本語でもよいので文にする(<code>test_only_reviewer_can_approve</code>)。失敗したとき、<strong>名前を読むだけで何が壊れたか</strong>分かるように。</p>
+</blockquote>
+<h2 id="5-ファズでたらめな入力-想定外を探す">5. ファズ(でたらめな入力)― 想定外を探す</h2>
+<p>人間が書くテストは、<strong>想定した入力</strong>しか試せません。ファズは、<strong>想定外の入力を大量にぶつけて、落ちない(500 を出さない)こと</strong>を確かめます。</p>
+<figure class="diagram"><svg id="ma464c5025af20db5" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 947.46875px;" viewBox="0 0 947.46875 174" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#ma464c5025af20db5{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#ma464c5025af20db5 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#ma464c5025af20db5 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#ma464c5025af20db5 .error-icon{fill:#552222;}#ma464c5025af20db5 .error-text{fill:#552222;stroke:#552222;}#ma464c5025af20db5 .edge-thickness-normal{stroke-width:1px;}#ma464c5025af20db5 .edge-thickness-thick{stroke-width:3.5px;}#ma464c5025af20db5 .edge-pattern-solid{stroke-dasharray:0;}#ma464c5025af20db5 .edge-thickness-invisible{stroke-width:0;fill:none;}#ma464c5025af20db5 .edge-pattern-dashed{stroke-dasharray:3;}#ma464c5025af20db5 .edge-pattern-dotted{stroke-dasharray:2;}#ma464c5025af20db5 .marker{fill:#666;stroke:#666;}#ma464c5025af20db5 .marker.cross{stroke:#666;}#ma464c5025af20db5 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#ma464c5025af20db5 p{margin:0;}#ma464c5025af20db5 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#ma464c5025af20db5 .cluster-label text{fill:#333;}#ma464c5025af20db5 .cluster-label span{color:#333;}#ma464c5025af20db5 .cluster-label span p{background-color:transparent;}#ma464c5025af20db5 .label text,#ma464c5025af20db5 span{fill:#000000;color:#000000;}#ma464c5025af20db5 .node rect,#ma464c5025af20db5 .node circle,#ma464c5025af20db5 .node ellipse,#ma464c5025af20db5 .node polygon,#ma464c5025af20db5 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#ma464c5025af20db5 .rough-node .label text,#ma464c5025af20db5 .node .label text,#ma464c5025af20db5 .image-shape .label,#ma464c5025af20db5 .icon-shape .label{text-anchor:middle;}#ma464c5025af20db5 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#ma464c5025af20db5 .rough-node .label,#ma464c5025af20db5 .node .label,#ma464c5025af20db5 .image-shape .label,#ma464c5025af20db5 .icon-shape .label{text-align:center;}#ma464c5025af20db5 .node.clickable{cursor:pointer;}#ma464c5025af20db5 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#ma464c5025af20db5 .arrowheadPath{fill:#333333;}#ma464c5025af20db5 .edgePaths .path{stroke:#666;stroke-width:1px;}#ma464c5025af20db5 .flowchart-link{stroke:#666;fill:none;}#ma464c5025af20db5 .edgeLabel{background-color:white;text-align:center;}#ma464c5025af20db5 .edgeLabel p{background-color:white;}#ma464c5025af20db5 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#ma464c5025af20db5 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#ma464c5025af20db5 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#ma464c5025af20db5 .cluster text{fill:#333;}#ma464c5025af20db5 .cluster span{color:#333;}#ma464c5025af20db5 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#ma464c5025af20db5 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#ma464c5025af20db5 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#ma464c5025af20db5 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#ma464c5025af20db5 rect.text{fill:none;stroke-width:0;}#ma464c5025af20db5 .icon-shape,#ma464c5025af20db5 .image-shape{background-color:white;text-align:center;}#ma464c5025af20db5 .icon-shape p,#ma464c5025af20db5 .image-shape p{background-color:white;padding:2px;}#ma464c5025af20db5 .icon-shape .label rect,#ma464c5025af20db5 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#ma464c5025af20db5 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#ma464c5025af20db5 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#ma464c5025af20db5 .node .neo-node{stroke:#999;}#ma464c5025af20db5 [data-look="neo"].node rect,#ma464c5025af20db5 [data-look="neo"].cluster rect,#ma464c5025af20db5 [data-look="neo"].node polygon{stroke:url(#ma464c5025af20db5-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#ma464c5025af20db5 [data-look="neo"].swimlane.cluster rect{filter:none;}#ma464c5025af20db5 [data-look="neo"].node path{stroke:url(#ma464c5025af20db5-gradient);stroke-width:1px;}#ma464c5025af20db5 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#ma464c5025af20db5 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#ma464c5025af20db5 [data-look="neo"].node circle{stroke:url(#ma464c5025af20db5-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#ma464c5025af20db5 [data-look="neo"].node circle .state-start{fill:#000000;}#ma464c5025af20db5 [data-look="neo"].icon-shape .icon{fill:url(#ma464c5025af20db5-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#ma464c5025af20db5 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#ma464c5025af20db5-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#ma464c5025af20db5 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="ma464c5025af20db5_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="ma464c5025af20db5_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="ma464c5025af20db5_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="ma464c5025af20db5_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="ma464c5025af20db5_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="ma464c5025af20db5_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="ma464c5025af20db5_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M268,87L272.167,87C276.333,87,284.667,87,292.333,87C300,87,307,87,310.5,87L314,87" id="ma464c5025af20db5-L_G_S_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_G_S_0" data-points="W3sieCI6MjY4LCJ5Ijo4N30seyJ4IjoyOTMsInkiOjg3fSx7IngiOjMxOCwieSI6ODd9XQ==" data-look="classic" marker-end="url(#ma464c5025af20db5_flowchart-v2-pointEnd)"></path><path d="M443.5,87L447.667,87C451.833,87,460.167,87,467.833,87C475.5,87,482.5,87,486,87L489.5,87" id="ma464c5025af20db5-L_S_J_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_J_0" data-points="W3sieCI6NDQzLjUsInkiOjg3fSx7IngiOjQ2OC41LCJ5Ijo4N30seyJ4Ijo0OTMuNSwieSI6ODd9XQ==" data-look="classic" marker-end="url(#ma464c5025af20db5_flowchart-v2-pointEnd)"></path><path d="M589.92,72.858L608.275,66.548C626.629,60.239,663.338,47.619,699.716,41.31C736.094,35,772.141,35,790.164,35L808.188,35" id="ma464c5025af20db5-L_J_OK_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_J_OK_0" data-points="W3sieCI6NTg5LjkyMDI5MDc2MDI0MjksInkiOjcyLjg1Nzc5MDc2MDI0Mjl9LHsieCI6NzAwLjA0Njg3NSwieSI6MzV9LHsieCI6ODEyLjE4NzUsInkiOjM1fV0=" data-look="classic" marker-end="url(#ma464c5025af20db5_flowchart-v2-pointEnd)"></path><path d="M589.92,101.142L608.275,107.452C626.629,113.761,663.338,126.381,697.023,132.69C730.708,139,761.37,139,776.701,139L792.031,139" id="ma464c5025af20db5-L_J_NG_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_J_NG_0" data-points="W3sieCI6NTg5LjkyMDI5MDc2MDI0MjksInkiOjEwMS4xNDIyMDkyMzk3NTcxfSx7IngiOjcwMC4wNDY4NzUsInkiOjEzOX0seyJ4Ijo3OTYuMDMxMjUsInkiOjEzOX1d" data-look="classic" marker-end="url(#ma464c5025af20db5_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_G_S_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_S_J_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(700.046875, 35)"><g class="label" data-id="L_J_OK_0" transform="translate(0, -18.799999237060547)"><g><rect class="background" style="" x="-69.15625" y="-2" width="138.3125" height="41.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">4xx</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> で拒否</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> または</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">正常に処理</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(700.046875, 139)"><g class="label" data-id="L_J_NG_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-70.984375" y="-2" width="141.96875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">500(想定外の例外)</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="ma464c5025af20db5-flowchart-G-0" data-look="classic" transform="translate(138, 87)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>入力の生成<br>(巨大な数・NUL文字・長い文字列・変な型)</p></span></div></foreignObject></g></g><g class="node default" id="ma464c5025af20db5-flowchart-S-1" data-look="classic" transform="translate(380.75, 87)"><rect class="basic label-container" style="" x="-62.75" y="-39" width="125.5" height="78"></rect><g class="label" style="" transform="translate(-32.75, -24)"><rect></rect><foreignObject width="65.5" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>システム<br>(API)</p></span></div></foreignObject></g></g><g class="node default" id="ma464c5025af20db5-flowchart-J-3" data-look="classic" transform="translate(548.78125, 87)"><polygon points="55.28125,0 110.5625,-55.28125 55.28125,-110.5625 0,-55.28125" class="label-container" transform="translate(-54.78125, 55.28125)"></polygon><g class="label" style="" transform="translate(-28.28125, -12)"><rect></rect><foreignObject width="56.5625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>応答は?</p></span></div></foreignObject></g></g><g class="node default" id="ma464c5025af20db5-flowchart-OK-5" data-look="classic" transform="translate(867.75, 35)"><rect class="basic label-container" style="" x="-55.5625" y="-27" width="111.125" height="54"></rect><g class="label" style="" transform="translate(-25.5625, -12)"><rect></rect><foreignObject width="51.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>○ 合格</p></span></div></foreignObject></g></g><g class="node default" id="ma464c5025af20db5-flowchart-NG-7" data-look="classic" transform="translate(867.75, 139)"><rect class="basic label-container" style="" x="-71.71875" y="-27" width="143.4375" height="54"></rect><g class="label" style="" transform="translate(-41.71875, -12)"><rect></rect><foreignObject width="83.4375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>✗ バグ発見</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="ma464c5025af20db5-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="ma464c5025af20db5-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="ma464c5025af20db5-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p>このアプリの <code>test_robustness.py</code> の考え方は、1 つのルールです。</p>
+<!-- excerpt: backend/tracker/tests/test_robustness.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">ok_or_client_error</span><span class="p">(</span><span class="n">res</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">res</span><span class="o">.</span><span class="n">status_code</span> <span class="o">&lt;</span> <span class="mi">500</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">res</span><span class="o">.</span><span class="n">content</span><span class="p">[:</span><span class="mi">200</span><span class="p">]</span><span class="si">!r}</span><span class="s2">"</span>
+</code></pre>
+
+<p>「<strong>入力が悪いのはクライアントの責任(4xx)であって、サーバーが壊れて(5xx)はいけない</strong>」。そして、悪い入力の<strong>一覧</strong>を表にして、すべての窓口に掛け合わせます(<code>parametrize</code> の積)。</p>
+<!-- excerpt: backend/tracker/tests/test_robustness.py -->
+<pre class="highlight"><code class="language-python"><span class="n">LIST_PATHS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"projects"</span><span class="p">,</span> <span class="s2">"entities"</span><span class="p">,</span> <span class="s2">"tasks"</span><span class="p">,</span> <span class="s2">"versions"</span><span class="p">,</span> <span class="s2">"steps"</span><span class="p">,</span> <span class="s2">"quality-reports"</span><span class="p">,</span> <span class="s2">"visual-results"</span><span class="p">]</span>
+<span class="n">BAD_QUERIES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"page=abc"</span><span class="p">,</span> <span class="s2">"page=0"</span><span class="p">,</span> <span class="s2">"page=-1"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"page=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"page_size=abc"</span><span class="p">,</span> <span class="s2">"page_size=-5"</span><span class="p">,</span> <span class="s2">"page_size=0"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"page_size=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"ordering="</span><span class="p">,</span> <span class="s2">"ordering=%00"</span><span class="p">,</span> <span class="s2">"ordering=-"</span><span class="p">,</span> <span class="s2">"q=%00"</span><span class="p">,</span> <span class="s2">"q=%25"</span><span class="p">,</span> <span class="s2">"q="</span> <span class="o">+</span> <span class="s2">"x"</span> <span class="o">*</span> <span class="mi">20000</span><span class="p">,</span>
+    <span class="sa">f</span><span class="s2">"project=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"entity=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"assignee=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"task=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"version=</span><span class="si">{</span><span class="n">HUGE</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span>
+    <span class="s2">"project=%00"</span><span class="p">,</span> <span class="s2">"status=%00"</span><span class="p">,</span> <span class="s2">"assignee=me,me"</span><span class="p">,</span> <span class="s2">"overdue=maybe"</span><span class="p">,</span>
+<span class="p">]</span>
+</code></pre>
+
+<p>7 つの窓口 × 23 通りの悪いクエリ = <strong>161 ケース</strong>が自動で生まれます。</p>
+<h3 id="自分でファズを書く乱数に種を与える">自分でファズを書く(乱数に種を与える)</h3>
+<p>ランダムな入力を使うときは、<strong>種(seed)を固定</strong>します。失敗したとき、<strong>同じ入力を再現</strong>できるように。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""素朴な実装: 連続する / を 1 つにし、前後の / を除く。"""</span>
+    <span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span><span class="p">]</span>
+    <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span>
+
+<span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">2026</span><span class="p">)</span>                       <span class="c1"># 種を固定 → 毎回同じ入力列</span>
+<span class="n">alphabet</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="s2">" "</span><span class="p">]</span>        <span class="c1"># / を多めにして、境界を突く</span>
+
+<span class="n">failures</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2000</span><span class="p">):</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="s2">""</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">alphabet</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">8</span><span class="p">)))</span>
+    <span class="n">once</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="c1"># 性質: 正規化を 2 回かけても結果は変わらない(冪等)</span>
+    <span class="k">if</span> <span class="n">normalize</span><span class="p">(</span><span class="n">once</span><span class="p">)</span> <span class="o">!=</span> <span class="n">once</span><span class="p">:</span>
+        <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="c1"># 性質: 結果に // は含まれない</span>
+    <span class="k">if</span> <span class="s2">"//"</span> <span class="ow">in</span> <span class="n">once</span><span class="p">:</span>
+        <span class="n">failures</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">"試した数: 2000 / 性質に反した数:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">failures</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">試した数: 2000 / 性質に反した数: 0
+</code></pre>
+
+<p>これは<strong>性質ベーステスト</strong>(property-based testing)の考え方です。「この入力ならこの出力」ではなく、「<strong>どんな入力でも成り立つ性質</strong>」(冪等・往復して元に戻る・長さが変わらない…)を検査する。<a href="L07-strings-paths.html">L07</a> の <code>normalize_path</code> も、この性質で守られています。</p>
+<blockquote>
+<p>本格的にやるなら <code>hypothesis</code> というライブラリが、入力の生成と、失敗した入力の<strong>自動縮小</strong>(最小の再現例に絞る)までしてくれます。このアプリでは依存を増やさないため、表と種付き乱数で足りる範囲に留めています。</p>
+</blockquote>
+<h2 id="6-副作用のある場所をテストしやすくする">6. 副作用のある場所をテストしやすくする</h2>
+<p>テストしにくいもの(時刻・乱数・ネットワーク・外部サービス)は、<strong>外から差し替えられる形</strong>にします。</p>
+<table>
+<thead>
+<tr>
+<th>難しいもの</th>
+<th>差し替え方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>現在時刻</td>
+<td>引数で受け取る(<code>today</code> を渡す)/ <code>freezegun</code> 等</td>
+</tr>
+<tr>
+<td>外部への送信(Sentry・メール)</td>
+<td>設定で空にする(<code>SENTRY_DSN = &quot;&quot;</code>、<code>settings_test.py</code>)</td>
+</tr>
+<tr>
+<td>遅いパスワードのハッシュ</td>
+<td>テストだけ MD5 に(<code>PASSWORD_HASHERS</code>、<code>settings_test.py</code>)</td>
+</tr>
+<tr>
+<td>スロットル(回数制限)</td>
+<td>テストだけ上限を大きく</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>テスト用 DB(SQLite 既定。<code>POSTGRES_HOST</code> で PostgreSQL でも同じテストが走る)</td>
+</tr>
+</tbody>
+</table>
+<!-- excerpt: backend/config/settings_test.py -->
+<pre class="highlight"><code class="language-python"><span class="n">PASSWORD_HASHERS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"django.contrib.auth.hashers.MD5PasswordHasher"</span><span class="p">]</span>
+<span class="n">ALLOWED_HOSTS</span> <span class="o">=</span> <span class="p">[</span><span class="o">*</span><span class="n">ALLOWED_HOSTS</span><span class="p">,</span> <span class="s2">"testserver"</span><span class="p">]</span>  <span class="c1"># noqa: F405</span>
+<span class="n">INGEST_API_KEYS</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"test-ingest-key"</span><span class="p">]</span>
+<span class="n">SENTRY_DSN</span> <span class="o">=</span> <span class="s2">""</span>
+</code></pre>
+
+<blockquote>
+<p><strong>やってはいけない</strong>: 本番の設定を壊すこと。<code>settings_test.py</code> は<strong>テストでだけ</strong>読み込まれ、<code>pytest.ini</code> が <code>DJANGO_SETTINGS_MODULE = config.settings_test</code> と指定しています。</p>
+</blockquote>
+<h2 id="7-2-つの-db-でテストする理由">7. 2 つの DB でテストする理由</h2>
+<p>SQLite は寛容です。PostgreSQL は <strong>NUL 文字</strong>や<strong>範囲外の整数</strong>を例外にします。つまり「SQLite で通った」は「本番(PostgreSQL)で通る」を保証しません。</p>
+<pre class="highlight"><code class="language-text">$ cd backend &amp;&amp; pytest                                   # SQLite(速い・既定)
+$ POSTGRES_HOST=localhost POSTGRES_DB=... pytest         # PostgreSQL(本番と同じ)
+</code></pre>
+
+<p>どちらも<strong>緑</strong>であることを、完了の条件にしています(<code>test_robustness.py</code> の冒頭にもその注記)。</p>
+<h2 id="8-文書もテストする">8. 文書もテストする</h2>
+<p>この講義資料の中のコードブロックは、<strong>本当に実行されて</strong>います(<code>test_docs.py</code>)。</p>
+<table>
+<thead>
+<tr>
+<th>印</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>&lt;!-- test --&gt;</code></td>
+<td>Python として実行(エラーなく終わること)</td>
+</tr>
+<tr>
+<td><code>&lt;!-- test:django --&gt;</code></td>
+<td>Django の設定を読み込んで実行(DB を使える)</td>
+</tr>
+<tr>
+<td><code>&lt;!-- test:node --&gt;</code></td>
+<td>Node.js で実行(<code>.ts</code> もそのまま import できる)</td>
+</tr>
+<tr>
+<td><code>&lt;!-- output --&gt;</code></td>
+<td>直前のコードの標準出力と<strong>一致</strong>すること</td>
+</tr>
+<tr>
+<td><code>&lt;!-- excerpt: パス --&gt;</code></td>
+<td>実際のソースファイルに<strong>そのまま含まれている</strong>こと</td>
+</tr>
+</tbody>
+</table>
+<p>だから、ソースを変えて抜粋が合わなくなれば、<strong>テストが落ちて</strong>文書の修正を促します。「文書が古びる」を、仕組みで防いでいます。出力の <code>?</code> は <code>docs/tools/fill_outputs.py</code> が埋めます。</p>
+<h2 id="9-フロントエンドのテストvitest--testing-library">9. フロントエンドのテスト(Vitest + Testing Library)</h2>
+<p>考え方は同じですが、画面部品を<strong>利用者の目線</strong>でテストします。</p>
+<table>
+<thead>
+<tr>
+<th>道具</th>
+<th>役割</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vitest</strong></td>
+<td>テスト実行(<code>describe</code> / <code>it</code> / <code>expect</code>)。Vite と同じ設定で動く</td>
+</tr>
+<tr>
+<td><strong>Testing Library</strong></td>
+<td>部品を描画し、<strong>役割(role)やラベルで探す</strong>。実装の詳細(クラス名など)に頼らない</td>
+</tr>
+<tr>
+<td><strong>user-event</strong></td>
+<td>実際の利用者のように、クリック・キー入力を行う</td>
+</tr>
+<tr>
+<td><strong>jsdom</strong></td>
+<td>ブラウザの代わりに、DOM を模す(Node の中で動く)</td>
+</tr>
+</tbody>
+</table>
+<!-- excerpt: frontend/src/components/Board.test.tsx -->
+<pre class="highlight"><code class="language-tsx"><span class="w">  </span><span class="nx">it</span><span class="p">(</span><span class="s2">"Shift + 右矢印で隣の列へ(キーボードの代替操作)"</span><span class="p">,</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">userEvent</span><span class="p">.</span><span class="nx">setup</span><span class="p">();</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">t</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">task</span><span class="p">(</span><span class="mf">1</span><span class="p">,</span><span class="w"> </span><span class="s2">"in_progress"</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">render</span><span class="p">(&lt;</span><span class="nt">Board</span><span class="w"> </span><span class="p">{</span><span class="na">...base</span><span class="p">}</span><span class="w"> </span><span class="na">canWrite</span><span class="w"> </span><span class="na">tasks</span><span class="o">=</span><span class="p">{[</span><span class="nx">t</span><span class="p">]}</span><span class="w"> </span><span class="p">/&gt;);</span>
+<span class="w">    </span><span class="nx">screen</span><span class="p">.</span><span class="nx">getByRole</span><span class="p">(</span><span class="s2">"article"</span><span class="p">).</span><span class="nx">focus</span><span class="p">();</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">keyboard</span><span class="p">(</span><span class="s2">"{Shift&gt;}{ArrowRight}{/Shift}"</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">base</span><span class="p">.</span><span class="nx">onMove</span><span class="p">).</span><span class="nx">toHaveBeenCalledWith</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="s2">"review"</span><span class="p">);</span>
+<span class="w">    </span><span class="k">await</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">keyboard</span><span class="p">(</span><span class="s2">"{Shift&gt;}{ArrowLeft}{/Shift}"</span><span class="p">);</span>
+<span class="w">    </span><span class="nx">expect</span><span class="p">(</span><span class="nx">base</span><span class="p">.</span><span class="nx">onMove</span><span class="p">).</span><span class="nx">toHaveBeenCalledWith</span><span class="p">(</span><span class="nx">t</span><span class="p">,</span><span class="w"> </span><span class="s2">"todo"</span><span class="p">);</span><span class="w"> </span><span class="c1">// 列の並びで隣へ。可否の判断はサーバー(409)</span>
+<span class="w">  </span><span class="p">});</span>
+</code></pre>
+
+<p>読み解き:</p>
+<ol>
+<li><code>render(&lt;Board ... /&gt;)</code> — 部品を描画。</li>
+<li><code>screen.getByRole(&quot;article&quot;)</code> — <strong>役割で探す</strong>(<code>&lt;article&gt;</code>)。アクセシビリティの良い画面ほどテストしやすい(ラベルが無いと探せない)。</li>
+<li><code>user.keyboard(&quot;{Shift&gt;}{ArrowRight}{/Shift}&quot;)</code> — Shift を押しながら →。</li>
+<li><code>expect(base.onMove).toHaveBeenCalledWith(t, &quot;review&quot;)</code> — <strong>見えない結果</strong>(コールバックが呼ばれたか)を確認。<code>base.onMove</code> は <code>vi.fn()</code>(呼び出しを記録する偽の関数=<strong>モック</strong>)。</li>
+</ol>
+<blockquote>
+<p><strong>テストの範囲を分ける</strong>: このテストは「<code>onMove</code> が呼ばれる」までを確認し、「遷移が許されるか」は確認しません。それはサーバー側のテストの責務です(<a href="L13-kanban.html">L13</a>)。</p>
+</blockquote>
+<h3 id="偽の-apiモックで画面と通信を切り離す">偽の API(モック)で、画面と通信を切り離す</h3>
+<p><code>client.test.ts</code> は <code>fetch</code> を<strong>差し替え</strong>て、通信なしで API クライアントを試します(L10 で扱った)。<strong>本物のサーバーを立てずに</strong>、<code>Idempotency-Key</code>・CSRF・エラー整形を検査できます。</p>
+<h2 id="10-新しい機能を足すときのテストの型">10. 新しい機能を足すときのテストの型</h2>
+<table>
+<thead>
+<tr>
+<th>足すもの</th>
+<th>足すテスト</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>モデルの状態遷移を 1 つ足す</td>
+<td><code>ALLOWED</code> の表に足す(4×4 の全検査が自動で効く)+ 権限・条件のテスト</td>
+</tr>
+<tr>
+<td>API のエンドポイントを足す</td>
+<td>正常系(200/201)・権限なし(403)・存在しない(404)・入力が悪い(400)・認証なし(401/403)</td>
+</tr>
+<tr>
+<td>クエリのパラメータを足す</td>
+<td><code>BAD_QUERIES</code> に悪い値を足す(ファズ)+ <code>test_query_plans.py</code>(索引)</td>
+</tr>
+<tr>
+<td>一覧を足す</td>
+<td>クエリ数の固定(N+1 でない)</td>
+</tr>
+<tr>
+<td>画面の部品を足す</td>
+<td>役割で探すテスト、キーボード操作、権限別の表示</td>
+</tr>
+<tr>
+<td>設定・運用の手順を足す</td>
+<td>文書に書いて、<code>&lt;!-- test --&gt;</code> で動かす</td>
+</tr>
+<tr>
+<td>バグを直す</td>
+<td><strong>まず、そのバグを再現するテストを書いて落とす → 直す → 緑</strong>(回帰テスト)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="よくある間違い">よくある間違い</h2>
+<table>
+<thead>
+<tr>
+<th>間違い</th>
+<th>正しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>実装の表をそのままテストに読み込む</td>
+<td>**独立した「正解の表」**を設計書から写す</td>
+</tr>
+<tr>
+<td>成功だけを確かめる</td>
+<td>拒否時に<strong>データが変わらない</strong>ことも確かめる</td>
+</tr>
+<tr>
+<td>テスト同士が順番に依存する</td>
+<td>各テストは独立(fixture で毎回準備、DB は巻き戻る)</td>
+</tr>
+<tr>
+<td>乱数のテストに種がない</td>
+<td>種を固定して再現可能にする</td>
+</tr>
+<tr>
+<td>実装の詳細(クラス名・内部の state)を assert</td>
+<td>利用者から見える結果(role・文言・呼び出し)を assert</td>
+</tr>
+<tr>
+<td>SQLite だけで確かめる</td>
+<td>PostgreSQL でも同じテストを流す</td>
+</tr>
+<tr>
+<td>バグを直すだけでテストを足さない</td>
+<td>再現テストを先に書く</td>
+</tr>
+</tbody>
+</table>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li>fixture と、テスト関数の引数の関係を説明せよ。</li>
+<li><code>ALLOWED</code>(テスト側の表)を、実装の <code>Task.TRANSITIONS</code> から作らないのはなぜか。</li>
+<li>拒否の検査で <code>pytest.raises</code> に加えて <code>refresh_from_db()</code> で状態を確かめるのは、なぜか。</li>
+<li>ファズテストの「合格」とは何か。500 が出たらなぜバグなのか。</li>
+<li>乱数を使うテストで、種を固定する理由は。</li>
+<li>SQLite と PostgreSQL の両方でテストする理由は。</li>
+<li>バグ修正のときの、テストを書く順序は。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li>テスト関数は、<strong>引数の名前</strong>で欲しい fixture を指定する。pytest が fixture を実行して、その戻り値を引数に渡す(準備の共有・依存性の注入)。</li>
+<li>同じ表を使うと、実装が間違っていてもテストも同じ間違いで通ってしまう。設計書を写した独立の正解と突き合わせるから、実装の誤りに気づける。</li>
+<li>例外が出ても、<strong>途中まで書き換わっていないか</strong>(データが壊れていないか)を確かめるため。</li>
+<li>4xx で拒否するか、正常に扱うこと。500 は「想定していない例外」で、サーバーの側の欠陥(悪い入力をちゃんと検査していない)だから。</li>
+<li>失敗したとき、同じ入力を再現して原因を調べられるから。</li>
+<li>SQLite は寛容で、PostgreSQL は NUL 文字や範囲外の整数を例外にするなど挙動が違う。本番は PostgreSQL なので、両方で通ることを確認する。</li>
+<li>まず<strong>バグを再現するテストを書き、落ちることを確認</strong>する → 修正 → テストが緑になる(回帰テストが残る)。</li>
+</ol>
+<h2 id="次へ">次へ</h2>
+<p><a href="L15-scripts.html">L15 スクリプトを読む</a> ― シェル・バックアップ・取り込みスクリプト。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L13-kanban.html"><span>← 前へ</span>L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a><a class="next" href="L15-scripts.html"><span>次へ →</span>L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-テストは何のためにあるか">1. テストは何のためにあるか</a></li><li class="lvl2"><a href="#2-層で考えるテストのピラミッド">2. 層で考える(テストのピラミッド)</a></li><li class="lvl2"><a href="#3-pytest-の最小の仕組み">3. pytest の最小の仕組み</a></li><li class="lvl3"><a href="#3-1-assert-と失敗の読み方">3-1. assert と、失敗の読み方</a></li><li class="lvl3"><a href="#3-2-fixture--準備を共有する">3-2. fixture ― 「準備」を共有する</a></li><li class="lvl3"><a href="#3-3-ファクトリfactory_boy-テストデータを手短に作る">3-3. ファクトリ(factory_boy)― テストデータを手短に作る</a></li><li class="lvl3"><a href="#3-4-パラメータ化--表から大量のテストを作る">3-4. パラメータ化 ― 表から大量のテストを作る</a></li><li class="lvl3"><a href="#3-5-pytestraises--失敗することをテストする">3-5. pytest.raises ― 「失敗すること」をテストする</a></li><li class="lvl2"><a href="#4-何を-assert-するかの型">4. 「何を assert するか」の型</a></li><li class="lvl2"><a href="#5-ファズでたらめな入力-想定外を探す">5. ファズ(でたらめな入力)― 想定外を探す</a></li><li class="lvl3"><a href="#自分でファズを書く乱数に種を与える">自分でファズを書く(乱数に種を与える)</a></li><li class="lvl2"><a href="#6-副作用のある場所をテストしやすくする">6. 副作用のある場所をテストしやすくする</a></li><li class="lvl2"><a href="#7-2-つの-db-でテストする理由">7. 2 つの DB でテストする理由</a></li><li class="lvl2"><a href="#8-文書もテストする">8. 文書もテストする</a></li><li class="lvl2"><a href="#9-フロントエンドのテストvitest--testing-library">9. フロントエンドのテスト(Vitest + Testing Library)</a></li><li class="lvl3"><a href="#偽の-apiモックで画面と通信を切り離す">偽の API(モック)で、画面と通信を切り離す</a></li><li class="lvl2"><a href="#10-新しい機能を足すときのテストの型">10. 新しい機能を足すときのテストの型</a></li><li class="lvl2"><a href="#よくある間違い">よくある間違い</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#次へ">次へ</a></li></ul></nav>
+</div>
+</body>
+</html>

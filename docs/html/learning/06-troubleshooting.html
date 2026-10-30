@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="144bbe81c0b19e442bfe">
+<title>6. 困ったとき — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="../lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="../lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="../lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="../lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="../lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="../lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="../lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="../lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="../lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="../lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="../lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="../lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="../lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="../lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="../lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="../lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="../lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="../lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="../lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="../lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="01-overview.html">1. 全体像</a></li><li><a href="02-backend.html">2. バックエンドの道案内</a></li><li><a href="03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="04-recipes.html">4. 拡張レシピ</a></li><li><a href="05-testing.html">5. テストの書き方</a></li><li><a href="06-troubleshooting.html" aria-current="page" class="current">6. 困ったとき</a></li><li><a href="07-exercises.html">7. 演習と確認問題</a></li><li><a href="08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../learning/06-troubleshooting.md"><code>docs/learning/06-troubleshooting.md</code></a></p>
+    <article class="doc"><h1 id="6-困ったとき">6. 困ったとき</h1>
+<p>症状 → 原因 → 確かめ方 → 直し方。<strong>まずステータスコードと <code>code</code> を見る</strong>(統一エラー形式なので、<code>code</code> で原因がほぼ決まる)。</p>
+<figure class="diagram"><svg id="m06c9607b931049a2" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1984.953125px;" viewBox="0 0 1984.953125 644.5843505859375" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m06c9607b931049a2{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m06c9607b931049a2 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m06c9607b931049a2 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m06c9607b931049a2 .error-icon{fill:#552222;}#m06c9607b931049a2 .error-text{fill:#552222;stroke:#552222;}#m06c9607b931049a2 .edge-thickness-normal{stroke-width:1px;}#m06c9607b931049a2 .edge-thickness-thick{stroke-width:3.5px;}#m06c9607b931049a2 .edge-pattern-solid{stroke-dasharray:0;}#m06c9607b931049a2 .edge-thickness-invisible{stroke-width:0;fill:none;}#m06c9607b931049a2 .edge-pattern-dashed{stroke-dasharray:3;}#m06c9607b931049a2 .edge-pattern-dotted{stroke-dasharray:2;}#m06c9607b931049a2 .marker{fill:#666;stroke:#666;}#m06c9607b931049a2 .marker.cross{stroke:#666;}#m06c9607b931049a2 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m06c9607b931049a2 p{margin:0;}#m06c9607b931049a2 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m06c9607b931049a2 .cluster-label text{fill:#333;}#m06c9607b931049a2 .cluster-label span{color:#333;}#m06c9607b931049a2 .cluster-label span p{background-color:transparent;}#m06c9607b931049a2 .label text,#m06c9607b931049a2 span{fill:#000000;color:#000000;}#m06c9607b931049a2 .node rect,#m06c9607b931049a2 .node circle,#m06c9607b931049a2 .node ellipse,#m06c9607b931049a2 .node polygon,#m06c9607b931049a2 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m06c9607b931049a2 .rough-node .label text,#m06c9607b931049a2 .node .label text,#m06c9607b931049a2 .image-shape .label,#m06c9607b931049a2 .icon-shape .label{text-anchor:middle;}#m06c9607b931049a2 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m06c9607b931049a2 .rough-node .label,#m06c9607b931049a2 .node .label,#m06c9607b931049a2 .image-shape .label,#m06c9607b931049a2 .icon-shape .label{text-align:center;}#m06c9607b931049a2 .node.clickable{cursor:pointer;}#m06c9607b931049a2 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m06c9607b931049a2 .arrowheadPath{fill:#333333;}#m06c9607b931049a2 .edgePaths .path{stroke:#666;stroke-width:1px;}#m06c9607b931049a2 .flowchart-link{stroke:#666;fill:none;}#m06c9607b931049a2 .edgeLabel{background-color:white;text-align:center;}#m06c9607b931049a2 .edgeLabel p{background-color:white;}#m06c9607b931049a2 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m06c9607b931049a2 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m06c9607b931049a2 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m06c9607b931049a2 .cluster text{fill:#333;}#m06c9607b931049a2 .cluster span{color:#333;}#m06c9607b931049a2 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m06c9607b931049a2 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m06c9607b931049a2 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m06c9607b931049a2 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m06c9607b931049a2 rect.text{fill:none;stroke-width:0;}#m06c9607b931049a2 .icon-shape,#m06c9607b931049a2 .image-shape{background-color:white;text-align:center;}#m06c9607b931049a2 .icon-shape p,#m06c9607b931049a2 .image-shape p{background-color:white;padding:2px;}#m06c9607b931049a2 .icon-shape .label rect,#m06c9607b931049a2 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m06c9607b931049a2 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m06c9607b931049a2 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m06c9607b931049a2 .node .neo-node{stroke:#999;}#m06c9607b931049a2 [data-look="neo"].node rect,#m06c9607b931049a2 [data-look="neo"].cluster rect,#m06c9607b931049a2 [data-look="neo"].node polygon{stroke:url(#m06c9607b931049a2-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06c9607b931049a2 [data-look="neo"].swimlane.cluster rect{filter:none;}#m06c9607b931049a2 [data-look="neo"].node path{stroke:url(#m06c9607b931049a2-gradient);stroke-width:1px;}#m06c9607b931049a2 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06c9607b931049a2 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m06c9607b931049a2 [data-look="neo"].node circle{stroke:url(#m06c9607b931049a2-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06c9607b931049a2 [data-look="neo"].node circle .state-start{fill:#000000;}#m06c9607b931049a2 [data-look="neo"].icon-shape .icon{fill:url(#m06c9607b931049a2-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06c9607b931049a2 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m06c9607b931049a2-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m06c9607b931049a2 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m06c9607b931049a2_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m06c9607b931049a2_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06c9607b931049a2_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06c9607b931049a2_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06c9607b931049a2_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m06c9607b931049a2_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m06c9607b931049a2_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M1040.844,62L1040.844,66.167C1040.844,70.333,1040.844,78.667,1040.844,86.333C1040.844,94,1040.844,101,1040.844,104.5L1040.844,108" id="m06c9607b931049a2-L_S_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_C_0" data-points="W3sieCI6MTA0MC44NDM3NSwieSI6NjJ9LHsieCI6MTA0MC44NDM3NSwieSI6ODd9LHsieCI6MTA0MC44NDM3NSwieSI6MTEyfV0=" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M969.996,201.215L831.33,219.189C692.664,237.164,415.332,273.113,276.666,298.165C138,323.216,138,337.37,138,344.447L138,351.523" id="m06c9607b931049a2-L_C_A_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_A_0" data-points="W3sieCI6OTY5Ljk5NjEzMjUzMDAyODEsInkiOjIwMS4yMTQ4ODI1MzAwMjgxOH0seyJ4IjoxMzgsInkiOjMwOS4wNjI1fSx7IngiOjEzOCwieSI6MzU1LjUyMzQzNzV9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M972.829,204.048L873.768,221.551C774.707,239.053,576.584,274.058,477.522,297.06C378.461,320.063,378.461,331.063,378.461,336.563L378.461,342.063" id="m06c9607b931049a2-L_C_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_F_0" data-points="W3sieCI6OTcyLjgyOTQyMTAxNDM4MzgsInkiOjIwNC4wNDgxNzEwMTQzODM4fSx7IngiOjM3OC40NjA5Mzc1LCJ5IjozMDkuMDYyNX0seyJ4IjozNzguNDYwOTM3NSwieSI6MzQ2LjA2MjV9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M342.591,431.114L322.736,444.726C302.881,458.338,263.171,485.561,243.316,506.139C223.461,526.718,223.461,540.651,223.461,547.618L223.461,554.584" id="m06c9607b931049a2-L_F_F1_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_F1_0" data-points="W3sieCI6MzQyLjU5MDg3ODEyNzM5NzksInkiOjQzMS4xMTQzMTU2MjczOTc5Nn0seyJ4IjoyMjMuNDYwOTM3NSwieSI6NTEyLjc4NDM3NDIzNzA2MDV9LHsieCI6MjIzLjQ2MDkzNzUsInkiOjU1OC41ODQzNzM0NzQxMjExfV0=" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M414.331,431.114L434.186,444.726C454.041,458.338,493.751,485.561,513.606,506.139C533.461,526.718,533.461,540.651,533.461,547.618L533.461,554.584" id="m06c9607b931049a2-L_F_F2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_F2_0" data-points="W3sieCI6NDE0LjMzMDk5Njg3MjYwMjEsInkiOjQzMS4xMTQzMTU2MjczOTc5fSx7IngiOjUzMy40NjA5Mzc1LCJ5Ijo1MTIuNzg0Mzc0MjM3MDYwNX0seyJ4Ijo1MzMuNDYwOTM3NSwieSI6NTU4LjU4NDM3MzQ3NDEyMTF9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M977.549,208.768L914.334,225.484C851.119,242.199,724.688,275.631,661.473,301.424C598.258,327.216,598.258,345.37,598.258,354.447L598.258,363.523" id="m06c9607b931049a2-L_C_N_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_N_0" data-points="W3sieCI6OTc3LjU0OTIyMTg4MDE5MTYsInkiOjIwOC43Njc5NzE4ODAxOTE1NH0seyJ4Ijo1OTguMjU3ODEyNSwieSI6MzA5LjA2MjV9LHsieCI6NTk4LjI1NzgxMjUsInkiOjM2Ny41MjM0Mzc1fV0=" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M995.466,226.685L977.487,240.414C959.508,254.144,923.551,281.603,905.572,302.41C887.594,323.216,887.594,337.37,887.594,344.447L887.594,351.523" id="m06c9607b931049a2-L_C_V_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_V_0" data-points="W3sieCI6OTk1LjQ2NTg3Mzk0NDk2NDgsInkiOjIyNi42ODQ2MjM5NDQ5NjQ3M30seyJ4Ijo4ODcuNTkzNzUsInkiOjMwOS4wNjI1fSx7IngiOjg4Ny41OTM3NSwieSI6MzU1LjUyMzQzNzV9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1075.017,237.889L1083.857,249.752C1092.696,261.614,1110.375,285.338,1119.215,302.7C1128.055,320.063,1128.055,331.063,1128.055,336.563L1128.055,342.063" id="m06c9607b931049a2-L_C_K_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_K_0" data-points="W3sieCI6MTA3NS4wMTY5MDcwMTE0MzcsInkiOjIzNy44ODkzNDI5ODg1NjI5fSx7IngiOjExMjguMDU0Njg3NSwieSI6MzA5LjA2MjV9LHsieCI6MTEyOC4wNTQ2ODc1LCJ5IjozNDYuMDYyNX1d" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1082.665,421.594L1036.891,436.793C991.118,451.991,899.571,482.388,853.797,506.553C808.023,530.718,808.023,548.651,808.023,557.618L808.023,566.584" id="m06c9607b931049a2-L_K_K1_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_K_K1_0" data-points="W3sieCI6MTA4Mi42NjQ3MTc4ODIyMDg4LCJ5Ijo0MjEuNTk0NDA1MzgyMjA5fSx7IngiOjgwOC4wMjM0Mzc1LCJ5Ijo1MTIuNzg0Mzc0MjM3MDYwNX0seyJ4Ijo4MDguMDIzNDM3NSwieSI6NTcwLjU4NDM3MzQ3NDEyMTF9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1142.388,452.651L1145.503,462.673C1148.617,472.695,1154.846,492.74,1157.96,511.729C1161.074,530.718,1161.074,548.651,1161.074,557.618L1161.074,566.584" id="m06c9607b931049a2-L_K_K2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_K_K2_0" data-points="W3sieCI6MTE0Mi4zODgyOTY4MjgyNzMsInkiOjQ1Mi42NTA3NjU2NzE3MjcxM30seyJ4IjoxMTYxLjA3NDIxODc1LCJ5Ijo1MTIuNzg0Mzc0MjM3MDYwNX0seyJ4IjoxMTYxLjA3NDIxODc1LCJ5Ijo1NzAuNTg0MzczNDc0MTIxMX1d" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1172.683,422.356L1215.166,437.427C1257.649,452.499,1342.616,482.642,1385.099,504.68C1427.582,526.718,1427.582,540.651,1427.582,547.618L1427.582,554.584" id="m06c9607b931049a2-L_K_K3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_K_K3_0" data-points="W3sieCI6MTE3Mi42ODMxNDI0ODcxMDA3LCJ5Ijo0MjIuMzU1OTIwMDEyODk5MzN9LHsieCI6MTQyNy41ODIwMzEyNSwieSI6NTEyLjc4NDM3NDIzNzA2MDV9LHsieCI6MTQyNy41ODIwMzEyNSwieSI6NTU4LjU4NDM3MzQ3NDEyMTF9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1097.053,215.853L1133.708,231.388C1170.363,246.923,1243.674,277.993,1280.329,304.604C1316.984,331.216,1316.984,353.37,1316.984,364.447L1316.984,375.523" id="m06c9607b931049a2-L_C_J_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_J_0" data-points="W3sieCI6MTA5Ny4wNTI5NTcyMTg5MzI1LCJ5IjoyMTUuODUzMjkyNzgxMDY3NDR9LHsieCI6MTMxNi45ODQzNzUsInkiOjMwOS4wNjI1fSx7IngiOjEzMTYuOTg0Mzc1LCJ5IjozNzkuNTIzNDM3NX1d" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1106.064,206.842L1181.087,223.879C1256.111,240.915,1406.157,274.989,1481.18,303.103C1556.203,331.216,1556.203,353.37,1556.203,364.447L1556.203,375.523" id="m06c9607b931049a2-L_C_T_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_T_0" data-points="W3sieCI6MTEwNi4wNjQyODUxNDA3MTEsInkiOjIwNi44NDE5NjQ4NTkyODg5fSx7IngiOjE1NTYuMjAzMTI1LCJ5IjozMDkuMDYyNX0seyJ4IjoxNTU2LjIwMzEyNSwieSI6Mzc5LjUyMzQzNzV9XQ==" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path><path d="M1110.729,202.177L1233.433,219.991C1356.137,237.806,1601.545,273.434,1724.249,300.325C1846.953,327.216,1846.953,345.37,1846.953,354.447L1846.953,363.523" id="m06c9607b931049a2-L_C_L_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_L_0" data-points="W3sieCI6MTExMC43MjkwMjk4NDg4NTE1LCJ5IjoyMDIuMTc3MjIwMTUxMTQ4NDJ9LHsieCI6MTg0Ni45NTMxMjUsInkiOjMwOS4wNjI1fSx7IngiOjE4NDYuOTUzMTI1LCJ5IjozNjcuNTIzNDM3NX1d" data-look="classic" marker-end="url(#m06c9607b931049a2_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_S_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(138, 309.0625)"><g class="label" data-id="L_C_A_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-15.46875" y="-2" width="30.9375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">401</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(378.4609375, 309.0625)"><g class="label" data-id="L_C_F_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-17.15625" y="-2" width="34.3125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">403</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(223.4609375, 512.7843742370605)"><g class="label" data-id="L_F_F1_0" transform="translate(0, -18.799999237060547)"><g><rect class="background" style="" x="-80.5390625" y="-2" width="161.078125" height="41.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">permission_denied</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> +</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">CSRF</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(533.4609375, 512.7843742370605)"><g class="label" data-id="L_F_F2_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-72.9921875" y="-2" width="145.984375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">permission_denied</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(598.2578125, 309.0625)"><g class="label" data-id="L_C_N_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-17.3828125" y="-2" width="34.765625" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">404</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(887.59375, 309.0625)"><g class="label" data-id="L_C_V_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-17.265625" y="-2" width="34.53125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">400</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1128.0546875, 309.0625)"><g class="label" data-id="L_C_K_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-17.1796875" y="-2" width="34.359375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">409</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(808.0234375, 512.7843742370605)"><g class="label" data-id="L_K_K1_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-65.0078125" y="-2" width="130.015625" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">invalid_transition</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1161.07421875, 512.7843742370605)"><g class="label" data-id="L_K_K2_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-65.171875" y="-2" width="130.34375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">version_required</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1427.58203125, 512.7843742370605)"><g class="label" data-id="L_K_K3_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-82.1796875" y="-2" width="164.359375" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">idempotency_conflict</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1316.984375, 309.0625)"><g class="label" data-id="L_C_J_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-15.1328125" y="-2" width="30.265625" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">415</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1556.203125, 309.0625)"><g class="label" data-id="L_C_T_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-17.0078125" y="-2" width="34.015625" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">429</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1846.953125, 309.0625)"><g class="label" data-id="L_C_L_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-16.9609375" y="-2" width="33.921875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">500</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="m06c9607b931049a2-flowchart-S-0" data-look="classic" transform="translate(1040.84375, 35)"><rect class="basic label-container" style="" x="-85.59375" y="-27" width="171.1875" height="54"></rect><g class="label" style="" transform="translate(-55.59375, -12)"><rect></rect><foreignObject width="111.1875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>API が失敗した</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-C-1" data-look="classic" transform="translate(1040.84375, 192.03125)"><polygon points="80.03125,0 160.0625,-80.03125 80.03125,-160.0625 0,-80.03125" class="label-container" transform="translate(-79.53125, 80.03125)"></polygon><g class="label" style="" transform="translate(-53.03125, -12)"><rect></rect><foreignObject width="106.0625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ステータスは?</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-A-3" data-look="classic" transform="translate(138, 406.5234375)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>認証: 未ログイン / セッション切れ /<br>キーなし / JWT 不正</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-F-5" data-look="classic" transform="translate(378.4609375, 406.5234375)"><polygon points="60.4609375,0 120.921875,-60.4609375 60.4609375,-120.921875 0,-60.4609375" class="label-container" transform="translate(-59.9609375, 60.4609375)"></polygon><g class="label" style="" transform="translate(-33.4609375, -12)"><rect></rect><foreignObject width="66.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>code は?</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-F1-7" data-look="classic" transform="translate(223.4609375, 597.5843734741211)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>CSRF クッキー・ヘッダ・オリジン</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-F2-9" data-look="classic" transform="translate(533.4609375, 597.5843734741211)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>役割(閲覧者・承認はレビュアーのみ)</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-N-11" data-look="classic" transform="translate(598.2578125, 406.5234375)"><rect class="basic label-container" style="" x="-109.3359375" y="-39" width="218.671875" height="78"></rect><g class="label" style="" transform="translate(-79.3359375, -24)"><rect></rect><foreignObject width="158.671875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>見える範囲の外<br>(メンバーでない)かも</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-V-13" data-look="classic" transform="translate(887.59375, 406.5234375)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>errors の項目別の理由<br>NUL / 大きすぎる / 時刻のタイムゾーン</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-K-15" data-look="classic" transform="translate(1128.0546875, 406.5234375)"><polygon points="60.4609375,0 120.921875,-60.4609375 60.4609375,-120.921875 0,-60.4609375" class="label-container" transform="translate(-59.9609375, 60.4609375)"></polygon><g class="label" style="" transform="translate(-33.4609375, -12)"><rect></rect><foreignObject width="66.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>code は?</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-K1-17" data-look="classic" transform="translate(808.0234375, 597.5843734741211)"><rect class="basic label-container" style="" x="-94.5625" y="-27" width="189.125" height="54"></rect><g class="label" style="" transform="translate(-64.5625, -12)"><rect></rect><foreignObject width="129.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>遷移表にない移動</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-K2-19" data-look="classic" transform="translate(1161.07421875, 597.5843734741211)"><rect class="basic label-container" style="" x="-86.5078125" y="-27" width="173.015625" height="54"></rect><g class="label" style="" transform="translate(-56.5078125, -12)"><rect></rect><foreignObject width="113.015625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>版が 1 つも無い</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-K3-21" data-look="classic" transform="translate(1427.58203125, 597.5843734741211)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>同じ鍵を別のタスクに使った</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-J-23" data-look="classic" transform="translate(1316.984375, 406.5234375)"><rect class="basic label-container" style="" x="-78.46875" y="-27" width="156.9375" height="54"></rect><g class="label" style="" transform="translate(-48.46875, -12)"><rect></rect><foreignObject width="96.9375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>JSON で送る</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-T-25" data-look="classic" transform="translate(1556.203125, 406.5234375)"><rect class="basic label-container" style="" x="-110.75" y="-27" width="221.5" height="54"></rect><g class="label" style="" transform="translate(-80.75, -12)"><rect></rect><foreignObject width="161.5" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>レート制限。少し待つ</p></span></div></foreignObject></g></g><g class="node default" id="m06c9607b931049a2-flowchart-L-27" data-look="classic" transform="translate(1846.953125, 406.5234375)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>サーバーのログのスタックトレース</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m06c9607b931049a2-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m06c9607b931049a2-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m06c9607b931049a2-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h2 id="api--画面">API / 画面</h2>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因</th>
+<th>確かめる / 直す</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>画面がログイン画面へ戻される</td>
+<td>どれかの API が <strong>401</strong>(セッション切れ・未ログイン)</td>
+<td>ブラウザの Network で 401 の API を探す。再ログイン。トークン・API キーのヘッダを付けていないか</td>
+</tr>
+<tr>
+<td><strong>403</strong> <code>CSRF Failed</code></td>
+<td>CSRF クッキーが無い / ヘッダ <code>X-CSRFToken</code> が無い / オリジンが信頼されていない</td>
+<td><code>GET /api/v1/auth/csrf/</code> で <code>csrftoken</code> クッキーが付くか。別のホスト名(Tunnel)で開いているなら <code>DJANGO_CSRF_TRUSTED_ORIGINS</code> と <code>DJANGO_ALLOWED_HOSTS</code></td>
+</tr>
+<tr>
+<td><strong>403</strong> <code>permission_denied</code>(状態遷移)</td>
+<td>承認(レビュー待ち → 完了)をレビュアー以外が試した / 閲覧者</td>
+<td>プロジェクトの自分の役割(概要タブ)。管理画面でメンバーの役割を直す。<strong><code>is_staff</code> でも承認はできない</strong></td>
+</tr>
+<tr>
+<td><strong>409</strong> <code>invalid_transition</code></td>
+<td>遷移表にない移動(例: 未着手 → 完了)</td>
+<td><code>next_statuses</code> に出ている状態だけ行ける。表は <code>Task.TRANSITIONS</code></td>
+</tr>
+<tr>
+<td><strong>409</strong> <code>version_required</code></td>
+<td>版が 1 つも無いのに「完了」</td>
+<td>版を登録する。ルールを外すなら <code>REQUIRE_VERSION_FOR_COMPLETION=0</code></td>
+</tr>
+<tr>
+<td><strong>400</strong> <code>validation_error</code></td>
+<td>入力の誤り。<code>errors</code> に項目別の理由が入る</td>
+<td>レスポンスの <code>detail</code>(先頭 1 件)と <code>errors</code></td>
+</tr>
+<tr>
+<td><strong>404</strong> なのに、あるはずのデータ</td>
+<td><strong>見える範囲の外</strong>(プロジェクトのメンバーでない)</td>
+<td>管理画面でメンバーに入れる。管理者(<code>is_staff</code>)は全て見える</td>
+</tr>
+<tr>
+<td><strong>429</strong> <code>throttled</code></td>
+<td>レート制限(ログイン 10 回/分、ユーザーごと 1200 回/分、取り込み全体 120 回/分)を超えた</td>
+<td>少し待つ。変えるなら <code>LOGIN_THROTTLE_RATE</code> / <code>API_THROTTLE_RATE</code> / <code>INGEST_THROTTLE_RATE</code>。画面が連打していないか(ループで API を呼んでいないか)も見る。プロセスを再起動するとカウントが消える</td>
+</tr>
+<tr>
+<td>Cloudflare Access 経由で <strong>401</strong> <code>Cloudflare Access の認証情報を確認できません</code></td>
+<td>JWT の AUD・チームのドメインが違う / 期限切れ / 公開鍵が取れない</td>
+<td><code>CF_ACCESS_AUD</code> と <code>CF_ACCESS_TEAM_DOMAIN</code>。サーバーのログに拒否の理由(<code>ExpiredSignatureError</code> など)が出る</td>
+</tr>
+<tr>
+<td>Cloudflare Access 経由で <strong>403</strong> <code>登録されていません</code></td>
+<td>Access は通ったが、同じメールのユーザーがアプリに無い</td>
+<td>管理画面でユーザーを作る(メールを一致させる)→ プロジェクトのメンバーにする</td>
+</tr>
+<tr>
+<td><strong>400</strong> <code>NUL 文字(%00)は使えません</code> / <code>値が大きすぎます</code></td>
+<td>URL や JSON に NUL、bigint を超える数</td>
+<td>送り手を直す(正しい入力ではない)。PostgreSQL は NUL を保存できず、通すと 500 になるため入口で弾いている</td>
+</tr>
+<tr>
+<td><strong>415</strong> <code>Unsupported media type</code></td>
+<td>JSON 以外(フォーム・multipart)で送った</td>
+<td><code>Content-Type: application/json</code> で送る</td>
+</tr>
+<tr>
+<td>一覧が 50 件で止まる</td>
+<td>ページネーション(既定 50・上限 200)</td>
+<td><code>?page=2</code>、<code>?page_size=200</code>。<code>next</code> を辿る</td>
+</tr>
+<tr>
+<td>絞り込みが 400</td>
+<td><code>?status=</code> などに、選択肢にない値</td>
+<td>値の一覧がエラーメッセージに出る</td>
+</tr>
+<tr>
+<td>概要の「タスク」タブが、ドロワーでの変更後も古い</td>
+<td>再読み込みの合図が足りない(過去の不具合)</td>
+<td><code>OverviewPage</code> の <code>tasksRevision</code>。新しい画面でも「変更があった」ことを明示の値で伝える</td>
+</tr>
+</tbody>
+</table>
+<h2 id="開発環境">開発環境</h2>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因</th>
+<th>直し方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Invalid HTTP_HOST header</code>(400)</td>
+<td><code>DJANGO_ALLOWED_HOSTS</code> に無いホスト名</td>
+<td><code>.env</code> に追加。compose の <code>web</code> の healthcheck は <code>localhost</code> を使うので、<strong><code>localhost</code> を消さない</strong></td>
+</tr>
+<tr>
+<td>Vite が <code>Blocked request. This host is not allowed</code></td>
+<td>Vite の <code>allowedHosts</code></td>
+<td><code>VITE_ALLOWED_HOSTS</code> にホスト名を入れる</td>
+</tr>
+<tr>
+<td>起動時に <code>DJANGO_SECRET_KEY が未設定です</code></td>
+<td><code>DJANGO_DEBUG=0</code> で鍵が空</td>
+<td>開発は <code>DJANGO_DEBUG=1</code>。公開は強い鍵を設定</td>
+</tr>
+<tr>
+<td><code>docker compose up</code> で <code>frontend</code> が起動しない</td>
+<td><code>web</code> が healthy にならない(<code>depends_on</code>)</td>
+<td><code>docker compose logs web</code>。DB の接続、マイグレーションのエラーを見る</td>
+</tr>
+<tr>
+<td><code>migrate</code> が <code>0003</code> で失敗</td>
+<td>既存データが新しい制約に違反(<code>demo</code> と <code>DEMO</code> の両方、負の見積など)</td>
+<td>違反するデータを直してから再実行。本番は先にバックアップ</td>
+</tr>
+<tr>
+<td><code>npm ci</code> が失敗(Docker)</td>
+<td><code>package-lock.json</code> と <code>package.json</code> のずれ</td>
+<td><code>npm install</code> でロックを更新してコミット</td>
+</tr>
+<tr>
+<td>ESLint を入れたい</td>
+<td><code>typescript-eslint</code> が TypeScript 7 に未対応</td>
+<td><a href="../decisions.html">decisions.md</a> 参照(TypeScript を下げる必要がある)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="取り込み">取り込み</h2>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因</th>
+<th>直し方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>401</strong></td>
+<td><code>X-API-Key</code> が無い・違う、または鍵が 1 つも設定されていない</td>
+<td><code>INGEST_API_KEYS</code>(サーバー)と <code>INGEST_API_KEY</code>(スクリプトの環境変数)を合わせる。未設定は常に 401(安全側)</td>
+</tr>
+<tr>
+<td><strong>400</strong> <code>タイムゾーン付きで指定してください</code></td>
+<td>時刻にタイムゾーンが無い</td>
+<td>送り手を直す。<code>send_quality.py</code> は <code>--naive-offset +09:00</code></td>
+</tr>
+<tr>
+<td>品質タブに出ない / <code>unmatched</code> が多い</td>
+<td><code>Entity.path</code> と <code>asset_path</code> が前方一致しない(基準ディレクトリ・表記の違い)</td>
+<td>レスポンスの <code>unmatched</code> を見て、アセットの <code>path</code> を直す。恒常的なずれは <code>paths.py</code> に対応表を足す</td>
+</tr>
+<tr>
+<td>再送したら件数が増えた?</td>
+<td>増えない(冪等)。同じ <code>(project, scan_run_id)</code> は置き換わる</td>
+<td>レスポンスが <strong>200</strong>(新規は 201)になっているか</td>
+</tr>
+<tr>
+<td>スクリプトの終了コードが 1(件数が一致しない)</td>
+<td>取り込み後の <code>defects_total</code> が元 DB の <code>COUNT(*)</code> と違う</td>
+<td>元 DB の表・列名の想定が違う可能性。<code>--defects-table</code> などで合わせる</td>
+</tr>
+<tr>
+<td>画面差分が 400 <code>存在しない版です</code></td>
+<td><code>version</code> に ProductionTracker の <strong>版の ID</strong> を渡していない</td>
+<td>版の ID は <code>GET /versions/?task=</code> の <code>id</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="運用">運用</h2>
+<table>
+<thead>
+<tr>
+<th>症状</th>
+<th>原因 / 確かめ方</th>
+<th>直し方</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/healthz</code> が 503</td>
+<td>DB に接続できない</td>
+<td><code>docker compose ps</code> / <code>logs db</code>。<strong>DB 停止時に 503 になるのは仕様</strong>(Hub が検知する)</td>
+</tr>
+<tr>
+<td><code>restore.sh</code> が「件数が一致しません」</td>
+<td>バックアップ後にデータが増えた(<code>.counts</code> は <strong>取得時点</strong>の件数)</td>
+<td>同じダンプから復元した直後に比べる。ダンプと <code>.counts</code> をセットで保管</td>
+</tr>
+<tr>
+<td>Sentry にイベントが来ない</td>
+<td>DSN 未設定 / サンプリング / 無料枠超過</td>
+<td><code>SENTRY_DSN</code>、<code>SENTRY_SAMPLE_RATE</code>。疎通は <code>/debug/sentry</code>(<code>VITE_SENTRY_DEBUG=1</code>)と <code>SENTRY_DEBUG_ENDPOINT_ENABLED=1</code></td>
+</tr>
+<tr>
+<td>ログにトークンが出ていないか不安</td>
+<td>アプリはリクエストヘッダをログしない</td>
+<td>`docker compose logs web</td>
+</tr>
+</tbody>
+</table>
+<h2 id="それでも分からないとき">それでも分からないとき</h2>
+<ol>
+<li><strong>再現する手順</strong>を書き出す(どの画面・どのユーザー・どの操作)</li>
+<li>ブラウザの Network で、失敗した API の <strong>ステータスと <code>code</code> / <code>detail</code></strong> を見る</li>
+<li>サーバーのログ(JSON、標準出力)を見る。500 なら例外のスタックトレースが出ている</li>
+<li><code>backend/tracker/tests/</code> に近いテストがあるか探す(仕様の確認)</li>
+<li>直したら、原因を <a href="../learning-log.html">learning-log.md</a> に残す</li>
+</ol>
+</article>
+    <nav class="pager"><a class="prev" href="05-testing.html"><span>← 前へ</span>5. テストの書き方</a><a class="next" href="07-exercises.html"><span>次へ →</span>7. 演習と確認問題</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#api--画面">API / 画面</a></li><li class="lvl2"><a href="#開発環境">開発環境</a></li><li class="lvl2"><a href="#取り込み">取り込み</a></li><li class="lvl2"><a href="#運用">運用</a></li><li class="lvl2"><a href="#それでも分からないとき">それでも分からないとき</a></li></ul></nav>
+</div>
+</body>
+</html>

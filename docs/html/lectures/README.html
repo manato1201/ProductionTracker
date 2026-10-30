@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="27c1f2a12a1021b08f7b">
+<title>講義資料 ― 基礎から、保守・拡張できるところまで — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html" aria-current="page" class="current">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/README.md"><code>docs/lectures/README.md</code></a></p>
+    <article class="doc"><h1 id="講義資料--基礎から保守・拡張できるところまで">講義資料 ― 基礎から、保守・拡張できるところまで</h1>
+<p>この資料は、<strong>ProductionTracker を題材にした講義</strong>です。プログラミングの基礎(Web の仕組み・Python・データベース)から始めて、
+フレームワーク(Django・React)、アルゴリズム(状態機械・文字列・並行制御・暗号)、テスト、運用まで、<strong>1 つの実物のアプリ</strong>で順に学びます。
+最後には、自分で機能を 1 つ足せるようになることがゴールです。</p>
+<p><img src="../../diagrams/lecture-roadmap.svg" alt="講義の地図" /></p>
+<h2 id="講義の一覧">講義の一覧</h2>
+<table>
+<thead>
+<tr>
+<th>回</th>
+<th>題名</th>
+<th>学ぶこと</th>
+<th>目安</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="L00-intro.html">L00</a></td>
+<td>はじめに</td>
+<td>学習の進め方・環境づくり・リポジトリの歩き方</td>
+<td>60 分</td>
+</tr>
+<tr>
+<td><a href="L01-web.html">L01</a></td>
+<td>Web の仕組み</td>
+<td>HTTP・URL・ステータスコード・JSON・Cookie・REST</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L02-python.html">L02</a></td>
+<td>Python の基礎</td>
+<td>値と型・関数・クラス・例外・内包表記・テキストの扱い</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L03-database.html">L03</a></td>
+<td>データベースと SQL</td>
+<td>表・キー・正規化・SELECT / JOIN・索引・トランザクション</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L04-django.html">L04</a></td>
+<td>Django の基礎</td>
+<td>MTV・設定・モデルと ORM・マイグレーション・ミドルウェア</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L05-drf.html">L05</a></td>
+<td>Django REST framework</td>
+<td>シリアライザ・ViewSet・認証・権限・スロットル・例外処理</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L06-state-machine.html">L06</a></td>
+<td>アルゴリズム① 状態機械</td>
+<td>遷移表・全組み合わせの検証・形式的な考え方</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L07-strings-paths.html">L07</a></td>
+<td>アルゴリズム② 文字列とパス</td>
+<td>正規化・最長前方一致・計算量・トライ木</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L08-concurrency.html">L08</a></td>
+<td>アルゴリズム③ 並行制御と冪等性</td>
+<td>競合・ロック・一意制約・Idempotency-Key</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L09-security-crypto.html">L09</a></td>
+<td>アルゴリズム④ 認証と暗号</td>
+<td>ハッシュ・CSRF・定数時間比較・JWT・レート制限</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+<td>JavaScript / TypeScript の基礎</td>
+<td>値・関数・非同期(Promise)・fetch・型</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L11-react.html">L11</a></td>
+<td>React の基礎</td>
+<td>コンポーネント・state・effect・フック・自作フック</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L12-ui-css.html">L12</a></td>
+<td>画面づくり</td>
+<td>CSS・Sass・デザイントークン・アクセシビリティ・コントラストの計算</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L13-kanban.html">L13</a></td>
+<td>かんばんを作る</td>
+<td>イベント・ドラッグ&amp;ドロップ・先行更新と巻き戻し・キーボード操作</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L14-testing.html">L14</a></td>
+<td>テストの理論と実践</td>
+<td>pytest・fixture・parametrize・壊れた入力・Vitest</td>
+<td>120 分</td>
+</tr>
+<tr>
+<td><a href="L15-scripts.html">L15</a></td>
+<td>スクリプトを読む</td>
+<td>シェル・Python のスクリプト・図の生成</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L16-operations.html">L16</a></td>
+<td>運用</td>
+<td>Docker・バックアップ・Cloudflare・Sentry・OWASP</td>
+<td>90 分</td>
+</tr>
+<tr>
+<td><a href="L17-capstone.html">L17</a></td>
+<td>総合演習</td>
+<td>機能を 1 つ足す(設計 → テスト → 実装 → 文書)</td>
+<td>半日</td>
+</tr>
+<tr>
+<td><a href="glossary.html">付録</a></td>
+<td>用語集</td>
+<td>本文に出てくる用語の一覧</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>合計で約 30 時間。<strong>1 回 = 1〜2 時間</strong>で区切れるようにしてある。</p>
+<h2 id="各回の形">各回の形</h2>
+<p>どの回も、同じ順で進みます。</p>
+<ol>
+<li><strong>この回の目標</strong> と、前提(前の回のどこを使うか)</li>
+<li><strong>考え方</strong> — まず言葉と図で。「なぜそうするのか」から</li>
+<li><strong>コードを読む</strong> — このアプリの<strong>実際のコード</strong>の抜粋</li>
+<li><strong>手を動かす</strong> — 実行できる小さなコード(結果つき)</li>
+<li><strong>よくある間違い</strong></li>
+<li><strong>確認問題</strong> と、答え</li>
+</ol>
+<h2 id="この資料の約束">この資料の約束</h2>
+<ul>
+<li><strong>掲載したコードは、実行して確かめてある。</strong> <code>&lt;!-- test --&gt;</code> の印が付いたコードは、テスト(<code>backend/tracker/tests/test_docs.py</code>)が毎回実行し、
+「実行結果」と一致することを確かめる。<code>&lt;!-- excerpt: パス --&gt;</code> の印が付いた抜粋は、そのファイルに本当にある行かを確かめる。
+つまり、<strong>この資料のコードは、書いてあるとおりに動く</strong>。ソースを直して文書が古くなると、テストが落ちる。</li>
+<li>図は、<strong>Markdown だけで読める mermaid 記法</strong>と、<code>docs/diagrams/</code> の SVG の両方で載せている。HTML 版(<a href="../index.html">docs/html/index.html</a>)もある。</li>
+<li>本文の「このアプリでは」は、ProductionTracker の実際の設計を指す。一般論と区別して読むこと。</li>
+<li>分からない言葉は <a href="glossary.html">用語集</a> へ。</li>
+</ul>
+<h2 id="読み方のおすすめ">読み方のおすすめ</h2>
+<table>
+<thead>
+<tr>
+<th>あなたは</th>
+<th>おすすめの順</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>プログラミングが初めて</td>
+<td>L00 → L01 → L02 → L03 → L04 → … を順に。<strong>手を動かす</strong>を必ず実行する</td>
+</tr>
+<tr>
+<td>Python は書けるが Web は初めて</td>
+<td>L01 → L03 → L04 → L05 → L06〜L09</td>
+</tr>
+<tr>
+<td>Django / React は使ったことがある</td>
+<td>L06〜L09(アルゴリズム)→ L14(テスト)→ L16(運用)→ L17</td>
+</tr>
+<tr>
+<td>保守・機能追加だけ急ぎたい</td>
+<td><a href="../learning/README.html">実践ガイド</a>(レシピ)を先に。分からない所で、対応する講義へ戻る</td>
+</tr>
+</tbody>
+</table>
+<h2 id="関連">関連</h2>
+<ul>
+<li><a href="../learning/README.html">実践ガイド(保守・拡張)</a> — 手順書。レシピ・テスト・トラブルシューティング</li>
+<li><a href="../er.html">設計・仕様</a> — データモデル・API の契約・セキュリティの点検結果</li>
+</ul>
+</article>
+    <nav class="pager"><span></span><a class="next" href="L00-intro.html"><span>次へ →</span>L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#講義の一覧">講義の一覧</a></li><li class="lvl2"><a href="#各回の形">各回の形</a></li><li class="lvl2"><a href="#この資料の約束">この資料の約束</a></li><li class="lvl2"><a href="#読み方のおすすめ">読み方のおすすめ</a></li><li class="lvl2"><a href="#関連">関連</a></li></ul></nav>
+</div>
+</body>
+</html>

@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="c692d0c95779096eda2a">
+<title>L02 Python の基礎 ― サーバー側のコードを読むための道具 — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html" aria-current="page" class="current">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L02-python.md"><code>docs/lectures/L02-python.md</code></a></p>
+    <article class="doc"><h1 id="l02-python-の基礎--サーバー側のコードを読むための道具">L02 Python の基礎 ― サーバー側のコードを読むための道具</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>値・型・コレクション(<code>list</code> / <code>dict</code> / <code>set</code> / <code>tuple</code>)を使い分けられる</li>
+<li>関数・クラス・継承・例外を読んで書ける</li>
+<li>内包表記・ジェネレータ・デコレータ・<code>with</code> が何をしているか分かる</li>
+<li>このアプリの <code>models.py</code> / <code>errors.py</code> / <code>paths.py</code> の Python の部分を、読み解ける</li>
+</ul>
+<p>前提: <a href="L00-intro.html">L00</a>。Python は、書いたことがなくても読める所から始めます。</p>
+<blockquote>
+<p>Python を本格的に学ぶ資料ではありません。<strong>このアプリのコードを読み書きするのに必要な範囲</strong>に絞っています。</p>
+</blockquote>
+<hr />
+<h2 id="1-値と型">1. 値と型</h2>
+<p>Python では、すべての値が「型」を持ちます。<code>type()</code> で調べられます。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="mi">42</span><span class="p">,</span> <span class="mf">3.14</span><span class="p">,</span> <span class="s2">"進行中"</span><span class="p">,</span> <span class="kc">True</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">{</span><span class="s2">"a"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">}]</span>
+<span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">v</span><span class="si">!r:</span><span class="s2">12</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">42           int
+3.14         float
+&#x27;進行中&#x27;        str
+True         bool
+None         NoneType
+[1, 2]       list
+{&#x27;a&#x27;: 1}     dict
+(1, 2)       tuple
+{1, 2}       set
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>型</th>
+<th>例</th>
+<th>このアプリでの使いどころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>int</code></td>
+<td><code>42</code></td>
+<td>ID(<code>task.id</code>)・件数</td>
+</tr>
+<tr>
+<td><code>float</code></td>
+<td><code>0.5</code></td>
+<td>見積(<code>estimate_h</code>)・差分率(<code>diff_ratio</code>)</td>
+</tr>
+<tr>
+<td><code>str</code></td>
+<td><code>&quot;review&quot;</code></td>
+<td>状態・名前・パス</td>
+</tr>
+<tr>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td><code>is_overdue</code>・<code>is_staff</code></td>
+</tr>
+<tr>
+<td><code>None</code></td>
+<td><code>None</code></td>
+<td>「値が無い」(担当者なし・期日なし)</td>
+</tr>
+<tr>
+<td><code>list</code></td>
+<td><code>[1, 2]</code></td>
+<td>順序のある並び(ページの結果)</td>
+</tr>
+<tr>
+<td><code>dict</code></td>
+<td><code>{&quot;a&quot;: 1}</code></td>
+<td>キーと値(JSON のオブジェクトに対応)</td>
+</tr>
+<tr>
+<td><code>tuple</code></td>
+<td><code>(1, 2)</code></td>
+<td>変更できない組(<code>(entity_id, path)</code>)</td>
+</tr>
+<tr>
+<td><code>set</code> / <code>frozenset</code></td>
+<td><code>{1, 2}</code></td>
+<td>重複のない集まり(遷移表の行き先)</td>
+</tr>
+</tbody>
+</table>
+<p><strong><code>None</code> は「無い」を表す値</strong>です。<code>if x:</code> と <code>if x is not None:</code> は違います(<code>0</code> や <code>&quot;&quot;</code> も偽として扱われるから)。
+「値が無いこと」を確かめるときは、<strong><code>is None</code> / <code>is not None</code></strong> を使います。</p>
+<h2 id="2-文字列">2. 文字列</h2>
+<p>文字列は<strong>変更できない</strong>(新しい文字列を返す)。よく使う操作を、パスの正規化で覚えましょう。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="n">raw</span> <span class="o">=</span> <span class="s2">"  .</span><span class="se">\\</span><span class="s2">assets</span><span class="se">\\\\</span><span class="s2">props//Crate/  "</span>          <span class="c1"># Windows 風の区切り・余分な空白・二重スラッシュ</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>                              <span class="c1"># 前後の空白を取る</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span>                     <span class="c1"># \ を / に</span>
+<span class="k">while</span> <span class="s2">"//"</span> <span class="ow">in</span> <span class="n">p</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"//"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span>                 <span class="c1"># 連続する / を 1 つに</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">p</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"./"</span><span class="p">),</span> <span class="n">p</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">"/"</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="s2">"|"</span><span class="p">,</span> <span class="n">p</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"a"</span> <span class="ow">in</span> <span class="n">p</span><span class="p">,</span> <span class="s2">"assets"</span> <span class="ow">in</span> <span class="n">p</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"パスは </span><span class="si">{</span><span class="n">p</span><span class="si">!r}</span><span class="s2"> で、長さは </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">p</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>      <span class="c1"># f 文字列: {} の中に式を書ける</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"review"</span><span class="o">.</span><span class="n">capitalize</span><span class="p">(),</span> <span class="s2">"x,y,z"</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">","</span><span class="p">),</span> <span class="s2">"-"</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">"a"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">]))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">&#x27;./assets/props/Crate/&#x27;
+True True
+./assets/props/crate/ | ./ASSETS/PROPS/CRATE/
+True True
+パスは &#x27;./assets/props/Crate/&#x27; で、長さは 21
+Review [&#x27;x&#x27;, &#x27;y&#x27;, &#x27;z&#x27;] a-b
+</code></pre>
+
+<p><strong>大文字小文字を区別せずに比べる</strong>ときは、<code>lower()</code> より <strong><code>casefold()</code></strong> が正確です(ドイツ語の <code>ß</code> → <code>ss</code> のような言語ごとの規則を扱える)。
+このアプリでは、Windows のドライブ文字(<code>P:</code> と <code>p:</code>)のずれを吸収するために、<code>casefold()</code> を使っています(<a href="L07-strings-paths.html">L07</a>)。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="nb">print</span><span class="p">(</span><span class="s2">"STRASSE"</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"straße"</span><span class="o">.</span><span class="n">casefold</span><span class="p">())</span>   <span class="c1"># True: ß は ss と同じ扱い</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"STRASSE"</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">"straße"</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>         <span class="c1"># False: lower() では違う</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">True
+False
+</code></pre>
+
+<h2 id="3-コレクションと内包表記">3. コレクションと内包表記</h2>
+<p><code>dict</code>(辞書)は、このアプリのあらゆる所に出てきます(JSON ≒ dict)。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="n">task</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"id"</span><span class="p">:</span> <span class="mi">12</span><span class="p">,</span> <span class="s2">"status"</span><span class="p">:</span> <span class="s2">"review"</span><span class="p">,</span> <span class="s2">"assignee"</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="p">[</span><span class="s2">"status"</span><span class="p">])</span>                 <span class="c1"># キーで引く(無いと KeyError)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"due"</span><span class="p">))</span>                <span class="c1"># .get なら、無いとき None(エラーにならない)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"due"</span><span class="p">,</span> <span class="s2">"期日なし"</span><span class="p">))</span>      <span class="c1"># 第 2 引数が「無いときの値」</span>
+<span class="n">task</span><span class="p">[</span><span class="s2">"priority"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"high"</span>             <span class="c1"># 追加・更新</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">task</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>       <span class="c1"># 中身を順に</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="s2">"="</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+<span class="c1"># 内包表記: ループで新しいリストを作る、短い書き方</span>
+<span class="n">numbers</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">n</span> <span class="o">*</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">])</span>                        <span class="c1"># 2 乗</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">numbers</span> <span class="k">if</span> <span class="n">n</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">])</span>              <span class="c1"># 偶数だけ</span>
+<span class="nb">print</span><span class="p">({</span><span class="n">n</span><span class="p">:</span> <span class="n">n</span> <span class="o">*</span> <span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">[:</span><span class="mi">3</span><span class="p">]})</span>                 <span class="c1"># 辞書も作れる</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">numbers</span><span class="p">))</span>                         <span class="c1"># ジェネレータ式(カッコ内)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">review
+None
+期日なし
+id = 12
+status = review
+assignee = None
+priority = high
+[1, 4, 9, 16, 25, 36]
+[2, 4, 6]
+{1: 1, 2: 4, 3: 9}
+21
+</code></pre>
+
+<p>内包表記は、**「入力のリストから、条件に合うものを取り出して、加工する」**を 1 行で書けます。このアプリでは、たとえば:</p>
+<!-- excerpt: backend/tracker/query_catalog.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">catalog</span><span class="p">(</span><span class="n">ids</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+</code></pre>
+
+<p><code>set</code>(集合)は<strong>重複を許さず</strong>、「含まれているか」の判定が速い。<strong>遷移表は、行き先を <code>frozenset</code>(変更できない集合)で持ちます</strong>。</p>
+<!-- excerpt: backend/tracker/models.py -->
+<pre class="highlight"><code class="language-python"><span class="n">TRANSITIONS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">TODO</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">Status</span><span class="o">.</span><span class="n">IN_PROGRESS</span><span class="p">}),</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">IN_PROGRESS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">Status</span><span class="o">.</span><span class="n">REVIEW</span><span class="p">}),</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">REVIEW</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">Status</span><span class="o">.</span><span class="n">IN_PROGRESS</span><span class="p">,</span> <span class="n">Status</span><span class="o">.</span><span class="n">DONE</span><span class="p">}),</span>  <span class="c1"># 差し戻し / 承認</span>
+    <span class="n">Status</span><span class="o">.</span><span class="n">DONE</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">({</span><span class="n">Status</span><span class="o">.</span><span class="n">IN_PROGRESS</span><span class="p">}),</span>  <span class="c1"># 再開</span>
+<span class="p">}</span>
+</code></pre>
+
+<p><code>to in self.TRANSITIONS[current]</code> で「その遷移は表にあるか」が分かります。<strong>変更できない</strong>ので、実行中にうっかり書き換わる事故がありません。</p>
+<h2 id="4-関数">4. 関数</h2>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">clamp</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""value を low 以上 high 以下に収める。"""</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">high</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">make_page</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">page</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">max_page_size</span><span class="o">=</span><span class="mi">200</span><span class="p">):</span>
+    <span class="c1"># page=1, page_size=50 は「既定値」。* の後ろは、名前を付けて渡さなければならない(キーワード専用)</span>
+    <span class="n">size</span> <span class="o">=</span> <span class="n">clamp</span><span class="p">(</span><span class="n">page_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">max_page_size</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">items</span><span class="p">[(</span><span class="n">page</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">size</span> <span class="p">:</span> <span class="n">page</span> <span class="o">*</span> <span class="n">size</span><span class="p">]</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">clamp</span><span class="p">(</span><span class="mi">500</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">200</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">make_page</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> <span class="n">page</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">page_size</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">make_page</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="n">max_page_size</span><span class="o">=</span><span class="mi">3</span><span class="p">))</span>   <span class="c1"># キーワードで渡す</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">200
+[3, 4, 5]
+[0, 1, 2]
+</code></pre>
+
+<ul>
+<li>引数の<strong>既定値</strong>(<code>page=1</code>)で、省略できるようにする。</li>
+<li><code>*</code> の後ろは<strong>キーワード専用</strong>。呼ぶ側が <code>max_page_size=3</code> と名前を書くので、意味が読み取れる。</li>
+<li>関数の最初の文字列(<strong>docstring</strong>)は、説明。IDE やツールが読む。</li>
+</ul>
+<p><strong>型ヒント</strong>(<code>def f(x: int) -&gt; str:</code>)は、人とツールへの注釈です。実行時には強制されません(間違っても、すぐ落ちない)。
+このアプリでは、<code>str | None</code>(「文字列、または None」)のように書きます。</p>
+<!-- excerpt: backend/tracker/paths.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">match_entity</span><span class="p">(</span><span class="n">asset_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+</code></pre>
+
+<p>読み方: 「<code>asset_path</code>(文字列)と <code>candidates</code>(<code>(整数, 文字列)</code> の組のリスト)を受け取り、整数または <code>None</code> を返す」。</p>
+<h2 id="5-クラスと継承">5. クラスと継承</h2>
+<p>クラスは「データ + そのデータを扱う関数(メソッド)」の設計図です。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">Animal</span><span class="p">:</span>
+    <span class="n">sound</span> <span class="o">=</span> <span class="s2">"..."</span>                       <span class="c1"># クラス属性(全員が共有)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>           <span class="c1"># 作るときに呼ばれる</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>                <span class="c1"># インスタンス属性(自分だけ)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">speak</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sound</span><span class="si">}</span><span class="s2">"</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Dog</span><span class="p">(</span><span class="n">Animal</span><span class="p">):</span>                      <span class="c1"># Animal を継承: 属性とメソッドを受け継ぎ、上書きできる</span>
+    <span class="n">sound</span> <span class="o">=</span> <span class="s2">"ワン"</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">Animal</span><span class="p">(</span><span class="s2">"something"</span><span class="p">)</span><span class="o">.</span><span class="n">speak</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Dog</span><span class="p">(</span><span class="s2">"ポチ"</span><span class="p">)</span><span class="o">.</span><span class="n">speak</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">Dog</span><span class="p">(</span><span class="s2">"ポチ"</span><span class="p">),</span> <span class="n">Animal</span><span class="p">))</span>  <span class="c1"># 継承関係の確認</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">something: ...
+ポチ: ワン
+True
+</code></pre>
+
+<p><strong>このアプリの「エラー」は、継承で整理されています。</strong></p>
+<!-- excerpt: backend/tracker/errors.py -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">DomainError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""業務ルール違反。モデル層から投げ、API 層で HTTP ステータスに変換する。"""</span>
+
+    <span class="n">status_code</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">HTTP_400_BAD_REQUEST</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="s2">"domain_error"</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">detail</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">detail</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail</span> <span class="o">=</span> <span class="n">detail</span>
+        <span class="k">if</span> <span class="n">code</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">code</span> <span class="o">=</span> <span class="n">code</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">InvalidTransition</span><span class="p">(</span><span class="n">DomainError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""遷移表にない状態変更(409)。"""</span>
+
+    <span class="n">status_code</span> <span class="o">=</span> <span class="n">status</span><span class="o">.</span><span class="n">HTTP_409_CONFLICT</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="s2">"invalid_transition"</span>
+</code></pre>
+
+<figure class="diagram"><svg id="m6c5e906839a3148e" width="100%" xmlns="http://www.w3.org/2000/svg" class="classDiagram" style="max-width: 1047.140625px;" viewBox="0 0 1047.140625 512" role="graphics-document document" aria-roledescription="classDiagram"><style>#m6c5e906839a3148e{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m6c5e906839a3148e .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m6c5e906839a3148e .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m6c5e906839a3148e .error-icon{fill:#552222;}#m6c5e906839a3148e .error-text{fill:#552222;stroke:#552222;}#m6c5e906839a3148e .edge-thickness-normal{stroke-width:1px;}#m6c5e906839a3148e .edge-thickness-thick{stroke-width:3.5px;}#m6c5e906839a3148e .edge-pattern-solid{stroke-dasharray:0;}#m6c5e906839a3148e .edge-thickness-invisible{stroke-width:0;fill:none;}#m6c5e906839a3148e .edge-pattern-dashed{stroke-dasharray:3;}#m6c5e906839a3148e .edge-pattern-dotted{stroke-dasharray:2;}#m6c5e906839a3148e .marker{fill:#666;stroke:#666;}#m6c5e906839a3148e .marker.cross{stroke:#666;}#m6c5e906839a3148e svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m6c5e906839a3148e p{margin:0;}#m6c5e906839a3148e g.classGroup text{fill:#999;stroke:none;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:10px;}#m6c5e906839a3148e g.classGroup text .title{font-weight:bolder;}#m6c5e906839a3148e .cluster-label text{fill:#333;}#m6c5e906839a3148e .cluster-label span{color:#333;}#m6c5e906839a3148e .cluster-label span p{background-color:transparent;}#m6c5e906839a3148e .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m6c5e906839a3148e .cluster text{fill:#333;}#m6c5e906839a3148e .cluster span{color:#333;}#m6c5e906839a3148e .nodeLabel,#m6c5e906839a3148e .edgeLabel{color:#111111;}#m6c5e906839a3148e .noteLabel .nodeLabel,#m6c5e906839a3148e .noteLabel .edgeLabel{color:#fff;}#m6c5e906839a3148e .edgeLabel .label rect{fill:#eee;}#m6c5e906839a3148e .label text{fill:#111111;}#m6c5e906839a3148e .labelBkg{background:#eee;}#m6c5e906839a3148e .edgeLabel .label span{background:#eee;}#m6c5e906839a3148e .classTitle{font-weight:bolder;}#m6c5e906839a3148e .node rect,#m6c5e906839a3148e .node circle,#m6c5e906839a3148e .node ellipse,#m6c5e906839a3148e .node polygon,#m6c5e906839a3148e .node path{fill:#eee;stroke:#999;stroke-width:1;}#m6c5e906839a3148e .divider{stroke:#999;stroke-width:1;}#m6c5e906839a3148e g.clickable{cursor:pointer;}#m6c5e906839a3148e g.classGroup rect{fill:#eee;stroke:#999;}#m6c5e906839a3148e g.classGroup line{stroke:#999;stroke-width:1;}#m6c5e906839a3148e .classLabel .box{stroke:none;stroke-width:0;fill:#eee;opacity:0.5;}#m6c5e906839a3148e .classLabel .label{fill:#999;font-size:10px;}#m6c5e906839a3148e .relation{stroke:#666;stroke-width:1;fill:none;}#m6c5e906839a3148e .dashed-line{stroke-dasharray:3;}#m6c5e906839a3148e .dotted-line{stroke-dasharray:1 2;}#m6c5e906839a3148e [id$="-compositionStart"],#m6c5e906839a3148e .composition{fill:#666!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-compositionEnd"],#m6c5e906839a3148e .composition{fill:#666!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-dependencyStart"],#m6c5e906839a3148e .dependency{fill:#666!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-dependencyEnd"],#m6c5e906839a3148e .dependency{fill:#666!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-extensionStart"],#m6c5e906839a3148e .extension{fill:transparent!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-extensionEnd"],#m6c5e906839a3148e .extension{fill:transparent!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-aggregationStart"],#m6c5e906839a3148e .aggregation{fill:transparent!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-aggregationEnd"],#m6c5e906839a3148e .aggregation{fill:transparent!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-lollipopStart"],#m6c5e906839a3148e .lollipop{fill:#eee!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e [id$="-lollipopEnd"],#m6c5e906839a3148e .lollipop{fill:#eee!important;stroke:#666!important;stroke-width:1;}#m6c5e906839a3148e .edgeTerminals{font-size:11px;line-height:initial;}#m6c5e906839a3148e .classTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m6c5e906839a3148e .edgeLabel[data-look="neo"]{background-color:white;text-align:center;}#m6c5e906839a3148e .edgeLabel[data-look="neo"] p{background-color:white;}#m6c5e906839a3148e .edgeLabel[data-look="neo"] rect{opacity:0.5;background-color:white;fill:white;}#m6c5e906839a3148e .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m6c5e906839a3148e .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m6c5e906839a3148e .node .neo-node{stroke:#999;}#m6c5e906839a3148e [data-look="neo"].node rect,#m6c5e906839a3148e [data-look="neo"].cluster rect,#m6c5e906839a3148e [data-look="neo"].node polygon{stroke:url(#m6c5e906839a3148e-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m6c5e906839a3148e [data-look="neo"].swimlane.cluster rect{filter:none;}#m6c5e906839a3148e [data-look="neo"].node path{stroke:url(#m6c5e906839a3148e-gradient);stroke-width:1px;}#m6c5e906839a3148e [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m6c5e906839a3148e [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m6c5e906839a3148e [data-look="neo"].node circle{stroke:url(#m6c5e906839a3148e-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m6c5e906839a3148e [data-look="neo"].node circle .state-start{fill:#000000;}#m6c5e906839a3148e [data-look="neo"].icon-shape .icon{fill:url(#m6c5e906839a3148e-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m6c5e906839a3148e [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m6c5e906839a3148e-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m6c5e906839a3148e :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><defs><marker id="m6c5e906839a3148e_classDiagram-aggregationStart" class="marker aggregation classDiagram" refX="18" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-aggregationEnd" class="marker aggregation classDiagram" refX="1" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-aggregationStart-margin" class="marker aggregation classDiagram" refX="15" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z" style="stroke-width: 2;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-aggregationEnd-margin" class="marker aggregation classDiagram" refX="1" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z" style="stroke-width: 2;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-extensionStart" class="marker extension classDiagram" refX="18" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1,7 L18,13 V 1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-extensionEnd" class="marker extension classDiagram" refX="1" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1,1 V 13 L18,7 Z"></path></marker></defs><marker id="m6c5e906839a3148e_classDiagram-extensionStart-margin" class="marker extension classDiagram" refX="18" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 20 14"><polygon points="10,7 18,13 18,1" style="stroke-width: 2; stroke-dasharray: 0;"></polygon></marker><defs><marker id="m6c5e906839a3148e_classDiagram-extensionEnd-margin" class="marker extension classDiagram" refX="9" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse" viewBox="0 0 20 14"><polygon points="10,1 10,13 18,7" style="stroke-width: 2; stroke-dasharray: 0;"></polygon></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-compositionStart" class="marker composition classDiagram" refX="18" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-compositionEnd" class="marker composition classDiagram" refX="1" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-compositionStart-margin" class="marker composition classDiagram" refX="15" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path viewBox="0 0 15 15" d="M 18,7 L9,13 L1,7 L9,1 Z" style="stroke-width: 0;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-compositionEnd-margin" class="marker composition classDiagram" refX="3.5" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L1,7 L9,1 Z" style="stroke-width: 0;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-dependencyStart" class="marker dependency classDiagram" refX="6" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path d="M 5,7 L9,13 L1,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-dependencyEnd" class="marker dependency classDiagram" refX="13" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L14,7 L9,1 Z"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-dependencyStart-margin" class="marker dependency classDiagram" refX="4" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><path d="M 5,7 L9,13 L1,7 L9,1 Z" style="stroke-width: 0;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-dependencyEnd-margin" class="marker dependency classDiagram" refX="16" refY="7" markerWidth="20" markerHeight="28" orient="auto" markerUnits="userSpaceOnUse"><path d="M 18,7 L9,13 L14,7 L9,1 Z" style="stroke-width: 0;"></path></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-lollipopStart" class="marker lollipop classDiagram" refX="13" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><circle fill="transparent" cx="7" cy="7" r="6"></circle></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-lollipopEnd" class="marker lollipop classDiagram" refX="1" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><circle fill="transparent" cx="7" cy="7" r="6"></circle></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-lollipopStart-margin" class="marker lollipop classDiagram" refX="13" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><circle fill="transparent" cx="7" cy="7" r="6" stroke-width="2"></circle></marker></defs><defs><marker id="m6c5e906839a3148e_classDiagram-lollipopEnd-margin" class="marker lollipop classDiagram" refX="1" refY="7" markerWidth="190" markerHeight="240" orient="auto" markerUnits="userSpaceOnUse"><circle fill="transparent" cx="7" cy="7" r="6" stroke-width="2"></circle></marker></defs><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M535.301,109.25L535.301,110.542C535.301,111.833,535.301,114.417,535.301,119.875C535.301,125.333,535.301,133.667,535.301,137.833L535.301,142" id="m6c5e906839a3148e-id_Exception_DomainError_1" class="edge-thickness-normal edge-pattern-solid relation" style=";;;" data-edge="true" data-et="edge" data-id="id_Exception_DomainError_1" data-points="W3sieCI6NTM1LjMwMDc4MTI1LCJ5Ijo5Mn0seyJ4Ijo1MzUuMzAwNzgxMjUsInkiOjExN30seyJ4Ijo1MzUuMzAwNzgxMjUsInkiOjE0Mn1d" data-look="classic" marker-start="url(#m6c5e906839a3148e_classDiagram-extensionStart)"></path><path d="M396.063,265.569L355.343,277.141C314.623,288.712,233.183,311.856,192.462,327.595C151.742,343.333,151.742,351.667,151.742,355.833L151.742,360" id="m6c5e906839a3148e-id_DomainError_InvalidTransition_2" class="edge-thickness-normal edge-pattern-solid relation" style=";;;" data-edge="true" data-et="edge" data-id="id_DomainError_InvalidTransition_2" data-points="W3sieCI6NDEyLjY1NjI1LCJ5IjoyNjAuODUzMjI0ODM3MzA2ODd9LHsieCI6MTUxLjc0MjE4NzUsInkiOjMzNX0seyJ4IjoxNTEuNzQyMTg3NSwieSI6MzYwfV0=" data-look="classic" marker-start="url(#m6c5e906839a3148e_classDiagram-extensionStart)"></path><path d="M424.915,321.271L422.264,323.559C419.613,325.847,414.31,330.424,411.659,341.878C409.008,353.333,409.008,371.667,409.008,380.833L409.008,390" id="m6c5e906839a3148e-id_DomainError_RuleViolation_3" class="edge-thickness-normal edge-pattern-solid relation" style=";;;" data-edge="true" data-et="edge" data-id="id_DomainError_RuleViolation_3" data-points="W3sieCI6NDM3Ljk3NDA4OTczNjIzODUsInkiOjMxMH0seyJ4Ijo0MDkuMDA3ODEyNSwieSI6MzM1fSx7IngiOjQwOS4wMDc4MTI1LCJ5IjozOTB9XQ==" data-look="classic" marker-start="url(#m6c5e906839a3148e_classDiagram-extensionStart)"></path><path d="M645.686,321.271L648.338,323.559C650.989,325.847,656.291,330.424,658.943,336.878C661.594,343.333,661.594,351.667,661.594,355.833L661.594,360" id="m6c5e906839a3148e-id_DomainError_Forbidden_4" class="edge-thickness-normal edge-pattern-solid relation" style=";;;" data-edge="true" data-et="edge" data-id="id_DomainError_Forbidden_4" data-points="W3sieCI6NjMyLjYyNzQ3Mjc2Mzc2MTUsInkiOjMxMH0seyJ4Ijo2NjEuNTkzNzUsInkiOjMzNX0seyJ4Ijo2NjEuNTkzNzUsInkiOjM2MH1d" data-look="classic" marker-start="url(#m6c5e906839a3148e_classDiagram-extensionStart)"></path><path d="M674.615,263.074L719.662,275.061C764.71,287.049,854.804,311.025,899.851,332.179C944.898,353.333,944.898,371.667,944.898,380.833L944.898,390" id="m6c5e906839a3148e-id_DomainError_IdempotencyConflict_5" class="edge-thickness-normal edge-pattern-solid relation" style=";;;" data-edge="true" data-et="edge" data-id="id_DomainError_IdempotencyConflict_5" data-points="W3sieCI6NjU3Ljk0NTMxMjUsInkiOjI1OC42Mzc1MjUzOTE3MjM5NX0seyJ4Ijo5NDQuODk4NDM3NSwieSI6MzM1fSx7IngiOjk0NC44OTg0Mzc1LCJ5IjozOTB9XQ==" data-look="classic" marker-start="url(#m6c5e906839a3148e_classDiagram-extensionStart)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="id_Exception_DomainError_1" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="id_DomainError_InvalidTransition_2" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="id_DomainError_RuleViolation_3" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="id_DomainError_Forbidden_4" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="id_DomainError_IdempotencyConflict_5" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m6c5e906839a3148e-classId-Exception-0" data-look="classic" transform="translate(535.30078125, 50)"><g class="basic label-container outer-path"><path d="M-50.84375 -42 L50.84375 -42 L50.84375 42 L-50.84375 42" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-50.84375 -42 C-14.533945467119985 -42, 21.77585906576003 -42, 50.84375 -42 M-50.84375 -42 C-25.482930392710433 -42, -0.1221107854208654 -42, 50.84375 -42 M50.84375 -42 C50.84375 -14.04928296578603, 50.84375 13.901434068427939, 50.84375 42 M50.84375 -42 C50.84375 -9.908398373452826, 50.84375 22.183203253094348, 50.84375 42 M50.84375 42 C10.270351992997 42, -30.303046014006 42, -50.84375 42 M50.84375 42 C18.069888470932092 42, -14.703973058135816 42, -50.84375 42 M-50.84375 42 C-50.84375 16.35463033258172, -50.84375 -9.290739334836559, -50.84375 -42 M-50.84375 42 C-50.84375 11.612286824989788, -50.84375 -18.775426350020425, -50.84375 -42" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -18)"></g><g class="label-group text" transform="translate(-38.84375, -18)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="77.6875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 124px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>Exception</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-38.84375, 30)"></g><g class="methods-group text" transform="translate(-38.84375, 60)"></g><g class="divider" style=""><path d="M-50.84375 6 C-18.95584742897369 6.000313587241018, 12.932055142052619 6.0006271744820365, 50.84375 6.001 M-50.84375 6 C-20.914479633865373 6.000294325953202, 9.014790732269255 6.000588651906402, 50.84375 6.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-50.84375 24 C-10.729685988089969 24.000394483727224, 29.384378023820062 24.000788967454444, 50.84375 24.001 M-50.84375 24 C-19.43866387959281 24.00030883919971, 11.966422240814381 24.00061767839942, 50.84375 24.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g><g class="node default" id="m6c5e906839a3148e-classId-DomainError-1" data-look="classic" transform="translate(535.30078125, 226)"><g class="basic label-container outer-path"><path d="M-122.64453125 -84 L122.64453125 -84 L122.64453125 84 L-122.64453125 84" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-122.64453125 -84 C-31.277338653107165 -84, 60.08985394378567 -84, 122.64453125 -84 M-122.64453125 -84 C-39.664895670817 -84, 43.31473990836599 -84, 122.64453125 -84 M122.64453125 -84 C122.64453125 -28.6641506983836, 122.64453125 26.671698603232798, 122.64453125 84 M122.64453125 -84 C122.64453125 -20.67212156291555, 122.64453125 42.6557568741689, 122.64453125 84 M122.64453125 84 C59.45958901736685 84, -3.7253532152662956 84, -122.64453125 84 M122.64453125 84 C61.79084168127621 84, 0.9371521125524254 84, -122.64453125 84 M-122.64453125 84 C-122.64453125 41.78527294221227, -122.64453125 -0.429454115575453, -122.64453125 -84 M-122.64453125 84 C-122.64453125 38.92538770924286, -122.64453125 -6.149224581514275, -122.64453125 -84" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -60)"></g><g class="label-group text" transform="translate(-49.1796875, -60)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="98.359375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 145px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>DomainError</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-110.64453125, -12)"><g class="label" style="" transform="translate(0,-12)"><foreignObject width="141.15625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 191px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>status_code = 400</p></span></div></foreignObject></g><g class="label" style="" transform="translate(0,12)"><foreignObject width="172.109375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 222px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>code = "domain_error"</p></span></div></foreignObject></g><g class="label" style="" transform="translate(0,36)"><foreignObject width="41.171875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 91px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>detail</p></span></div></foreignObject></g></g><g class="methods-group text" transform="translate(-110.64453125, 84)"></g><g class="divider" style=""><path d="M-122.64453125 -36 C-29.767866197611568 -35.999621358310456, 63.108798854776865 -35.999242716620905, 122.64453125 -35.999 M-122.64453125 -36 C-37.70903647919259 -35.99965373305314, 47.22645829161482 -35.99930746610627, 122.64453125 -35.999" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-122.64453125 60 C-57.14753253472324 60.00026701964632, 8.34946618055352 60.00053403929264, 122.64453125 60.001 M-122.64453125 60 C-33.12312881728201 60.00036496287898, 56.39827361543598 60.00072992575796, 122.64453125 60.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g><g class="node default" id="m6c5e906839a3148e-classId-InvalidTransition-2" data-look="classic" transform="translate(151.7421875, 432)"><g class="basic label-container outer-path"><path d="M-143.7421875 -72 L143.7421875 -72 L143.7421875 72 L-143.7421875 72" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-143.7421875 -72 C-77.88369088446899 -72, -12.02519426893798 -72, 143.7421875 -72 M-143.7421875 -72 C-71.93528352477607 -72, -0.12837954955213604 -72, 143.7421875 -72 M143.7421875 -72 C143.7421875 -21.906113748340154, 143.7421875 28.187772503319692, 143.7421875 72 M143.7421875 -72 C143.7421875 -37.2052661323212, 143.7421875 -2.4105322646423986, 143.7421875 72 M143.7421875 72 C37.05213393702773 72, -69.63791962594453 72, -143.7421875 72 M143.7421875 72 C72.03025167964962 72, 0.318315859299247 72, -143.7421875 72 M-143.7421875 72 C-143.7421875 21.023517109392714, -143.7421875 -29.952965781214573, -143.7421875 -72 M-143.7421875 72 C-143.7421875 34.497423481943386, -143.7421875 -3.005153036113228, -143.7421875 -72" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -48)"></g><g class="label-group text" transform="translate(-65.125, -48)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="130.25" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 173px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>InvalidTransition</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-131.7421875, 0)"><g class="label" style="" transform="translate(0,-12)"><foreignObject width="140.984375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 191px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>status_code = 409</p></span></div></foreignObject></g><g class="label" style="" transform="translate(0,12)"><foreignObject width="198.359375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 248px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>code = "invalid_transition"</p></span></div></foreignObject></g></g><g class="methods-group text" transform="translate(-131.7421875, 72)"></g><g class="divider" style=""><path d="M-143.7421875 -24 C-74.37935474708989 -23.999758724860254, -5.016521994179783 -23.999517449720507, 143.7421875 -23.999 M-143.7421875 -24 C-85.66157486145846 -23.99979796949786, -27.58096222291691 -23.99959593899572, 143.7421875 -23.999" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-143.7421875 48 C-43.04692151557627 48.00035026343948, 57.648344468847455 48.00070052687896, 143.7421875 48.001 M-143.7421875 48 C-67.97252274071045 48.000263560983996, 7.797142018579109 48.000527121968, 143.7421875 48.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g><g class="node default" id="m6c5e906839a3148e-classId-RuleViolation-3" data-look="classic" transform="translate(409.0078125, 432)"><g class="basic label-container outer-path"><path d="M-63.5234375 -42 L63.5234375 -42 L63.5234375 42 L-63.5234375 42" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-63.5234375 -42 C-29.993943348766003 -42, 3.535550802467995 -42, 63.5234375 -42 M-63.5234375 -42 C-26.37792315869647 -42, 10.767591182607063 -42, 63.5234375 -42 M63.5234375 -42 C63.5234375 -24.860239633148655, 63.5234375 -7.7204792662973105, 63.5234375 42 M63.5234375 -42 C63.5234375 -8.855895530161078, 63.5234375 24.288208939677844, 63.5234375 42 M63.5234375 42 C25.2204771956892 42, -13.082483108621602 42, -63.5234375 42 M63.5234375 42 C29.440891570094294 42, -4.641654359811412 42, -63.5234375 42 M-63.5234375 42 C-63.5234375 19.00760866515497, -63.5234375 -3.9847826696900626, -63.5234375 -42 M-63.5234375 42 C-63.5234375 21.98542318904227, -63.5234375 1.9708463780845378, -63.5234375 -42" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -18)"></g><g class="label-group text" transform="translate(-51.5234375, -18)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="103.046875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 148px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>RuleViolation</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-51.5234375, 30)"></g><g class="methods-group text" transform="translate(-51.5234375, 60)"></g><g class="divider" style=""><path d="M-63.5234375 6 C-27.70253484919153 6.000281950285285, 8.118367801616941 6.00056390057057, 63.5234375 6.001 M-63.5234375 6 C-31.416902363644297 6.000252714087901, 0.6896327727114056 6.000505428175803, 63.5234375 6.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-63.5234375 24 C-29.349812008360658 24.000268984384636, 4.823813483278684 24.00053796876927, 63.5234375 24.001 M-63.5234375 24 C-28.86536014465792 24.000272797558818, 5.79271721068416 24.000545595117636, 63.5234375 24.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g><g class="node default" id="m6c5e906839a3148e-classId-Forbidden-4" data-look="classic" transform="translate(661.59375, 432)"><g class="basic label-container outer-path"><path d="M-139.0625 -72 L139.0625 -72 L139.0625 72 L-139.0625 72" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-139.0625 -72 C-62.84247732312237 -72, 13.377545353755266 -72, 139.0625 -72 M-139.0625 -72 C-31.518545587392097 -72, 76.0254088252158 -72, 139.0625 -72 M139.0625 -72 C139.0625 -31.46626959724412, 139.0625 9.067460805511757, 139.0625 72 M139.0625 -72 C139.0625 -40.11946308134217, 139.0625 -8.238926162684336, 139.0625 72 M139.0625 72 C47.23136658452138 72, -44.599766830957236 72, -139.0625 72 M139.0625 72 C59.635850304514435 72, -19.79079939097113 72, -139.0625 72 M-139.0625 72 C-139.0625 35.940544008935156, -139.0625 -0.11891198212968845, -139.0625 -72 M-139.0625 72 C-139.0625 42.530196918189446, -139.0625 13.060393836378893, -139.0625 -72" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -48)"></g><g class="label-group text" transform="translate(-39.796875, -48)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="79.59375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 127px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>Forbidden</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-127.0625, 0)"><g class="label" style="" transform="translate(0,-12)"><foreignObject width="140.9375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 191px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>status_code = 403</p></span></div></foreignObject></g><g class="label" style="" transform="translate(0,12)"><foreignObject width="214.328125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 264px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>code = "permission_denied"</p></span></div></foreignObject></g></g><g class="methods-group text" transform="translate(-127.0625, 72)"></g><g class="divider" style=""><path d="M-139.0625 -24 C-44.5370085577011 -23.999660133064477, 49.9884828845978 -23.999320266128954, 139.0625 -23.999 M-139.0625 -24 C-73.91083491987109 -23.999765746822185, -8.759169839742185 -23.999531493644366, 139.0625 -23.999" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-139.0625 48 C-52.00631533112133 48.000313011001055, 35.04986933775734 48.00062602200211, 139.0625 48.001 M-139.0625 48 C-82.88014549523507 48.00020200397125, -26.69779099047014 48.00040400794251, 139.0625 48.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g><g class="node default" id="m6c5e906839a3148e-classId-IdempotencyConflict-5" data-look="classic" transform="translate(944.8984375, 432)"><g class="basic label-container outer-path"><path d="M-94.2421875 -42 L94.2421875 -42 L94.2421875 42 L-94.2421875 42" stroke="none" stroke-width="0" fill="#eee" style=""></path><path d="M-94.2421875 -42 C-22.153215748095732 -42, 49.935756003808535 -42, 94.2421875 -42 M-94.2421875 -42 C-35.463695637028216 -42, 23.314796225943567 -42, 94.2421875 -42 M94.2421875 -42 C94.2421875 -21.451469631933126, 94.2421875 -0.9029392638662515, 94.2421875 42 M94.2421875 -42 C94.2421875 -16.81337293732217, 94.2421875 8.373254125355658, 94.2421875 42 M94.2421875 42 C32.756353291713566 42, -28.729480916572868 42, -94.2421875 42 M94.2421875 42 C53.2557004422945 42, 12.269213384588994 42, -94.2421875 42 M-94.2421875 42 C-94.2421875 18.976660336339016, -94.2421875 -4.046679327321968, -94.2421875 -42 M-94.2421875 42 C-94.2421875 23.4247494756736, -94.2421875 4.849498951347201, -94.2421875 -42" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="annotation-group text" transform="translate(0, -18)"></g><g class="label-group text" transform="translate(-82.2421875, -18)"><g class="label" style="font-weight: bolder" transform="translate(0,-12)"><foreignObject width="164.484375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 207px; text-align: center;"><span class="nodeLabel markdown-node-label" style=""><p>IdempotencyConflict</p></span></div></foreignObject></g></g><g class="members-group text" transform="translate(-82.2421875, 30)"></g><g class="methods-group text" transform="translate(-82.2421875, 60)"></g><g class="divider" style=""><path d="M-94.2421875 6 C-39.077295197735 6.000292676208849, 16.087597104530005 6.000585352417698, 94.2421875 6.001 M-94.2421875 6 C-32.884795050720584 6.000325530391839, 28.472597398558833 6.000651060783678, 94.2421875 6.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g><g class="divider" style=""><path d="M-94.2421875 24 C-28.87455760467681 24.000346806624663, 36.49307229064638 24.000693613249325, 94.2421875 24.001 M-94.2421875 24 C-40.09774828990718 24.00028726221582, 14.04669092018564 24.00057452443164, 94.2421875 24.001" stroke="#999" stroke-width="1.3" fill="none" stroke-dasharray="0 0" style=""></path></g></g></g></g></g><defs><filter id="m6c5e906839a3148e-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m6c5e906839a3148e-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m6c5e906839a3148e-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p>ねらいは、<strong>「何がダメか」はモデル層が決め、「どう伝えるか(HTTP の番号)」は子クラスが持つ</strong>こと。
+モデルは <code>raise InvalidTransition(&quot;…&quot;)</code> と書くだけで、HTTP を知りません。変換は 1 か所(例外ハンドラ)だけがします。</p>
+<p><code>Enum</code>(列挙型)も、クラスの一種です。<strong>状態は文字列でなく Enum で持つ</strong>と、打ち間違いが防げます。Django の <code>TextChoices</code> はその拡張です。</p>
+<!-- excerpt: backend/tracker/models.py -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">Status</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">TextChoices</span><span class="p">):</span>
+    <span class="n">TODO</span> <span class="o">=</span> <span class="s2">"todo"</span><span class="p">,</span> <span class="s2">"未着手"</span>
+    <span class="n">IN_PROGRESS</span> <span class="o">=</span> <span class="s2">"in_progress"</span><span class="p">,</span> <span class="s2">"進行中"</span>
+    <span class="n">REVIEW</span> <span class="o">=</span> <span class="s2">"review"</span><span class="p">,</span> <span class="s2">"レビュー待ち"</span>
+    <span class="n">DONE</span> <span class="o">=</span> <span class="s2">"done"</span><span class="p">,</span> <span class="s2">"完了"</span>
+</code></pre>
+
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Status</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">Enum</span><span class="p">):</span>             <span class="c1"># str を継承: 文字列としても比べられる</span>
+    <span class="n">TODO</span> <span class="o">=</span> <span class="s2">"todo"</span>
+    <span class="n">DONE</span> <span class="o">=</span> <span class="s2">"done"</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">Status</span><span class="o">.</span><span class="n">TODO</span> <span class="o">==</span> <span class="s2">"todo"</span><span class="p">)</span>          <span class="c1"># True: JSON の文字列と直接比べられる</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Status</span><span class="p">(</span><span class="s2">"done"</span><span class="p">))</span>                 <span class="c1"># 値からメンバーを引く</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">Status</span><span class="p">(</span><span class="s2">"finished"</span><span class="p">)</span>                <span class="c1"># 無い値は ValueError(打ち間違いが早く見つかる)</span>
+<span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"ValueError:"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">True
+Status.DONE
+ValueError: &#x27;finished&#x27; is not a valid Status
+</code></pre>
+
+<h2 id="6-例外">6. 例外</h2>
+<p><strong>例外</strong>は、「通常の流れを続けられない」ことを知らせる仕組みです。<code>raise</code> で投げ、<code>try / except</code> で受けます。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">to_int</span><span class="p">(</span><span class="n">text</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>                              <span class="c1"># int("abc") は ValueError</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"整数で指定してください: </span><span class="si">{</span><span class="n">text</span><span class="si">!r}</span><span class="s2">"</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>   <span class="c1"># 元の例外の連鎖を隠す</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">to_int</span><span class="p">(</span><span class="s2">"42"</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">bad</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"abc"</span><span class="p">,</span> <span class="s2">"4.5"</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">to_int</span><span class="p">(</span><span class="n">bad</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"拒否:"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">risky</span><span class="p">():</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">0</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"finally: 成功しても失敗しても必ず実行される(後片付け)"</span><span class="p">)</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">risky</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">ZeroDivisionError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"ZeroDivisionError を受け取った"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">42
+拒否: 整数で指定してください: &#x27;abc&#x27;
+拒否: 整数で指定してください: &#x27;4.5&#x27;
+finally: 成功しても失敗しても必ず実行される(後片付け)
+ZeroDivisionError を受け取った
+</code></pre>
+
+<p><code>raise ... from None</code> は、「元の例外(<code>int()</code> の長いエラー)を表に出さず、読みやすいエラーだけを見せる」書き方です。
+このアプリの <code>int_param</code>(クエリの数値の検査)も、同じ形です。</p>
+<!-- excerpt: backend/tracker/views.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">int_param</span><span class="p">(</span><span class="n">request</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+    <span class="n">raw</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">query_params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">raw</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">""</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="s2">"整数で指定してください。"</span><span class="p">})</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">MAX_ID</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">serializers</span><span class="o">.</span><span class="n">ValidationError</span><span class="p">({</span><span class="n">name</span><span class="p">:</span> <span class="s2">"値が大きすぎます。"</span><span class="p">})</span>
+    <span class="k">return</span> <span class="n">value</span>
+</code></pre>
+
+<p><strong>例外の鉄則</strong>: 想定できる失敗は、<strong>自分で名前を付けた例外</strong>にして、意味のある 4xx に変える。想定外のもの(バグ)は、<strong>握りつぶさず</strong>に 500 にして、ログに残す。
+<code>except Exception: pass</code>(何でも握りつぶす)は、バグを隠すので、書いてはいけません。</p>
+<h2 id="7-再帰">7. 再帰</h2>
+<p>関数が<strong>自分自身を呼ぶ</strong>のが再帰です。入れ子の構造(辞書の中の辞書…)を扱うのに向いています。
+このアプリの、検証エラーの文章を取り出す関数が、その例です。</p>
+<!-- excerpt: backend/tracker/errors.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">_flatten</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""検証エラーの先頭 1 件を 'field: message' にして detail に使う。"""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">errors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">_flatten</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">inner</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"non_field_errors"</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">}</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">_flatten</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">errors</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+</code></pre>
+
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">flatten</span><span class="p">(</span><span class="n">errors</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""入れ子のエラーから、最初の 1 件を『項目: 理由』にする(errors.py の _flatten と同じ形)。"""</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">errors</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="n">flatten</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">inner</span> <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"non_field_errors"</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">}</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">inner</span><span class="si">}</span><span class="s2">"</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">errors</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">flatten</span><span class="p">(</span><span class="n">errors</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">if</span> <span class="n">errors</span> <span class="k">else</span> <span class="s2">""</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">flatten</span><span class="p">({</span><span class="s2">"due"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"期日は開始日以降にしてください。"</span><span class="p">]}))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">flatten</span><span class="p">({</span><span class="s2">"results"</span><span class="p">:</span> <span class="p">[{</span><span class="s2">"defects"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"0 以上にしてください。"</span><span class="p">]}]}))</span>     <span class="c1"># 入れ子</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">flatten</span><span class="p">({</span><span class="s2">"non_field_errors"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"組み合わせが不正です。"</span><span class="p">]}))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">flatten</span><span class="p">([])))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">due: 期日は開始日以降にしてください。
+results: defects: 0 以上にしてください。
+組み合わせが不正です。
+&#x27;&#x27;
+</code></pre>
+
+<p><strong>再帰の 2 つの約束</strong>: ①自分より<strong>小さな問題</strong>に分けて呼ぶ(リストの先頭、辞書の値)、②<strong>これ以上分けない場合(<code>str(errors)</code>)で止まる</strong>。
+止まる条件が無いと、永遠に呼び続けて <code>RecursionError</code> になります。</p>
+<h2 id="8-ジェネレータとデコレータ">8. ジェネレータとデコレータ</h2>
+<p><strong>ジェネレータ</strong>は、<code>yield</code> で「値を 1 つずつ渡す」関数です。大きなデータを一度にメモリへ載せずに済みます。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">pages</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""items を size 個ずつに分けて、1 ページずつ渡す。"""</span>
+    <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">items</span><span class="p">),</span> <span class="n">size</span><span class="p">):</span>
+        <span class="k">yield</span> <span class="n">items</span><span class="p">[</span><span class="n">start</span> <span class="p">:</span> <span class="n">start</span> <span class="o">+</span> <span class="n">size</span><span class="p">]</span>
+
+
+<span class="n">gen</span> <span class="o">=</span> <span class="n">pages</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)),</span> <span class="mi">3</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">next</span><span class="p">(</span><span class="n">gen</span><span class="p">))</span>            <span class="c1"># 必要になったときに初めて計算される</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">gen</span><span class="p">))</span>            <span class="c1"># 残りを全部</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">[0, 1, 2]
+[[3, 4, 5], [6]]
+</code></pre>
+
+<p><strong>デコレータ</strong>(<code>@名前</code>)は、「関数を包んで、機能を足す」仕組みです。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">timed</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+    <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>                      <span class="c1"># 元の関数の名前・説明を保つ</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>     <span class="c1"># どんな引数でも受けて、そのまま渡す</span>
+        <span class="n">started</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">wrapper</span><span class="o">.</span><span class="n">last_seconds</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span> <span class="o">-</span> <span class="n">started</span>
+        <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">wrapper</span>
+
+
+<span class="nd">@timed</span>                                <span class="c1"># ← sum_to = timed(sum_to) と同じ</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">sum_to</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">sum_to</span><span class="p">(</span><span class="mi">1000</span><span class="p">),</span> <span class="n">sum_to</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">sum_to</span><span class="o">.</span><span class="n">last_seconds</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">500500 sum_to True
+</code></pre>
+
+<p>このアプリで出てくるデコレータ: <code>@property</code>(関数を属性のように読む)、<code>@staticmethod</code>(インスタンスなしで呼べる)、
+<code>@action(detail=True, methods=[&quot;post&quot;])</code>(DRF: ViewSet に追加の URL を足す)、<code>@transaction.atomic</code>(中の処理を 1 つのトランザクションにする)。</p>
+<h2 id="9-with後片付けを保証する">9. <code>with</code>(後片付けを保証する)</h2>
+<p><code>with</code> は、「始まりと終わりの処理を、必ずセットにする」仕組みです。ファイルを開いたら閉じる、トランザクションを始めたら終わらせる。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">contextlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">contextmanager</span>
+
+
+<span class="nd">@contextmanager</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">tracing</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+    <span class="n">log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 開始"</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">yield</span>                           <span class="c1"># ← ここで with の中身が実行される</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 成功"</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 失敗(元に戻す)"</span><span class="p">)</span>
+        <span class="k">raise</span>                           <span class="c1"># 例外は、そのまま外へ</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="n">log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">: 後片付け"</span><span class="p">)</span>
+
+
+<span class="n">log</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">with</span> <span class="n">tracing</span><span class="p">(</span><span class="s2">"T1"</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+    <span class="k">pass</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">tracing</span><span class="p">(</span><span class="s2">"T2"</span><span class="p">,</span> <span class="n">log</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"途中で失敗"</span><span class="p">)</span>
+<span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+    <span class="k">pass</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">log</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">T1: 開始
+T1: 成功
+T1: 後片付け
+T2: 開始
+T2: 失敗(元に戻す)
+T2: 後片付け
+</code></pre>
+
+<p>このアプリの <code>with transaction.atomic():</code> は、まさにこの形です。<strong>中で例外が起きたら、DB の変更を丸ごと取り消す</strong>(<code>T2</code> の「元に戻す」)。
+<a href="L08-concurrency.html">L08</a> で、状態遷移のロックと組み合わせます。</p>
+<h2 id="10-モジュールと-import">10. モジュールと <code>import</code></h2>
+<p>Python のファイルは<strong>モジュール</strong>です。<code>import</code> で他のファイルの部品を使います。</p>
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">rest_framework</span><span class="w"> </span><span class="kn">import</span> <span class="n">exceptions</span><span class="p">,</span> <span class="n">status</span>     <span class="c1"># パッケージ rest_framework から 2 つ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.errors</span><span class="w"> </span><span class="kn">import</span> <span class="n">Forbidden</span><span class="p">,</span> <span class="n">InvalidTransition</span>  <span class="c1"># 同じ階層(.)の errors.py から</span>
+</code></pre>
+
+<p><code>if __name__ == &quot;__main__&quot;:</code> は「このファイルを直接実行したときだけ」の意味で、スクリプト(<code>scripts/*.py</code>)の入口に使います(<a href="L15-scripts.html">L15</a>)。</p>
+<h2 id="11-標準ライブラリ--道具箱">11. 標準ライブラリ ― 道具箱</h2>
+<p>よく使うものを、このアプリの用途とともに。</p>
+<table>
+<thead>
+<tr>
+<th>モジュール</th>
+<th>用途</th>
+<th>このアプリの例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>re</code></td>
+<td>正規表現</td>
+<td>パスの二重スラッシュの除去</td>
+</tr>
+<tr>
+<td><code>json</code></td>
+<td>JSON の読み書き</td>
+<td>JSON ログ・<code>dcc</code> の大きさの検査</td>
+</tr>
+<tr>
+<td><code>datetime</code></td>
+<td>日時</td>
+<td>期日・取り込み時刻(タイムゾーン付き)</td>
+</tr>
+<tr>
+<td><code>secrets</code></td>
+<td>暗号用の乱数・安全な比較</td>
+<td>API キーの比較(<code>compare_digest</code>)</td>
+</tr>
+<tr>
+<td><code>hashlib</code></td>
+<td>ハッシュ</td>
+<td>ドキュメントの更新検出</td>
+</tr>
+<tr>
+<td><code>sqlite3</code></td>
+<td>SQLite を読む</td>
+<td><code>send_quality.py</code> が <code>insight.db</code> を読む</td>
+</tr>
+<tr>
+<td><code>argparse</code></td>
+<td>コマンドライン引数</td>
+<td>スクリプトの <code>--db</code> など</td>
+</tr>
+<tr>
+<td><code>urllib.request</code></td>
+<td>HTTP を送る</td>
+<td>スクリプトが API を呼ぶ</td>
+</tr>
+</tbody>
+</table>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">timedelta</span><span class="p">,</span> <span class="n">timezone</span>
+
+<span class="c1"># 正規表現: 「/ が 2 つ以上」を 1 つに</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">"/{2,}"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">,</span> <span class="s2">"assets//props///crate"</span><span class="p">))</span>
+
+<span class="c1"># 日時: タイムゾーン付き(aware)と無し(naive)は、比べられない</span>
+<span class="n">jst</span> <span class="o">=</span> <span class="n">timezone</span><span class="p">(</span><span class="n">timedelta</span><span class="p">(</span><span class="n">hours</span><span class="o">=</span><span class="mi">9</span><span class="p">))</span>
+<span class="n">aware</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tzinfo</span><span class="o">=</span><span class="n">jst</span><span class="p">)</span>
+<span class="n">naive</span> <span class="o">=</span> <span class="n">datetime</span><span class="p">(</span><span class="mi">2026</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">11</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">aware</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span> <span class="s2">"|"</span><span class="p">,</span> <span class="n">naive</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">aware</span><span class="o">.</span><span class="n">astimezone</span><span class="p">(</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span><span class="o">.</span><span class="n">isoformat</span><span class="p">())</span>      <span class="c1"># 同じ瞬間を、UTC で</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">aware</span> <span class="o">&lt;</span> <span class="n">naive</span>
+<span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"TypeError:"</span><span class="p">,</span> <span class="n">error</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">assets/props/crate
+2026-10-11T09:00:00+09:00 | 2026-10-11T09:00:00
+2026-10-11T00:00:00+00:00
+TypeError: can&#x27;t compare offset-naive and offset-aware datetimes
+</code></pre>
+
+<p><strong>日時にタイムゾーンを付ける理由</strong>: <code>2026-10-11 09:00</code> は、日本時間なのか UTC なのか、これだけでは分かりません(9 時間ずれる)。
+このアプリの取り込み API が、<strong>タイムゾーン無しの時刻を 400 で拒否する</strong>のは、このためです。</p>
+<h2 id="よくある間違い">よくある間違い</h2>
+<table>
+<thead>
+<tr>
+<th>間違い</th>
+<th>正しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>if x:</code> で「値があるか」を判定</td>
+<td><code>0</code> / <code>&quot;&quot;</code> / <code>[]</code> も偽になる。<code>None</code> かを見たいなら <code>x is None</code></td>
+</tr>
+<tr>
+<td>可変な既定値 <code>def f(items=[])</code></td>
+<td>呼び出しをまたいで<strong>同じリストが共有</strong>される。<code>items=None</code> にして中で作る</td>
+</tr>
+<tr>
+<td><code>except:</code> / <code>except Exception: pass</code></td>
+<td>バグを隠す。想定する例外だけを受ける</td>
+</tr>
+<tr>
+<td>リストを回しながら、そのリストを変更</td>
+<td>新しいリストを作る(内包表記)</td>
+</tr>
+<tr>
+<td><code>==</code> と <code>is</code> の混同</td>
+<td>値が等しいかは <code>==</code>、同一のものかは <code>is</code>(<code>None</code> との比較だけ <code>is</code>)</td>
+</tr>
+<tr>
+<td>文字列を <code>+</code> で何度もつなぐ</td>
+<td><code>&quot;&quot;.join([...])</code> や f 文字列</td>
+</tr>
+</tbody>
+</table>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li><code>task.get(&quot;due&quot;)</code> と <code>task[&quot;due&quot;]</code> の違いは。</li>
+<li>遷移表の行き先を <code>frozenset</code> で持つ利点は何か。</li>
+<li><code>raise ValueError(...) from None</code> は、何のためか。</li>
+<li>再帰関数に必要な 2 つの約束は。</li>
+<li><code>with transaction.atomic():</code> の中で例外が起きると、何が起きるか。</li>
+<li>タイムゾーン付きと無しの <code>datetime</code> を比べるとどうなるか。なぜ API は無しを拒否するのか。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li><code>.get</code> はキーが無いと <code>None</code>(または第 2 引数)を返す。<code>[&quot;due&quot;]</code> は <code>KeyError</code> になる。</li>
+<li>変更できないので、実行中に書き換わる事故が無い。集合なので「含まれるか」の判定が速く、重複もない。</li>
+<li>元の例外の長い連鎖を隠し、読みやすい 1 つのエラーだけを見せるため。</li>
+<li>小さな問題に分けて自分を呼ぶこと。これ以上分けない場合で止まること。</li>
+<li>中の DB 変更が全部取り消される(ロールバック)。例外は外へ伝わる。</li>
+<li><code>TypeError</code>(比べられない)。時刻が日本時間か UTC か分からないと 9 時間ずれても気づけないので、曖昧な入力を受け付けない。</li>
+</ol>
+<h2 id="次へ">次へ</h2>
+<p><a href="L03-database.html">L03 データベースと SQL</a> ― データを「表」で持つ考え方と、SQL を学びます。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L01-web.html"><span>← 前へ</span>L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a><a class="next" href="L03-database.html"><span>次へ →</span>L03 データベースと SQL ― 表・キー・索引・トランザクション</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-値と型">1. 値と型</a></li><li class="lvl2"><a href="#2-文字列">2. 文字列</a></li><li class="lvl2"><a href="#3-コレクションと内包表記">3. コレクションと内包表記</a></li><li class="lvl2"><a href="#4-関数">4. 関数</a></li><li class="lvl2"><a href="#5-クラスと継承">5. クラスと継承</a></li><li class="lvl2"><a href="#6-例外">6. 例外</a></li><li class="lvl2"><a href="#7-再帰">7. 再帰</a></li><li class="lvl2"><a href="#8-ジェネレータとデコレータ">8. ジェネレータとデコレータ</a></li><li class="lvl2"><a href="#9-with後片付けを保証する">9. with(後片付けを保証する)</a></li><li class="lvl2"><a href="#10-モジュールと-import">10. モジュールと import</a></li><li class="lvl2"><a href="#11-標準ライブラリ--道具箱">11. 標準ライブラリ ― 道具箱</a></li><li class="lvl2"><a href="#よくある間違い">よくある間違い</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#次へ">次へ</a></li></ul></nav>
+</div>
+</body>
+</html>

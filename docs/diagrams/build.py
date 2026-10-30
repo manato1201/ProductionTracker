@@ -289,12 +289,161 @@ def code_map() -> str:
     return d.svg()
 
 
+def request_pipeline() -> str:
+    d = Diagram(1600, 900, "1 本のリクエストが通る関門 ― 上から順に検査し、最初に失敗した所で止まる")
+    ORANGE, PURPLE = "#e08a3c", "#8a6fd6"
+
+    gates_top = [
+        (160, "Cloudflare Access", "入口(許可した人だけ)\nJWT を付けて通す", "lock", "ログイン画面へ", GRAY),
+        (460, "ミドルウェア", "NUL を弾く\nキャッシュ禁止を付ける", "gear", "400 NUL 文字", RED),
+        (760, "認証", "Session+CSRF / Token\nAccess JWT / X-API-Key", "shield", "401 / 403 CSRF", RED),
+        (1060, "レート制限", "ユーザー・ログイン\n・取り込み", "pulse", "429 throttled", RED),
+        (1360, "入力の検証", "JSON だけ・型・範囲\n・サイズ上限", "braces", "415 / 400", RED),
+    ]
+    gates_bottom = [
+        (1360, "見える範囲", "visible_* で最初に絞る", "list", "404(存在を明かさない)", RED),
+        (1060, "権限", "役割(viewer は書けない)", "lock", "403 permission_denied", RED),
+        (760, "業務ルール", "Task.transition_to\n遷移表→権限→条件", "gear", "409 / 403", RED),
+        (460, "データベース", "一意制約・CHECK\n・行ロック", "database", "400 / 409(最後の砦)", RED),
+    ]
+    n = 1
+    for x, title, sub, icon, reject, col in gates_top:
+        d.tile(x, 250, title, sub, icon)
+        d.step(n, x - 44, 214, color=BLUE)
+        d.pill(x - text_w(reject) / 2, 352, reject, color=col)
+        n += 1
+    for x, title, sub, icon, reject, col in gates_bottom:
+        d.tile(x, 620, title, sub, icon)
+        d.step(n, x - 44, 584, color=BLUE)
+        d.pill(x - text_w(reject) / 2, 722, reject, color=col)
+        n += 1
+    d.tile(160, 620, "成功", "200 / 201 + JSON", "check", accent="#3da86a")
+
+    for (x1, *_), (x2, *_) in zip(gates_top, gates_top[1:]):
+        d.edge([(x1 + 40, 250), (x2 - 40, 250)], "")
+    d.edge([(1360, 384), (1360, 578)], "")
+    for (x1, *_), (x2, *_) in zip(gates_bottom, gates_bottom[1:]):
+        d.edge([(x1 - 40, 620), (x2 + 40, 620)], "")
+    d.edge([(420, 620), (200, 620)], "")
+
+    d.note(40, 140, "エッジ(Cloudflare)→ Django のミドルウェア・認証・制限 → DRF の検証・権限 → ドメイン(モデル)→ DB", color=INK, size=13.5, bold=True)
+    d.note(40, 800, "凡例", bold=True, color=INK)
+    d.pill(100, 783, "赤い札 = その関門で拒否されたときの応答", color=RED)
+    d.note(40, 850, "どの関門も、通ったあとに前の関門へ戻らない。後ろの関門ほど、業務の意味に近い(ルール・DB)。\n前の関門ほど、安く・早く拒否できる(NUL・レート制限・認証)。", color=MUTED, size=12.5)
+    return d.svg()
+
+
+def text_w(s: str, size: float = 12.5) -> float:
+    from diagram import text_width
+
+    return (text_width(s, size) + 22) / 1.0
+
+
+def auth_flow() -> str:
+    d = Diagram(1600, 1010, "認証の経路 ― 誰が、どのヘッダで、どの認証クラスに届くか")
+    d.tile(130, 230, "画面(ブラウザ)", "ログインして使う", "monitor")
+    d.tile(130, 400, "Access を通った端末", "Cloudflare Access", "cloud", dashed=True)
+    d.tile(130, 570, "DCC パネル(未実装)", "Houdini など", "plug", dashed=True)
+    d.tile(130, 740, "外部ツール", "取り込みスクリプト", "terminal")
+
+    d.group(420, 120, 640, 760, "Django: 認証クラスを上から順に試す", "REST_FRAMEWORK['DEFAULT_AUTHENTICATION_CLASSES']", "green")
+    d.tile(740, 250, "SessionAuthentication401", "セッション + CSRF\n(未認証は 401)", "shield")
+    d.tile(740, 410, "CloudflareAccessAuthentication", "JWT(RS256)の署名・発行者・宛先・期限\nメールで既存ユーザーに対応づけ", "lock", dashed=True)
+    d.tile(740, 580, "TokenAuthentication", "Authorization: Token <ユーザー別>\n(期限なし・要確認)", "braces")
+    d.tile(740, 750, "IngestApiKeyAuthentication", "X-API-Key(取り込み API 専用)\n定数時間で比較", "terminal")
+
+    d.edge([(162, 230), (698, 230)], "Cookie sessionid + X-CSRFToken", label_at=0.5)
+    d.edge([(162, 400), (676, 400)], "Cf-Access-Jwt-Assertion", color=GRAY, dashed=True, label_at=0.45)
+    d.edge([(162, 570), (676, 570)], "Authorization: Token …", color=GRAY, dashed=True, label_at=0.5)
+    d.edge([(162, 740), (676, 740)], "X-API-Key", label_at=0.5)
+
+    d.tile(1330, 400, "request.user", "Django の User\n(役割はプロジェクトごと)", "person")
+    d.tile(1330, 750, "IngestPrincipal", "ユーザーではない外部ツール\n(画面の API は呼べない)", "terminal")
+    d.edge([(782, 250), (1100, 250), (1100, 400), (1298, 400)], "", label_at=0.5)
+    d.edge([(812, 410), (1100, 410)], "", arrow=False)
+    d.edge([(782, 580), (1100, 580), (1100, 400)], "", arrow=False)
+    d.edge([(812, 750), (1298, 750)], "", label_at=0.5)
+
+    d.step(1, 560, 200)
+    d.step(2, 590, 372, color=GRAY)
+    d.step(3, 590, 542, color=GRAY)
+    d.step(4, 560, 712)
+
+    d.group(1120, 880, 440, 100, "どれにも当たらない / 失敗", "", "red", dashed=True)
+    d.note(1140, 935, "401: 認証情報なし・不正   403: Access は通ったが未登録 / CSRF 失敗", color=RED, size=12)
+    d.note(40, 930, "ヘッダが無ければ次のクラスへ進む。ヘッダがあって不正なら、そこで 401(次へは進まない)。", color=MUTED, size=12.5)
+    d.note(40, 960, "取り込み API は IngestApiKeyAuthentication だけ。セッションやトークンでは通らず、キーでは画面の API に入れない。", color=MUTED, size=12.5)
+    return d.svg()
+
+
+def data_model() -> str:
+    d = Diagram(1600, 960, "データモデル ― テーブルと関係(太字 = 主要な項目、UK = 一意、FK = 外部キー)")
+
+    def table(x, y, w, title, rows, color="blue"):
+        d.box(x, y, w, 46 + 18 * len(rows), title, rows, color)
+
+    table(40, 90, 330, "Project", ["code  UK(大文字小文字を区別しない)", "name", "start / due"], "blue")
+    table(40, 290, 330, "ProjectMember", ["project  FK → Project", "user  FK → User", "role  reviewer / artist / viewer", "UK (project, user)"], "blue")
+    table(40, 500, 330, "User(Django 標準)", ["username / email", "is_staff(管理者。承認はできない)"], "gray")
+
+    table(450, 90, 340, "Entity(アセット)", ["project  FK", "name / kind(asset)/ status", "path(品質との突き合わせ用)", "UK (project, kind, name)"], "green")
+    table(450, 330, 340, "Task", ["entity  FK / step  FK", "status  todo → … → done", "priority / due / estimate_h ≥ 0", "assignee  FK → User(SET NULL)", "UK (entity, step)"], "green")
+    table(450, 610, 340, "Step(工程)", ["code  UK / name / order", "初期データはマイグレーション"], "gray")
+
+    table(870, 330, 340, "Version", ["task  FK / number(タスク内の連番)", "status  draft/submitted/approved/rejected", "file_ref / thumb / comment / dcc", "created_by  FK / idempotency_key", "UK (task, number)"], "purple")
+    table(870, 610, 340, "VisualResult", ["version  FK / run_id", "verdict / diff_ratio  0〜1", "captured_at / conditions", "UK (run_id, version)"], "purple")
+
+    table(1290, 90, 290, "QualityReport", ["project  FK / entity  FK(NULL 可)", "scan_run_id / asset_path", "defects(bigint)/ scanned_at", "UK (project, run, path)"], "orange")
+    table(1290, 440, 290, "Note", ["content_type + object_id", "author  FK / body", "対象 = Entity / Task / Version"], "orange")
+
+    d.edge([(370, 140), (450, 140)], "1 : N", color=BLUE)
+    d.edge([(205, 190), (205, 290)], "1 : N")
+    d.edge([(205, 500), (205, 408)], "1 : N", arrow=False)
+    d.edge([(620, 208), (620, 330)], "1 : N")
+    d.edge([(620, 610), (620, 466)], "1 : N", arrow=False)
+    d.edge([(790, 430), (870, 430)], "1 : N")
+    d.edge([(1040, 466), (1040, 610)], "1 : N")
+    d.edge([(790, 130), (1290, 130)], "1 : N(パスの前方一致)", color=GRAY, dashed=True, label_at=0.5)
+    d.edge([(370, 560), (410, 560), (410, 450), (450, 450)], "assignee", color=GRAY, dashed=True, label_at=0.5)
+    d.edge([(1290, 500), (1210, 440)], "GFK", color=GRAY, dashed=True, label_at=0.5)
+
+    d.note(40, 720, "読み方", bold=True, color=INK)
+    d.note(40, 745, "・1 つのアセットに、工程ごとに 1 つのタスク(UK (entity, step))。\n・版の番号はタスクの中で 1, 2, 3 …(行ロックで採番)。\n・品質・画面差分は取り込んだ結果の保存先(参照用。編集しない)。\n・ノートは外部キーでなく ContentType + id なので、\n  対象を消すと一緒に消えるよう GenericRelation を持たせてある。", color=MUTED, size=12.5)
+    d.note(450, 800, "派生する値は保存しない(進捗・件数・期限切れ・次に行ける状態は計算する)。", color=MUTED, size=12.5)
+    return d.svg()
+
+
+def lecture_roadmap() -> str:
+    d = Diagram(1600, 900, "講義の地図 ― 基礎から順に、最後は総合演習")
+    cols = [
+        ("基礎", "blue", 30, [("L01 Web の仕組み", "HTTP · REST · Cookie", "link"), ("L02 Python の基礎", "型 · クラス · 例外", "terminal"), ("L03 データベースと SQL", "キー · 索引 · トランザクション", "database")]),
+        ("フレームワーク", "green", 350, [("L04 Django の基礎", "モデル · ORM · マイグレーション", "layers"), ("L05 Django REST framework", "シリアライザ · ViewSet · 認証", "braces")]),
+        ("アルゴリズム", "purple", 670, [("L06 状態機械", "遷移表 · 全組み合わせ", "gear"), ("L07 文字列とパス", "正規化 · 最長前方一致", "link"), ("L08 並行制御と冪等性", "ロック · 一意制約", "lock"), ("L09 認証と暗号", "ハッシュ · JWT · 制限", "shield")]),
+        ("フロントエンド", "orange", 990, [("L10 JavaScript / TypeScript", "非同期 · 型", "braces"), ("L11 React の基礎", "state · effect · フック", "layers"), ("L12 画面づくり", "CSS · Sass · アクセシビリティ", "palette"), ("L13 かんばん", "イベント · ドラッグ", "kanban")]),
+        ("品質と運用", "red", 1310, [("L14 テスト", "pytest · Vitest", "check"), ("L15 スクリプトを読む", "シェル · Python", "terminal"), ("L16 運用", "Docker · 監視 · 安全", "box"), ("L17 総合演習", "機能を 1 つ足す", "file")]),
+    ]
+    for title, color, x, items in cols:
+        h = 120 + 130 * len(items)
+        d.group(x, 100, 260, h, title, "", color)
+        for i, (t, sub, icon) in enumerate(items):
+            d.tile(x + 130, 210 + i * 130, t, sub, icon)
+    for x in (290, 610, 930, 1250):
+        d.edge([(x, 330), (x + 60, 330)], "")
+    d.note(40, 800, "読む順は L01 → L17。 基礎(青)が不安なら L01〜L03 から。 すでに Django / React を知っているなら、L06〜L09(アルゴリズム)と L14〜L16 から読んでもよい。", color=MUTED, size=13)
+    d.note(40, 830, "各講義の最後に確認問題と答え。 ◆ 掲載したコードは、実行して確かめてある(backend/tracker/tests/test_docs.py)。", color=MUTED, size=13)
+    return d.svg()
+
+
 DIAGRAMS = {
     "architecture.svg": architecture,
     "transition-flow.svg": transition_flow,
     "ingest-flow.svg": ingest_flow,
     "operations.svg": operations,
     "code-map.svg": code_map,
+    "request-pipeline.svg": request_pipeline,
+    "auth-flow.svg": auth_flow,
+    "data-model.svg": data_model,
+    "lecture-roadmap.svg": lecture_roadmap,
 }
 
 

@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="12e6327506df97ba6e16">
+<title>実装時の判断記録 — ProductionTracker</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="learning/01-overview.html">1. 全体像</a></li><li><a href="learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="learning/05-testing.html">5. テストの書き方</a></li><li><a href="learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="ui-rules.html">UI の決めごと表</a></li><li><a href="er.html">ER 図(実装済みモデル)</a></li><li><a href="integration.html">既存ツールとの連携</a></li><li><a href="auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="database.html">データベースの点検(SQL の指針)</a></li><li><a href="operations.html">運用手順(Phase 7)</a></li><li><a href="decisions.html" aria-current="page" class="current">実装時の判断記録</a></li><li><a href="learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../decisions.md"><code>docs/decisions.md</code></a></p>
+    <article class="doc"><h1 id="実装時の判断記録">実装時の判断記録</h1>
+<p>設計書が「実装時に決める」「着手時に確認」としていたことと、設計書から意図的に外れた点。</p>
+<h2 id="技術・バージョン2026-10-25-に確認して固定">技術・バージョン(2026-10-25 に確認して固定)</h2>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>選んだもの</th>
+<th>理由・注意</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Django</td>
+<td><strong>5.2 LTS</strong>(<code>&gt;=5.2,&lt;5.3</code>)</td>
+<td>「LTS 系」の指定。PyPI の最新は 6.1 だが LTS ではない</td>
+</tr>
+<tr>
+<td>DRF</td>
+<td>3.18</td>
+<td>5.2 / Python 3.13 で動作確認</td>
+</tr>
+<tr>
+<td>Python</td>
+<td>3.13</td>
+<td>開発環境のもの。Dockerfile も 3.13</td>
+</tr>
+<tr>
+<td>DB</td>
+<td>PostgreSQL 16(compose)/ SQLite(テストの既定)</td>
+<td>テストは SQLite と PostgreSQL 16 の<strong>両方</strong>で全件通した(<code>POSTGRES_HOST</code> を渡すと PG で走る)</td>
+</tr>
+<tr>
+<td>React / Router</td>
+<td>React 19 / react-router-dom 7</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>MUI</strong></td>
+<td><strong>7.3</strong>(最新の 9.5 ではない)</td>
+<td>9.x は API の差分を確認できておらず、学習対象の安定した基準として 7 系に固定。上げるときは型チェックとビルドで検出できる</td>
+</tr>
+<tr>
+<td>ビルド・テスト</td>
+<td>Vite 8 / TypeScript 7 / Vitest 5</td>
+<td>最新。<code>tsc --noEmit</code> + <code>vite build</code> + Vitest が通ることを確認</td>
+</tr>
+<tr>
+<td>Sentry</td>
+<td><code>sentry-sdk</code> 2.73 / <code>@sentry/react</code> 11.9</td>
+<td><strong>v11 では <code>sendDefaultPii</code> が無く <code>dataCollection</code> に置き換わっていた</strong>(型エラーで発覚)。個人情報・ヘッダ・本文・クエリを送らない設定にした</td>
+</tr>
+</tbody>
+</table>
+<p>| ESLint | <strong>入れていない</strong> | <code>typescript-eslint</code> の peer が TypeScript <code>&lt;6.1</code> で、<strong>TypeScript 7 に未対応</strong>(強制インストールは壊れた依存になる)。型チェックは <code>tsc</code>、挙動は Vitest。ESLint を足すなら TypeScript を 5.9 / 6.0 に下げる必要がある |</p>
+<h2 id="ドラッグドロップのライブラリ設計書実装時に比較">ドラッグ&amp;ドロップのライブラリ(設計書「実装時に比較」)</h2>
+<table>
+<thead>
+<tr>
+<th>候補</th>
+<th>評価</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>@dnd-kit/core(採用)</strong></td>
+<td>ポインタ・タッチのセンサーを分けられ、<code>DragOverlay</code> で「傾き + 影」を自由に描ける。React 19 で動作。キーボード操作は標準のセンサー(座標移動)だと列移動に向かないため、<strong>メニューと <code>Shift+←/→</code></strong> を別に用意した</td>
+</tr>
+<tr>
+<td>@hello-pangea/dnd</td>
+<td>キーボード操作が組み込みで手軽だが、見た目(傾き・影)の自由度が低く、動きは同ライブラリの作法に縛られる</td>
+</tr>
+<tr>
+<td>HTML5 ネイティブ DnD</td>
+<td>依存ゼロだが、タッチ端末で動かない</td>
+</tr>
+</tbody>
+</table>
+<p>タッチは「200ms 長押しでドラッグ開始」にして、縦スクロールを妨げないようにした。マウスは 6px 動いたらドラッグ(クリックと区別)。</p>
+<h2 id="設計書から外れた点・補った点">設計書から外れた点・補った点</h2>
+<ol>
+<li><strong>状態の値は英語コード</strong>(<code>todo</code> / <code>in_progress</code> / <code>review</code> / <code>done</code>、版は <code>draft</code> / <code>submitted</code> / <code>approved</code> / <code>rejected</code>)。表示名は日本語ラベルで、API は <code>status_label</code> も返す。DB・API の値を日本語にすると将来の連携で扱いにくいため。</li>
+<li><strong>プロジェクトを作った人は、そのプロジェクトのレビュアーになる</strong>。そうしないと作成者が自分のプロジェクトを編集も承認もできない。他のメンバーの追加は管理画面(<code>/admin/</code>)で行う(設計書にメンバー管理の API・画面は無い)。</li>
+<li><strong><code>is_staff</code> でも承認はできない</strong>(レビュアーの役割が要る)。設計書 §3.3「承認できるのは、プロジェクトのレビュアーのみ」を字義どおりに実装した。ただし管理者は全プロジェクトを閲覧でき、承認以外の編集はできる。</li>
+<li><strong>閲覧者(viewer)は書き込み不可</strong>(ノートも含む)。設計書は閲覧者のノート可否を定めていない。</li>
+<li><strong>ヒントとしての <code>next_statuses</code></strong> をタスクの応答に追加。遷移表(サーバー)の結果を返し、UI が遷移ルールを二重に持たないため。権限や「版が必要」などの追加条件は含まない(最終判断は <code>transition</code> のみ)。</li>
+<li><strong>遷移の検査順</strong>: 遷移表 → 権限(403)→ 追加条件(409 <code>version_required</code>)。「未着手 → 完了」は誰が試しても 409。</li>
+<li><strong><code>shot</code> は未実装</strong>(<code>kind</code> は残すが、API は <code>asset</code> 以外を 400 で拒否)。設計書「まずは asset のみ」。</li>
+<li><strong>画面の一覧の上限</strong>: かんばん・タスク一覧は最大 10 ページ(2,000 件)まで読む。超えたら画面に件数を出す。プロジェクト一覧は 200 件まで。</li>
+<li><strong>API の並べ替えは許可リスト</strong>。それ以外の <code>ordering</code> は 400。同順位は id で固定(ページ送りがぶれない)。</li>
+<li><strong>取り込み API の鍵が未設定なら、常に 401</strong>(fail closed)。</li>
+<li><strong>取り込みの時刻はタイムゾーン付き必須</strong>。<code>send_quality.py</code> も、タイムゾーンが無い値は <code>--naive-offset</code> で明示しない限り止まる(黙って UTC にしない)。</li>
+<li><strong>プロジェクトコードは大文字小文字を区別せず一意</strong>(<code>demo</code> / <code>DEMO</code> で URL・取り込みの指定が曖昧になるのを避ける)。</li>
+</ol>
+<h2 id="ascii-モチーフ設計書-追補-2026-10-27で決めたこと">ASCII モチーフ(設計書 追補 2026-10-27)で決めたこと</h2>
+<p>設計書は「提案/未実装」で、細部は「UI を作る段階で決める」としていた。次のように決めて実装した。</p>
+<ul>
+<li><strong>元資料 <code>ASCII_MOTIF_MAP_2026-10-27.md</code> はこのリポジトリに無く、中身を確認できていない。</strong> 設計書の表の「実装系統: B. Grow」の定義も不明なので、「段階が成長する(種 → 芽 → 花 → 実)」という名前どおりの意味で解釈した。元資料と食い違うなら、<code>domain/motif.ts</code> の差し替えで直せる。</li>
+<li><strong>上流(<code>stackedlol/ascii-sharks</code>)のコードは使っていない。</strong> 設計書(2026-10-30 版)は上流の動作を「確認済み(型検査・ビルド成功、60fps)」としたが、このアプリでは、依存を増やさず、絵とタイマーを自前で書いた(外部依存なし・数十行)。上流の描画負荷の確認は、各プロジェクトへ組み込んだときの負荷が未確認のまま(設計書どおり)。</li>
+<li><strong>出す場所は「空の列」だけ</strong>にした(設計書「動きは空・待機の状態だけ=P8」)。読み込み中のスケルトン、一覧の空状態(プロジェクトなど)には出していない。出したくなったら <code>EmptyState</code> の <code>motif</code> に渡すだけ。</li>
+<li>工程の状態との対応は、設計書が「(候補)」としていたので、状態の並び順どおりに 1 対 1(種・芽・花・実)にした。</li>
+</ul>
+<h2 id="第4弾の外部資料z32で決めたこと">第4弾の外部資料(Z32)で決めたこと</h2>
+<p>設計書は「提案(未実装)」。次のように具体化した。</p>
+<ul>
+<li><strong>認証は Cloudflare Access(OIDC)</strong>: 任意の認証クラスとして実装し、<strong>既定では無効</strong>にした(Access が無い開発環境でも動くように)。ユーザーは自動作成しない(既定)。実 Cloudflare では未検証。</li>
+<li><strong>認可はロール別・最小権限</strong>: ロール × 操作の一覧をテストにした(<a href="security.html">security.md</a>)。<strong>承認は管理者でもレビュアーの役割が要る</strong>。</li>
+<li><strong>401 と 403 の使い分け</strong>: 未認証は 401、権限なしは 403、<strong>見えないものは 404</strong>(存在を明かさない)。</li>
+<li><strong>OWASP API Top 10(2023)を基準にした点検</strong>を、自動テストにした(全エンドポイントは未認証で 401 など)。</li>
+<li><strong>「レート制限・入力検証は資料の外なので別に設計する」</strong>: 3 種類のレート制限(ユーザー / ログイン / 取り込み)、自由記述・JSON の上限、<code>Cache-Control: no-store</code>。値は環境変数。</li>
+<li><strong>「自前の Keycloak・cert-manager は要らない」</strong>: 入れていない。</li>
+<li><strong>SQL の指針</strong>: <a href="database.html">database.md</a>。値の種類が少ない <code>status</code> 単独の索引を削除、<code>iexact</code> を索引の式にそろえた、一覧の <code>ORDER BY</code> をテストで強制、主要クエリの実行計画をテストとコマンド(<code>explain_queries</code>)にした。資料は D1(SQLite)向けで MySQL の <code>EXPLAIN</code> 前提の記述があるが、このアプリは PostgreSQL(テストは SQLite)なので、<code>EXPLAIN</code> と <code>EXPLAIN QUERY PLAN</code> の両方を使い分けた。</li>
+</ul>
+<h2 id="入力の堅牢性設計書にない追加">入力の堅牢性(設計書にない追加)</h2>
+<ul>
+<li><strong>JSON 以外の本文(フォーム・multipart)は受け付けない(415)。</strong> 画面もスクリプトも JSON だけを送る。受け付ける形式が少ないほど、検証すべき入口が減る。</li>
+<li><strong>NUL 文字(<code>\x00</code>)は URL(ミドルウェア)と JSON の項目(シリアライザ)で 400 にする。</strong> PostgreSQL は保存できず、通すと 500 になる(SQLite は通すので、SQLite のテストだけでは気づけない)。</li>
+<li><strong>bigint を超える ID は 400。</strong> <code>QualityReport.defects</code> は、同じパスを合算するので bigint。</li>
+</ul>
+<h2 id="実装しなかったもの">実装しなかったもの</h2>
+<ul>
+<li>追補の**提案(未実装)**扱いの項目のうち、<strong>ASCII モチーフ以外</strong>: TakayuStudio 系(比較ラボ・ウォッチ・j/k ショートカット・定型項目)、外部リソース(形式検証・security-audit・skills.sh)。</li>
+<li><strong>Phase 8 のうち DCC パネル本体</strong>、ローカルキュー、確認ダイアログ(API 側のみ実装)。</li>
+<li><strong>Phase 9</strong>(three.js の GLB ビューア)、<strong>Phase 10</strong>(Cloudflare Containers の検証スパイク。実環境が必要で、設計書も「半日の検証に留める」としているもの)。</li>
+<li>Firebase Auth(設計書どおり。差し込み口だけ: <code>docs/auth.md</code>)。</li>
+</ul>
+</article>
+    <nav class="pager"><a class="prev" href="operations.html"><span>← 前へ</span>運用手順(Phase 7)</a><a class="next" href="learning-log.html"><span>次へ →</span>学習ログ(各スキルで詰まった点)</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#技術・バージョン2026-10-25-に確認して固定">技術・バージョン(2026-10-25 に確認して固定)</a></li><li class="lvl2"><a href="#ドラッグドロップのライブラリ設計書実装時に比較">ドラッグ&amp;ドロップのライブラリ(設計書「実装時に比較」)</a></li><li class="lvl2"><a href="#設計書から外れた点・補った点">設計書から外れた点・補った点</a></li><li class="lvl2"><a href="#ascii-モチーフ設計書-追補-2026-10-27で決めたこと">ASCII モチーフ(設計書 追補 2026-10-27)で決めたこと</a></li><li class="lvl2"><a href="#第4弾の外部資料z32で決めたこと">第4弾の外部資料(Z32)で決めたこと</a></li><li class="lvl2"><a href="#入力の堅牢性設計書にない追加">入力の堅牢性(設計書にない追加)</a></li><li class="lvl2"><a href="#実装しなかったもの">実装しなかったもの</a></li></ul></nav>
+</div>
+</body>
+</html>

@@ -24,3 +24,7 @@ backups/
 .DS_Store
 .idea/
 .vscode/
+
+# docs の HTML 版を作る道具
+docs/tools/node_modules/
+docs/tools/.cache/

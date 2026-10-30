@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="244a981bdb29b37ec93d">
+<title>学習ログ(各スキルで詰まった点) — ProductionTracker</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="learning/01-overview.html">1. 全体像</a></li><li><a href="learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="learning/05-testing.html">5. テストの書き方</a></li><li><a href="learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="ui-rules.html">UI の決めごと表</a></li><li><a href="er.html">ER 図(実装済みモデル)</a></li><li><a href="integration.html">既存ツールとの連携</a></li><li><a href="auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="database.html">データベースの点検(SQL の指針)</a></li><li><a href="operations.html">運用手順(Phase 7)</a></li><li><a href="decisions.html">実装時の判断記録</a></li><li><a href="learning-log.html" aria-current="page" class="current">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../learning-log.md"><code>docs/learning-log.md</code></a></p>
+    <article class="doc"><h1 id="学習ログ各スキルで詰まった点">学習ログ(各スキルで詰まった点)</h1>
+<p>実装中に実際に引っかかったことの記録。新しいものを上に足す。</p>
+<h2 id="外部資料z32の指針で点検した3-回目のレビュー">外部資料(Z32)の指針で点検した(3 回目のレビュー)</h2>
+<p>OWASP API Top 10 と SQL の指針を、<strong>文書のチェックリストでなく自動テストにした</strong>ら、見落としが数件見つかった。</p>
+<ul>
+<li><strong>レート制限がログインにしか無かった。</strong> 「全員が認証済みの API」でも、画面のバグ(ループで API を呼ぶ)や悪意のある連打で資源を使い切れる。ユーザーごと・取り込み全体の枠を足した。</li>
+<li><strong>API の応答がキャッシュされうる。</strong> Cloudflare を前に置くと、認証済みのデータが共有キャッシュに残りうる。<code>no-store</code> を全 API 応答に。</li>
+<li><strong>自由記述に上限が無かった。</strong> 本文の上限(2.5MB)まで <code>dcc</code> やコメントを保存できた。項目ごとに上限を決めた。</li>
+<li><strong>値の種類が 4 つしかない列(<code>status</code>)に索引があった。</strong> 効かないうえ、書き込みを遅くする。外した。</li>
+<li><strong><code>iexact</code> は、LOWER の索引を使わない。</strong> PostgreSQL では <code>UPPER(code)</code> で比べる。<strong>関数をかけた列には、同じ関数の索引</strong>。式をそろえた。</li>
+<li><strong>同じ落とし穴を、もう一度踏んだ。</strong> 新しい認証クラス(Cloudflare Access)で <code>authenticate_header</code> を書き忘れ、失敗が 401 でなく 403 になった。テストが見つけたが、<strong>過去に学習ログに書いた同じ内容</strong>。教訓: 書いただけでは繰り返す。<strong>チェックリスト(新しい認証クラスの雛形 = <code>cf_access.py</code>)に入れる</strong>。</li>
+<li>「全エンドポイントは未認証で 401」のテストは、<strong>ルーターから URL を自動で洗い出す</strong>ので、新しいエンドポイントを足した人が何もしなくても対象になる。ただし、実在しない URL(ノートの詳細は無い)を除くために <code>resolve()</code> で絞る必要があった。</li>
+<li>SQLite の <code>EXPLAIN QUERY PLAN</code> は「索引があるか」を決定的に確かめられる(小さな表でも使う)。PostgreSQL は小さな表では索引を使わないことがあるので、<strong>テストは SQLite で、実データの確認は PostgreSQL で</strong>と分けた。</li>
+</ul>
+<h2 id="入力を壊しにいくテストで見つけた不具合2-回目のレビュー">入力を壊しにいくテストで見つけた不具合(2 回目のレビュー)</h2>
+<p>「正しい入力で動く」の次は「変な入力で 500 にならない」。API の全一覧・詳細・書き込みに、NUL 文字・巨大な整数・不正な JSON・深いネスト・NaN などを機械的に投げた(<code>tests/test_robustness.py</code>、約 215 ケース)。</p>
+<ul>
+<li><strong>PostgreSQL だけで落ちるものがある。</strong> NUL 文字(検索語・URL・JSON の項目)は SQLite では通り、PostgreSQL では <code>DataError</code> で 500。SQLite のテストが全部緑でも安心できない。PostgreSQL でも流す。</li>
+<li><strong>逆に SQLite だけで落ちるものもある。</strong> bigint を超える ID は SQLite が <code>OverflowError</code>(500)。PostgreSQL は(Django が)空の結果にする。<strong>どちらの DB でも 400 にそろえた。</strong></li>
+<li><strong>同じ値を合算する列は、1 行の上限では足りない。</strong> 同じパスの欠陥数を足し合わせるので、1 行ずつは 32 ビットに収まっても合計が溢れる。列を bigint にした。</li>
+<li><strong>受け付けない形式は、受け付けない。</strong> DRF の既定はフォーム・multipart も受け付ける。使わない入口は閉じる(415)。</li>
+<li>入口で 1 回弾けるものはミドルウェアで(URL の NUL)、項目の中身はシリアライザで(JSON の NUL)。個々のビューに書かない。</li>
+</ul>
+<h2 id="レビューで見つけた不具合リファクタリング後の見直し">レビューで見つけた不具合(リファクタリング後の見直し)</h2>
+<p>「動いた」と「正しい」は別、という記録。<strong>再現してから直した</strong>ものには ✔ を付けた(修正前のコードでブラウザ操作を再現し、修正後に解消を確認)。</p>
+<ul>
+<li>✔ <strong>ドロワーで状態を変えても、タスク一覧(タブ)が古いまま。</strong> 再読み込みの合図に「更新日時 + タスク総数」を使っていたが、状態の変更ではどちらも変わらない。合図を「ドロワーで変更があった回数」に変えた。<strong>教訓: 再読み込みの条件を、結果から推測しない。変更を知らせる明示の合図を持つ。</strong></li>
+<li>✔ <strong>「⋮」ボタンの上でマウスを動かすと、ドラッグが始まる。</strong> dnd-kit の <code>MouseSensor</code> は <code>mousedown</code> を見るのに、<code>pointerdown</code> だけ止めていた。ポインタイベントとマウスイベントは別物で、前者を止めても後者は届く。</li>
+<li><strong>ノートが孤児になる。</strong> 対象は <code>GenericForeignKey</code> で、DB の外部キーではないため、アセットを消してもノートが残る。<code>GenericRelation</code> を足して連鎖削除にした(スキーマ変更なし)。</li>
+<li><strong><code>demo</code> と <code>DEMO</code> が別のプロジェクトになる。</strong> 一意制約を <code>Lower(code)</code> にし、DRF は式の制約を検査しないので、API 側でも先に弾いた(でないと 500 になる)。</li>
+<li><strong>タイムゾーンの無い時刻を黙って補っていた。</strong> DRF の既定は「サーバーの時間帯とみなす」、スクリプトは「UTC とみなす」で、食い違っていた。どちらも黙って補うのをやめ、明示を必須にした。</li>
+<li><strong>同じスキャン実行の同時再送で一意制約違反(500)になり得る。</strong> 「削除 → 再作成」の間に割り込まれるため。プロジェクトの行をロックして直列化した。</li>
+<li><strong>権限の判定が 2 か所にあった</strong>(モデルとシリアライザ)。UI に出す <code>can_write</code> と、実際の判定がずれる危険があったので、1 つの関数に寄せ、「常に一致する」テストを足した。</li>
+<li><strong>ログインに試行回数の制限が無かった。</strong> DRF の <code>ScopedRateThrottle</code> で 10 回/分にした。</li>
+<li>本番の既定 <code>ALLOWED_HOSTS</code> にテスト用の <code>testserver</code> が入っていた。テスト設定へ移した。</li>
+<li>絞り込みの値(<code>?status=</code> など)のタイプミスが「0 件」に見えていた。選択肢にない値は 400 にした。</li>
+</ul>
+<h2 id="django--drf">Django / DRF</h2>
+<ul>
+<li><strong>未認証が 401 でなく 403 になる。</strong> DRF は認証クラスが <code>authenticate_header()</code> を返さないと、未認証・認証失敗を 403 に変える。<code>SessionAuthentication</code> を継承して <code>authenticate_header</code> を足し、画面側が 401 を見てログイン画面へ戻せるようにした(<code>tracker/auth.py</code>)。ログイン用の CSRF だけ検査するクラスでも同じ。</li>
+<li><strong><code>force_authenticate</code> は認証クラスを素通りする。</strong> 「画面の利用者(セッション)は取り込み API を呼べない」を <code>force_authenticate</code> で試すと、認証クラスが動かず 401 でなく 403(権限クラスで拒否)になる。実際のセッションを使う <code>force_login</code> で試すのが正しい。</li>
+<li><strong><code>select_for_update</code> は SQLite では何もしない。</strong> 版番号の連番(タスク行をロック)は PostgreSQL でしか効果を検証できない。テストを SQLite と PostgreSQL 16 の両方で通した(同時実行そのものの負荷試験はしていない)。<code>(task, number)</code> の一意制約を最後の砦にしてある。</li>
+<li>**<code>UniqueConstraint</code> に <code>condition=</code>(鍵が NULL でないときだけ一意)**で、Idempotency-Key を「鍵があるときだけユーザーごとに一意」にできた。NULL を許す一意制約は DB によって扱いが違うので、条件付きにして意図を明示した。</li>
+<li>遷移ルールをモデルのメソッドに集約すると、API・テスト・(将来の)管理画面が同じルールを通る。<strong>全 4×4 の組み合わせ表を parametrize</strong> でテストしたので、表を変えたら必ずテストが落ちる(設計書の「全遷移の表」のテスト)。</li>
+</ul>
+<h2 id="pytest--factory_boy">pytest / factory_boy</h2>
+<ul>
+<li><code>PostGenerationMethodCall(&quot;set_password&quot;)</code> + <code>skip_postgeneration_save = True</code> だと、<strong>パスワードが DB に保存されない</strong>。ログインのテストが 401 になり、原因はファクトリだった。<code>_create</code> で <code>create_user</code> を呼ぶ形にした。</li>
+<li>設定を <code>config.settings_test</code> に分けた。<code>DJANGO_SECRET_KEY</code> 未設定でも起動する分岐を本体に入れず、テスト用モジュールで許可する。</li>
+</ul>
+<h2 id="react--react-router">React / React Router</h2>
+<ul>
+<li>画面の状態(開いているタスク)は <code>?task=ID</code> に持たせると、共有・戻るボタン・Esc で閉じる、が URL だけで済む。</li>
+<li>取得フックは「古い応答を捨てる」(連番で判定)だけで、フィルタを素早く切り替えても表示がぶれなかった。TanStack Query は入れていない(規模的に不要と判断。かんばんの先行更新と巻き戻しは自前で数十行)。</li>
+</ul>
+<h2 id="mui">MUI</h2>
+<ul>
+<li><strong>AppBar の z-index がドロワーを覆った。</strong> 固定の AppBar(<code>zIndex: drawer + 1</code>)の下に、右から出すタスクのドロワーの上端(題名・閉じるボタン)が隠れていた。スクリーンショットで気づいた。ドロワーを <code>zIndex: modal</code> にして解決。</li>
+<li>狭い幅(360px)で、タスクの行の右端(優先度・状態・期日)が縮まず <strong>374px まで横にはみ出した</strong>。ブラウザで全画面の <code>scrollWidth</code> を計測して発覚。行を縦に積む指定を足した。</li>
+</ul>
+<h2 id="sass">Sass</h2>
+<ul>
+<li>デザイントークンの出どころを 1 つにするため、<code>_tokens.scss</code> に Sass マップで定義 → CSS 変数(<code>--pt-*</code>)として出力し、同じ値を <code>tokens.module.scss</code> の <code>:export</code> で JS(MUI テーマ)にも渡した。ライト/ダークは <code>data-theme</code> と <code>prefers-color-scheme</code> の両方に対応。</li>
+<li>色のコントラストは目視でなく計算で確認した(8 色 × 3 背景 × 2 テーマ、全て 4.5:1 以上)。</li>
+</ul>
+<h2 id="sentry">Sentry</h2>
+<ul>
+<li><strong><code>@sentry/react</code> v11 に <code>sendDefaultPii</code> が無い。</strong> 代わりに <code>dataCollection</code>(userInfo / cookies / httpHeaders / httpBodies / urlQueryParams を個別に指定)。型チェックで気づいた。</li>
+<li>Sentry に実際にイベントが届くことは、DSN が無く確認できていない。代わりに、<strong>送信の直前(トランスポート)を差し替えて</strong>、Django の意図的な例外が 1 件捕捉され、Authorization / X-API-Key / Cookie が含まれないことを確認した。React 側は <code>scrubEvent</code> を単体テストで確認。</li>
+</ul>
+<h2 id="vite--typescript--vitest">Vite / TypeScript / Vitest</h2>
+<ul>
+<li><code>vite.config.ts</code> で <code>process.env</code> を使うと、<code>@types/node</code> が無く型エラー。</li>
+<li>fetch のモックで同じ <code>Response</code> を 2 回返すと、2 回目に本文が読めない(使い捨て)。<code>mockImplementation</code> で毎回作る。</li>
+<li>並べ替えや絞り込みのチップは、<code>aria-pressed</code> を付けるとテストでも画面読み上げでも状態が分かる。</li>
+</ul>
+<h2 id="ドラッグドロップ">ドラッグ&amp;ドロップ</h2>
+<ul>
+<li>ポインタ操作と、キーボード・タッチの代替操作を<strong>同じ関数(<code>onMove</code>)に流す</strong>と、拒否されたときの巻き戻しとトーストが 1 か所で済む。</li>
+<li>ドロップ前に遷移の可否を UI で判断せず、サーバーの 409/403 を信じて戻す(設計書の方針)。そのぶん「どの遷移が可能か」は <code>next_statuses</code> でサーバーから受け取る。</li>
+</ul>
+<h2 id="docker">Docker</h2>
+<ul>
+<li>この開発環境には Docker のデーモンがなく、<code>docker compose config</code> による構文確認までしかできていない。<code>docker compose up</code> での起動、DB 停止時の <code>/healthz</code>(代わりに PostgreSQL を直接止めて確認済み)は、手元の PC での確認が必要。</li>
+</ul>
+</article>
+    <nav class="pager"><a class="prev" href="decisions.html"><span>← 前へ</span>実装時の判断記録</a><span></span></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#外部資料z32の指針で点検した3-回目のレビュー">外部資料(Z32)の指針で点検した(3 回目のレビュー)</a></li><li class="lvl2"><a href="#入力を壊しにいくテストで見つけた不具合2-回目のレビュー">入力を壊しにいくテストで見つけた不具合(2 回目のレビュー)</a></li><li class="lvl2"><a href="#レビューで見つけた不具合リファクタリング後の見直し">レビューで見つけた不具合(リファクタリング後の見直し)</a></li><li class="lvl2"><a href="#django--drf">Django / DRF</a></li><li class="lvl2"><a href="#pytest--factory_boy">pytest / factory_boy</a></li><li class="lvl2"><a href="#react--react-router">React / React Router</a></li><li class="lvl2"><a href="#mui">MUI</a></li><li class="lvl2"><a href="#sass">Sass</a></li><li class="lvl2"><a href="#sentry">Sentry</a></li><li class="lvl2"><a href="#vite--typescript--vitest">Vite / TypeScript / Vitest</a></li><li class="lvl2"><a href="#ドラッグドロップ">ドラッグ&amp;ドロップ</a></li><li class="lvl2"><a href="#docker">Docker</a></li></ul></nav>
+</div>
+</body>
+</html>

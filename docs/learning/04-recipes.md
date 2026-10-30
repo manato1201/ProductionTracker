@@ -11,6 +11,16 @@ cd frontend && npx tsc --noEmit && npm test && npm run build
 
 > **コンパイラを味方にする**: フロントで型を変えたら `npx tsc --noEmit` が、直すべき場所を全部教えてくれる(テスト用のデータ生成関数も含む)。先に型を変えて、赤くなった所を順に直す。
 
+```mermaid
+flowchart TD
+    Q{"何を足す?"} --> F["項目(フィールド)"] --> A["レシピ A<br/>モデル → マイグレーション → シリアライザ → 型 → 画面"]
+    Q --> ST["状態"] --> B["レシピ B<br/>models → 画面の表(Record)→ トークン → テスト"]
+    Q --> AP["API"] --> C["レシピ C<br/>visible_* → シリアライザ → ビュー → URL → 5 つのテスト"]
+    Q --> SC["画面"] --> D["レシピ D<br/>useResource → 4 状態 → Route → 360px"]
+    Q --> IN["取り込み口"] --> E["レシピ E<br/>冪等性の鍵 → ingest → スクリプト → 件数の突き合わせ"]
+    Q --> RO["役割"] --> Fr["レシピ F<br/>Role → can_write_as / can_review_as"]
+```
+
 ---
 
 ## A. タスクに項目を足す(例: `description`)

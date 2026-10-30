@@ -9,7 +9,7 @@
 | バックエンド | Django 5.2 LTS + Django REST framework、PostgreSQL 16(テストの既定は SQLite) |
 | フロント | Vite + React 19 + TypeScript、React Router、MUI 7、Sass(デザイントークン)、@dnd-kit |
 | 監視 | Sentry(Django / React)、`/healthz`、JSON ログ |
-| テスト | pytest + pytest-django + factory_boy(597 件)/ Vitest(37 件) |
+| テスト | pytest + pytest-django + factory_boy(877 件(うち文書内コードの検証 約 280 件))/ Vitest(37 件) |
 | 起動 | `docker compose`(`db` / `web` / `frontend`) |
 
 ![タスクボード](docs/screenshots/board.png)
@@ -25,9 +25,52 @@
 | [状態遷移の流れ](docs/diagrams/transition-flow.svg) | かんばんで列を動かしてから、トーストが出るまでの 9 手順 |
 | [取り込みの流れ](docs/diagrams/ingest-flow.svg) | `insight.db` が品質タブに出るまでの 9 手順と、件数の突き合わせ |
 | [コードの地図](docs/diagrams/code-map.svg) | どのファイルが何を担当し、どちら向きに呼ぶか |
+| [リクエストが通る関門](docs/diagrams/request-pipeline.svg) | Cloudflare → ミドルウェア → 認証 → 制限 → 検証 → 見える範囲 → 権限 → ルール → DB の 9 つの関門と、拒否の応答 |
+| [認証の経路](docs/diagrams/auth-flow.svg) | 画面・Access・DCC パネル・外部ツールが、どのヘッダでどの認証クラスに届くか |
+| [データモデル](docs/diagrams/data-model.svg) | テーブルと関係、一意制約 |
+| [講義の地図](docs/diagrams/lecture-roadmap.svg) | 基礎から総合演習までの 18 回の講義の流れ |
 | [運用構成](docs/diagrams/operations.svg) | 自分の PC + Cloudflare Tunnel / Access、バックアップ、監視 |
 
 ![状態遷移の流れ](docs/diagrams/transition-flow.svg)
+
+### 仕組みの要点(mermaid。Markdown だけで読める版)
+```mermaid
+flowchart LR
+    U([ユーザー]) -->|HTTPS| FE["画面<br/>React + MUI + Sass"]
+    FE -->|"REST / JSON<br/>セッション + CSRF"| API["API<br/>Django + DRF"]
+    API -->|SQL| DB[("PostgreSQL")]
+    ADIS["AssetDataInsightSuite<br/>insight.db"] -->|"POST /ingest/quality<br/>X-API-Key"| API
+    VRQA["VisualRegressionQATool"] -->|"POST /ingest/visual<br/>X-API-Key"| API
+    DCC["DCC パネル<br/>(未実装)"] -.->|"POST /versions<br/>Token + Idempotency-Key"| API
+    HUB["ToolOrchestrationHub"] -.->|"GET /healthz"| API
+    API -.->|エラー| SEN["Sentry"]
+    FE -.->|エラー| SEN
+```
+
+かんばんで列を動かしたときの流れ(遷移の可否は、画面でなくサーバーが決める):
+
+```mermaid
+sequenceDiagram
+    actor U as ユーザー
+    participant B as かんばん(React)
+    participant A as API(Django)
+    participant M as Task.transition_to
+    participant D as PostgreSQL
+    U->>B: カードを別の列へドロップ
+    B->>B: 画面を先に動かす(元の状態を覚える)
+    B->>A: POST /tasks/{id}/transition/ {to}
+    A->>D: 行をロック(select_for_update)
+    A->>M: 遷移表 → 権限 → 追加条件
+    alt すべて通る
+        M->>D: status を更新
+        A-->>B: 200 + 最新のタスク
+        B-->>U: 成功トースト
+    else 失敗(409 または 403)
+        A-->>B: {code, detail}
+        B->>B: 元の列へ戻す
+        B-->>U: 理由のトースト
+    end
+```
 
 ## 起動(Docker)
 ```bash
@@ -79,6 +122,8 @@ cd frontend && npm test && npm run build  # Vitest / 型チェック + ビルド
 
 状態は「色 + アイコン + 文字」で示し、ライト/ダークの切替、幅 360px で横スクロールなし。詳しくは [docs/ui-rules.md](docs/ui-rules.md)。
 
+空の列には、状態に対応した植物の ASCII モチーフ(種 → 芽 → 花 → 実)を飾りとして出す(読み上げ対象外・動きを減らす設定では静止画)。[docs/ui-rules.md](docs/ui-rules.md)。
+
 | ドロワー(版・ノート・品質) | 品質(取得日時の固定表示) | ダーク |
 |---|---|---|
 | ![](docs/screenshots/task-drawer.png) | ![](docs/screenshots/entity-quality.png) | ![](docs/screenshots/board-dark.png) |
@@ -114,12 +159,16 @@ cd frontend && npm test && npm run build  # Vitest / 型チェック + ビルド
 backend/    Django(config/ 設定、tracker/ アプリ。tests/ に pytest)
 frontend/   Vite + React(src/styles にデザイントークン)
 scripts/    send_quality.py / send_visual.py(取り込み)、backup.sh / restore.sh
-docs/       ui-rules.md, er.md, integration.md, auth.md, operations.md, decisions.md, learning-log.md, screenshots/
+docs/       設計・仕様(*.md)、lectures/(講義)、learning/(実践ガイド)、diagrams/(図)、html/(HTML 版)、tools/(HTML 版の生成)
 docker-compose.yml  .env.example
 ```
 
 ## ドキュメント
-- **[docs/learning/](docs/learning/README.md) — 保守・拡張のための学習資料(最初にここ)**
+全ての文書は **Markdown(mermaid 記法つき)と HTML の両方**で読める。HTML 版は [docs/html/index.html](docs/html/index.html)(JavaScript なし・図は埋め込み済み。ブラウザで開く)。
+Markdown を直したら `python docs/tools/build_html.py` で HTML を作り直す(手順: [docs/diagrams/README.md](docs/diagrams/README.md)、古くなっていないかはテストが見る)。
+
+- **[docs/lectures/](docs/lectures/README.md) — 講義資料(基礎から。Web・Python・DB・Django・アルゴリズム・React・テスト・運用まで)**
+- **[docs/learning/](docs/learning/README.md) — 保守・拡張のための実践ガイド(レシピ・トラブルシューティング)**
 - [docs/ui-rules.md](docs/ui-rules.md) — UI の決めごと表 / [docs/er.md](docs/er.md) — ER 図
 - [docs/integration.md](docs/integration.md) — AssetDataInsightSuite・VisualRegressionQATool・Hub・Publish API
 - [docs/auth.md](docs/auth.md) — 認証(セッション・トークン・API キー・Cloudflare Access)と、差し込み口

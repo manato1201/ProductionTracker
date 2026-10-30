@@ -40,7 +40,35 @@ BACKUP_RCLONE_DEST=r2:my-bucket/pt ./scripts/backup.sh   # rclone で R2 にも�
 | W012 / W016 Secure クッキー | `DJANGO_SECURE_COOKIES=1`(https で公開するとき) |
 | W009 `SECRET_KEY` が短い | 50 文字以上のランダム値を `DJANGO_SECRET_KEY` に(`python -c "import secrets; print(secrets.token_urlsafe(64))"`) |
 
+```mermaid
+flowchart LR
+    subgraph backup[毎日]
+        B1[pg_dump -Fc] --> B2["backups/*.dump + .counts<br/>(0600)"]
+        B2 --> B3["古い世代を削除<br/>BACKUP_KEEP"]
+        B2 -.-> B4["rclone → R2(任意)"]
+    end
+    subgraph restore[数か月に 1 回は試す]
+        R1["別 DB に pg_restore"] --> R2["件数を .counts と比べる"]
+        R2 -->|一致| R3[復元できる ✔]
+        R2 -->|不一致| R4[原因を調べる ✖]
+    end
+    B2 --> R1
+```
+
 ## 更新(マイグレーションを伴うとき)
+
+```mermaid
+flowchart TD
+    A[更新したい] --> B["① backup.sh(必ず先に)"]
+    B --> C{"制約を足すマイグレーション?"}
+    C -- はい --> D["別 DB に復元して先に試す<br/>(既存データが違反していないか)"]
+    C -- いいえ --> E
+    D --> E["② git pull → build → up -d<br/>(起動時に migrate)"]
+    E --> F{"③ /healthz が 200?<br/>ログインできる?"}
+    F -- はい --> G[完了]
+    F -- いいえ --> H["④ ロールバック<br/>down → 旧版を checkout → restore.sh"]
+```
+
 1. `./scripts/backup.sh`(**必ず先に**)。マイグレーション `0003` は DB に制約を足す。**既存データが違反していると失敗する**(例: `demo` と `DEMO` が両方ある、見積が負)ので、バックアップから別 DB に復元して先に試すと安全
 2. `git pull` → `docker compose build` → `docker compose up -d`(起動時に `migrate` が走る)
 3. `curl http://localhost:8000/healthz` が `200` であること、画面でログインできること

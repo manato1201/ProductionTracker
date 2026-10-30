@@ -1,0 +1,667 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="c1168c1498a3a75f788e">
+<title>L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html" aria-current="page" class="current">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L04-django.md"><code>docs/lectures/L04-django.md</code></a></p>
+    <article class="doc"><h1 id="l04-django-の基礎--設定・ミドルウェア・モデルと-orm・マイグレーション">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>Django が<strong>何をしてくれて、何を自分で書くのか</strong>を説明できる</li>
+<li>リクエストが入ってから応答が出るまでの道(ミドルウェア → URL → ビュー)を言える</li>
+<li>モデルを書いて、ORM で作成・検索・更新・削除ができる</li>
+<li><strong>N+1 問題</strong>を、クエリ数を数えて見つけ、直せる</li>
+<li>マイグレーションの仕組みと、触ってはいけない場所が分かる</li>
+</ul>
+<p>前提: <a href="L02-python.html">L02</a>、<a href="L03-database.html">L03</a>。</p>
+<hr />
+<h2 id="1-django-とは">1. Django とは</h2>
+<p>Django は Python の <strong>Web フレームワーク</strong>です。ライブラリとの違いは「<strong>誰が主導権を持つか</strong>」。</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>呼び出し方</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ライブラリ</td>
+<td><strong>自分のコードが</strong>、必要なときにライブラリを呼ぶ</td>
+<td><code>json.dumps(...)</code></td>
+</tr>
+<tr>
+<td>フレームワーク</td>
+<td><strong>フレームワークが</strong>、決まった場面で自分のコードを呼ぶ</td>
+<td>リクエストが来たら、自分の <code>view</code> を呼んでくれる</td>
+</tr>
+</tbody>
+</table>
+<p>Django は、Web アプリに必要な部品が<strong>最初から揃っています</strong>(電池付属)。</p>
+<table>
+<thead>
+<tr>
+<th>部品</th>
+<th>役割</th>
+<th>このアプリで使っている所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ORM</strong></td>
+<td>Python のクラス ↔ DB の表</td>
+<td><code>tracker/models.py</code></td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>表の構造の変更を、履歴として管理</td>
+<td><code>tracker/migrations/</code></td>
+</tr>
+<tr>
+<td>URL ルーティング</td>
+<td>URL → 処理の対応</td>
+<td><code>config/urls.py</code></td>
+</tr>
+<tr>
+<td>ミドルウェア</td>
+<td>全リクエストに共通の前後処理</td>
+<td>NUL の拒否・キャッシュ禁止</td>
+</tr>
+<tr>
+<td>認証・セッション</td>
+<td>ユーザー・ログイン・権限</td>
+<td><code>django.contrib.auth</code></td>
+</tr>
+<tr>
+<td>管理画面</td>
+<td>データを表で編集できる画面</td>
+<td><code>/admin/</code></td>
+</tr>
+<tr>
+<td>テスト支援</td>
+<td>テスト用 DB・クライアント</td>
+<td><code>pytest-django</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-プロジェクトの構造">2. プロジェクトの構造</h2>
+<pre class="highlight"><code class="language-text">backend/
+├── manage.py            ← 「Django への命令」の入口(migrate, runserver, test …)
+├── config/              ← プロジェクトの設定(アプリ全体に関わるもの)
+│   ├── settings.py          設定
+│   ├── urls.py              URL の一覧
+│   └── wsgi.py              サーバー(gunicorn)との接点
+└── tracker/             ← アプリ(機能のまとまり)
+    ├── models.py            データ
+    ├── views.py             処理の入口
+    ├── admin.py             管理画面の設定
+    └── migrations/          表の変更履歴
+</code></pre>
+
+<p><strong>「プロジェクト」は 1 つ、「アプリ」は機能ごとに複数</strong>、が Django の言葉です。このアプリは、アプリが <code>tracker</code> 1 つだけの小さな構成です。</p>
+<h2 id="3-mtv-とリクエストの道">3. MTV と、リクエストの道</h2>
+<p>Django の分担は <strong>MTV</strong>(Model・Template・View)です。(このアプリは画面を React が作るので、Template の代わりに JSON を返します。)</p>
+<table>
+<thead>
+<tr>
+<th>役割</th>
+<th>担当</th>
+<th>このアプリ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td>データとルール</td>
+<td><code>models.py</code></td>
+</tr>
+<tr>
+<td>View</td>
+<td>リクエストを受け、応答を作る</td>
+<td><code>views.py</code>(DRF の ViewSet)</td>
+</tr>
+<tr>
+<td>Template</td>
+<td>HTML を作る</td>
+<td>(使わない。React が画面を作る)</td>
+</tr>
+</tbody>
+</table>
+<p>リクエストが入ってから応答が出るまで:</p>
+<figure class="diagram"><svg id="m3430028fbde51ece" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 2013.9375px;" viewBox="0 0 2013.9375 198" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m3430028fbde51ece{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m3430028fbde51ece .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m3430028fbde51ece .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m3430028fbde51ece .error-icon{fill:#552222;}#m3430028fbde51ece .error-text{fill:#552222;stroke:#552222;}#m3430028fbde51ece .edge-thickness-normal{stroke-width:1px;}#m3430028fbde51ece .edge-thickness-thick{stroke-width:3.5px;}#m3430028fbde51ece .edge-pattern-solid{stroke-dasharray:0;}#m3430028fbde51ece .edge-thickness-invisible{stroke-width:0;fill:none;}#m3430028fbde51ece .edge-pattern-dashed{stroke-dasharray:3;}#m3430028fbde51ece .edge-pattern-dotted{stroke-dasharray:2;}#m3430028fbde51ece .marker{fill:#666;stroke:#666;}#m3430028fbde51ece .marker.cross{stroke:#666;}#m3430028fbde51ece svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m3430028fbde51ece p{margin:0;}#m3430028fbde51ece .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m3430028fbde51ece .cluster-label text{fill:#333;}#m3430028fbde51ece .cluster-label span{color:#333;}#m3430028fbde51ece .cluster-label span p{background-color:transparent;}#m3430028fbde51ece .label text,#m3430028fbde51ece span{fill:#000000;color:#000000;}#m3430028fbde51ece .node rect,#m3430028fbde51ece .node circle,#m3430028fbde51ece .node ellipse,#m3430028fbde51ece .node polygon,#m3430028fbde51ece .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m3430028fbde51ece .rough-node .label text,#m3430028fbde51ece .node .label text,#m3430028fbde51ece .image-shape .label,#m3430028fbde51ece .icon-shape .label{text-anchor:middle;}#m3430028fbde51ece .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m3430028fbde51ece .rough-node .label,#m3430028fbde51ece .node .label,#m3430028fbde51ece .image-shape .label,#m3430028fbde51ece .icon-shape .label{text-align:center;}#m3430028fbde51ece .node.clickable{cursor:pointer;}#m3430028fbde51ece .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m3430028fbde51ece .arrowheadPath{fill:#333333;}#m3430028fbde51ece .edgePaths .path{stroke:#666;stroke-width:1px;}#m3430028fbde51ece .flowchart-link{stroke:#666;fill:none;}#m3430028fbde51ece .edgeLabel{background-color:white;text-align:center;}#m3430028fbde51ece .edgeLabel p{background-color:white;}#m3430028fbde51ece .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m3430028fbde51ece .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m3430028fbde51ece .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m3430028fbde51ece .cluster text{fill:#333;}#m3430028fbde51ece .cluster span{color:#333;}#m3430028fbde51ece .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m3430028fbde51ece .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m3430028fbde51ece div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m3430028fbde51ece .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m3430028fbde51ece rect.text{fill:none;stroke-width:0;}#m3430028fbde51ece .icon-shape,#m3430028fbde51ece .image-shape{background-color:white;text-align:center;}#m3430028fbde51ece .icon-shape p,#m3430028fbde51ece .image-shape p{background-color:white;padding:2px;}#m3430028fbde51ece .icon-shape .label rect,#m3430028fbde51ece .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m3430028fbde51ece .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m3430028fbde51ece .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m3430028fbde51ece .node .neo-node{stroke:#999;}#m3430028fbde51ece [data-look="neo"].node rect,#m3430028fbde51ece [data-look="neo"].cluster rect,#m3430028fbde51ece [data-look="neo"].node polygon{stroke:url(#m3430028fbde51ece-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3430028fbde51ece [data-look="neo"].swimlane.cluster rect{filter:none;}#m3430028fbde51ece [data-look="neo"].node path{stroke:url(#m3430028fbde51ece-gradient);stroke-width:1px;}#m3430028fbde51ece [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3430028fbde51ece [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m3430028fbde51ece [data-look="neo"].node circle{stroke:url(#m3430028fbde51ece-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3430028fbde51ece [data-look="neo"].node circle .state-start{fill:#000000;}#m3430028fbde51ece [data-look="neo"].icon-shape .icon{fill:url(#m3430028fbde51ece-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3430028fbde51ece [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m3430028fbde51ece-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3430028fbde51ece :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m3430028fbde51ece_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m3430028fbde51ece_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3430028fbde51ece_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3430028fbde51ece_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3430028fbde51ece_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3430028fbde51ece_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m3430028fbde51ece_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M149.875,105L154.042,105C158.208,105,166.542,105,174.208,105C181.875,105,188.875,105,192.375,105L195.875,105" id="m3430028fbde51ece-L_R_M1_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_R_M1_0" data-points="W3sieCI6MTQ5Ljg3NSwieSI6MTA1fSx7IngiOjE3NC44NzUsInkiOjEwNX0seyJ4IjoxOTkuODc1LCJ5IjoxMDV9XQ==" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M410.844,105L415.01,105C419.177,105,427.51,105,435.177,105C442.844,105,449.844,105,453.344,105L456.844,105" id="m3430028fbde51ece-L_M1_M2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M1_M2_0" data-points="W3sieCI6NDEwLjg0Mzc1LCJ5IjoxMDV9LHsieCI6NDM1Ljg0Mzc1LCJ5IjoxMDV9LHsieCI6NDYwLjg0Mzc1LCJ5IjoxMDV9XQ==" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M681.203,105L685.37,105C689.536,105,697.87,105,705.536,105C713.203,105,720.203,105,723.703,105L727.203,105" id="m3430028fbde51ece-L_M2_M3_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M2_M3_0" data-points="W3sieCI6NjgxLjIwMzEyNSwieSI6MTA1fSx7IngiOjcwNi4yMDMxMjUsInkiOjEwNX0seyJ4Ijo3MzEuMjAzMTI1LCJ5IjoxMDV9XQ==" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M953.844,105L958.01,105C962.177,105,970.51,105,978.177,105C985.844,105,992.844,105,996.344,105L999.844,105" id="m3430028fbde51ece-L_M3_U_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M3_U_0" data-points="W3sieCI6OTUzLjg0Mzc1LCJ5IjoxMDV9LHsieCI6OTc4Ljg0Mzc1LCJ5IjoxMDV9LHsieCI6MTAwMy44NDM3NSwieSI6MTA1fV0=" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1197.469,105L1201.635,105C1205.802,105,1214.135,105,1221.802,105C1229.469,105,1236.469,105,1239.969,105L1243.469,105" id="m3430028fbde51ece-L_U_V_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_U_V_0" data-points="W3sieCI6MTE5Ny40Njg3NSwieSI6MTA1fSx7IngiOjEyMjIuNDY4NzUsInkiOjEwNX0seyJ4IjoxMjQ3LjQ2ODc1LCJ5IjoxMDV9XQ==" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1370.085,66L1374.904,62.833C1379.724,59.667,1389.362,53.333,1397.681,50.167C1406,47,1413,47,1416.5,47L1420,47" id="m3430028fbde51ece-L_V_MO_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_V_MO_0" data-points="W3sieCI6MTM3MC4wODUzOTg3MDY4OTY1LCJ5Ijo2Nn0seyJ4IjoxMzk5LCJ5Ijo0N30seyJ4IjoxNDI0LCJ5Ijo0N31d" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1562.141,47L1566.307,47C1570.474,47,1578.807,47,1600.216,47C1621.625,47,1656.109,47,1673.352,47L1690.594,47" id="m3430028fbde51ece-L_MO_DB_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_MO_DB_0" data-points="W3sieCI6MTU2Mi4xNDA2MjUsInkiOjQ3fSx7IngiOjE1ODcuMTQwNjI1LCJ5Ijo0N30seyJ4IjoxNjk0LjU5Mzc1LCJ5Ijo0N31d" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1370.085,144L1374.904,147.167C1379.724,150.333,1389.362,156.667,1401.526,159.833C1413.69,163,1428.38,163,1435.725,163L1443.07,163" id="m3430028fbde51ece-L_V_RES_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_V_RES_0" data-points="W3sieCI6MTM3MC4wODUzOTg3MDY4OTY1LCJ5IjoxNDR9LHsieCI6MTM5OSwieSI6MTYzfSx7IngiOjE0NDcuMDcwMzEyNSwieSI6MTYzfV0=" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1539.07,163L1547.082,163C1555.094,163,1571.117,163,1582.629,163C1594.141,163,1601.141,163,1604.641,163L1608.141,163" id="m3430028fbde51ece-L_RES_M3b_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_RES_M3b_0" data-points="W3sieCI6MTUzOS4wNzAzMTI1LCJ5IjoxNjN9LHsieCI6MTU4Ny4xNDA2MjUsInkiOjE2M30seyJ4IjoxNjEyLjE0MDYyNSwieSI6MTYzfV0=" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path><path d="M1814.063,163L1818.229,163C1822.396,163,1830.729,163,1838.396,163C1846.063,163,1853.063,163,1856.563,163L1860.063,163" id="m3430028fbde51ece-L_M3b_OUT_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_M3b_OUT_0" data-points="W3sieCI6MTgxNC4wNjI1LCJ5IjoxNjN9LHsieCI6MTgzOS4wNjI1LCJ5IjoxNjN9LHsieCI6MTg2NC4wNjI1LCJ5IjoxNjN9XQ==" data-look="classic" marker-end="url(#m3430028fbde51ece_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_R_M1_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_M1_M2_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_M2_M3_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_M3_U_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_U_V_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_V_MO_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_MO_DB_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_V_RES_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_RES_M3b_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_M3b_OUT_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m3430028fbde51ece-flowchart-R-0" data-look="classic" transform="translate(78.9375, 105)"><rect class="basic label-container" style="" x="-70.9375" y="-27" width="141.875" height="54"></rect><g class="label" style="" transform="translate(-40.9375, -12)"><rect></rect><foreignObject width="81.875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>リクエスト</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-M1-1" data-look="classic" transform="translate(305.359375, 105)"><rect class="basic label-container" style="" x="-105.484375" y="-39" width="210.96875" height="78"></rect><g class="label" style="" transform="translate(-75.484375, -24)"><rect></rect><foreignObject width="150.96875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ミドルウェア 1<br>SecurityMiddleware</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-M2-3" data-look="classic" transform="translate(571.0234375, 105)"><rect class="basic label-container" style="" x="-110.1796875" y="-39" width="220.359375" height="78"></rect><g class="label" style="" transform="translate(-80.1796875, -24)"><rect></rect><foreignObject width="160.359375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ミドルウェア 2<br>RejectNulMiddleware</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-M3-5" data-look="classic" transform="translate(842.5234375, 105)"><rect class="basic label-container" style="" x="-111.3203125" y="-39" width="222.640625" height="78"></rect><g class="label" style="" transform="translate(-81.3203125, -24)"><rect></rect><foreignObject width="162.640625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>…<br>Session / CSRF / 認証</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-U-7" data-look="classic" transform="translate(1100.65625, 105)"><rect class="basic label-container" style="" x="-96.8125" y="-39" width="193.625" height="78"></rect><g class="label" style="" transform="translate(-66.8125, -24)"><rect></rect><foreignObject width="133.625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>URL ルーティング<br>config/urls.py</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-V-9" data-look="classic" transform="translate(1310.734375, 105)"><rect class="basic label-container" style="" x="-63.265625" y="-39" width="126.53125" height="78"></rect><g class="label" style="" transform="translate(-33.265625, -24)"><rect></rect><foreignObject width="66.53125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ビュー<br>views.py</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-MO-11" data-look="classic" transform="translate(1493.0703125, 47)"><rect class="basic label-container" style="" x="-69.0703125" y="-39" width="138.140625" height="78"></rect><g class="label" style="" transform="translate(-39.0703125, -24)"><rect></rect><foreignObject width="78.140625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>モデル<br>models.py</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-DB-13" data-look="classic" transform="translate(1713.1015625, 47)"><path d="M0,5.711736908091426 a18.5078125,5.711736908091426 0,0,0 37.015625,0 a18.5078125,5.711736908091426 0,0,0 -37.015625,0 l0,44.711736908091424 a18.5078125,5.711736908091426 0,0,0 37.015625,0 l0,-44.711736908091424" class="basic label-container outer-path" style="" transform="translate(-18.5078125, -28.067605362137137)"></path><g class="label" style="" transform="translate(-11.0078125, -2)"><rect></rect><foreignObject width="22.015625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>DB</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-RES-15" data-look="classic" transform="translate(1493.0703125, 163)"><rect class="basic label-container" style="" x="-46" y="-27" width="92" height="54"></rect><g class="label" style="" transform="translate(-16, -12)"><rect></rect><foreignObject width="32" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>応答</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-M3b-17" data-look="classic" transform="translate(1713.1015625, 163)"><rect class="basic label-container" style="" x="-100.9609375" y="-27" width="201.921875" height="54"></rect><g class="label" style="" transform="translate(-70.9609375, -12)"><rect></rect><foreignObject width="141.921875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ミドルウェア(逆順)</p></span></div></foreignObject></g></g><g class="node default" id="m3430028fbde51ece-flowchart-OUT-18" data-look="classic" transform="translate(1935, 163)"><rect class="basic label-container" style="" x="-70.9375" y="-27" width="141.875" height="54"></rect><g class="label" style="" transform="translate(-40.9375, -12)"><rect></rect><foreignObject width="81.875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ブラウザへ</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m3430028fbde51ece-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m3430028fbde51ece-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m3430028fbde51ece-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h3 id="ミドルウェア--玉ねぎの皮">ミドルウェア ― 玉ねぎの皮</h3>
+<p>ミドルウェアは、<strong>全てのリクエストの前後</strong>に挟まる処理です。外側から内側へ入り、応答は<strong>逆順</strong>で外へ出ます(玉ねぎの皮)。</p>
+<!-- excerpt: backend/config/settings.py -->
+<pre class="highlight"><code class="language-python"><span class="n">MIDDLEWARE</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"django.middleware.security.SecurityMiddleware"</span><span class="p">,</span>
+    <span class="s2">"tracker.middleware.RejectNulMiddleware"</span><span class="p">,</span>
+    <span class="s2">"tracker.middleware.ApiNoStoreMiddleware"</span><span class="p">,</span>
+    <span class="s2">"whitenoise.middleware.WhiteNoiseMiddleware"</span><span class="p">,</span>
+    <span class="s2">"django.contrib.sessions.middleware.SessionMiddleware"</span><span class="p">,</span>
+    <span class="s2">"django.middleware.common.CommonMiddleware"</span><span class="p">,</span>
+<span class="p">]</span>
+</code></pre>
+
+<p><strong>順序には意味があります。</strong> 危険なリクエスト(NUL 文字)は、<strong>セッションや DB に触れる前</strong>に弾きたいので、早い位置に置いています。</p>
+<p>このアプリのミドルウェアは、たった 1 つのクラスです。</p>
+<!-- excerpt: backend/tracker/middleware.py -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">RejectNulMiddleware</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">get_response</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span> <span class="o">=</span> <span class="n">get_response</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">unquote</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">META</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"QUERY_STRING"</span><span class="p">,</span> <span class="s2">""</span><span class="p">))</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">unquote</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">JsonResponse</span><span class="p">({</span><span class="s2">"code"</span><span class="p">:</span> <span class="s2">"validation_error"</span><span class="p">,</span> <span class="s2">"detail"</span><span class="p">:</span> <span class="s2">"NUL 文字(%00)は使えません。"</span><span class="p">},</span> <span class="n">status</span><span class="o">=</span><span class="mi">400</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+</code></pre>
+
+<p><code>get_response</code> は「<strong>次の皮(内側)を呼ぶ関数</strong>」です。<code>return self.get_response(request)</code> で内側へ進み、
+<code>return JsonResponse(...)</code> なら<strong>内側へ進まずに、その場で応答</strong>します(早期リターン)。玉ねぎの仕組みを、純粋な Python で作ってみましょう。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">build</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">view</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""内側(view)から外側へ、1 枚ずつ皮で包む。"""</span>
+    <span class="n">handler</span> <span class="o">=</span> <span class="n">view</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">reversed</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+        <span class="n">handler</span> <span class="o">=</span> <span class="n">layer</span><span class="p">(</span><span class="n">handler</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">handler</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">logging_layer</span><span class="p">(</span><span class="n">get_response</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"→ logging: 入る"</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">request</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]))</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">get_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"← logging: 出る"</span><span class="p">,</span> <span class="n">response</span><span class="p">[</span><span class="s2">"status"</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">response</span>
+    <span class="k">return</span> <span class="n">handle</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">reject_nul_layer</span><span class="p">(</span><span class="n">get_response</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">handle</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">"</span><span class="se">\x00</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">request</span><span class="p">[</span><span class="s2">"path"</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="mi">400</span><span class="p">}</span>                <span class="c1"># 内側へ進まない(view も、後ろの層も呼ばれない)</span>
+        <span class="k">return</span> <span class="n">get_response</span><span class="p">(</span><span class="n">request</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">handle</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">view</span><span class="p">(</span><span class="n">request</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"   view: 実行"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"status"</span><span class="p">:</span> <span class="mi">200</span><span class="p">}</span>
+
+
+<span class="n">app</span> <span class="o">=</span> <span class="n">build</span><span class="p">([</span><span class="n">logging_layer</span><span class="p">,</span> <span class="n">reject_nul_layer</span><span class="p">],</span> <span class="n">view</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="p">({</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"/api/v1/tasks/"</span><span class="p">})[</span><span class="s2">"status"</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">app</span><span class="p">({</span><span class="s2">"path"</span><span class="p">:</span> <span class="s2">"/api/v1/tasks/</span><span class="se">\x00</span><span class="s2">"</span><span class="p">})[</span><span class="s2">"status"</span><span class="p">])</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">→ logging: 入る &#x27;/api/v1/tasks/&#x27;
+   view: 実行
+← logging: 出る 200
+200
+→ logging: 入る &#x27;/api/v1/tasks/\x00&#x27;
+← logging: 出る 400
+400
+</code></pre>
+
+<p>2 回目は <code>view</code> が<strong>一度も呼ばれません</strong>。「早い段階で安く拒否する」と「内側のコードが危険な入力を知らずに済む」が、ミドルウェアの価値です。</p>
+<h3 id="url-とビュー">URL とビュー</h3>
+<p><code>config/urls.py</code> が、URL とビューを結びつけます(<a href="L01-web.html">L01</a> で見たもの)。ビューの中身は、次の <a href="L05-drf.html">L05</a> で学びます。</p>
+<h2 id="4-設定settingspy">4. 設定(settings.py)</h2>
+<p>アプリ全体の設定は 1 ファイルに集まります。<strong>秘密情報は、ファイルに書かず環境変数から読む</strong>のが鉄則です。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">env_bool</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""環境変数を真偽値として読む(このアプリの settings.py と同じ形)。"""</span>
+    <span class="n">value</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">default</span>
+    <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">{</span><span class="s2">"1"</span><span class="p">,</span> <span class="s2">"true"</span><span class="p">,</span> <span class="s2">"yes"</span><span class="p">,</span> <span class="s2">"on"</span><span class="p">}</span>
+
+
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DEMO_DEBUG"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"1"</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">env_bool</span><span class="p">(</span><span class="s2">"DEMO_DEBUG"</span><span class="p">),</span> <span class="n">env_bool</span><span class="p">(</span><span class="s2">"DEMO_UNSET"</span><span class="p">),</span> <span class="n">env_bool</span><span class="p">(</span><span class="s2">"DEMO_UNSET"</span><span class="p">,</span> <span class="kc">True</span><span class="p">))</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">"DEMO_DEBUG"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"no"</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">env_bool</span><span class="p">(</span><span class="s2">"DEMO_DEBUG"</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">True False True
+False
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>設定</th>
+<th>意味</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>DEBUG</code></td>
+<td>開発用の詳しいエラー画面</td>
+<td><strong>本番では必ず False</strong>(スタックトレースが漏れる)</td>
+</tr>
+<tr>
+<td><code>SECRET_KEY</code></td>
+<td>署名(セッション・CSRF)に使う鍵</td>
+<td>漏れると、セッションを偽造できる。環境変数から。長くランダムに</td>
+</tr>
+<tr>
+<td><code>ALLOWED_HOSTS</code></td>
+<td>受け付ける Host ヘッダ</td>
+<td>偽の Host で来たリクエストを拒否</td>
+</tr>
+<tr>
+<td><code>DATABASES</code></td>
+<td>DB の接続先</td>
+<td><code>POSTGRES_HOST</code> があれば PostgreSQL、無ければ SQLite</td>
+</tr>
+<tr>
+<td><code>INSTALLED_APPS</code></td>
+<td>使うアプリの一覧</td>
+<td>書かないと、モデルもマイグレーションも認識されない</td>
+</tr>
+</tbody>
+</table>
+<p><code>DJANGO_DEBUG=0</code> で <code>SECRET_KEY</code> が空なら、<strong>起動しない</strong>設計にしてあります(うっかり本番で弱い鍵を使わないため)。</p>
+<h2 id="5-モデルと-orm">5. モデルと ORM</h2>
+<p><strong>モデル</strong>は、DB の表を表す Python のクラスです。1 クラス = 1 表、1 属性 = 1 列、1 インスタンス = 1 行。</p>
+<!-- excerpt: backend/tracker/models.py -->
+<pre class="highlight"><code class="language-python"><span class="k">class</span><span class="w"> </span><span class="nc">Project</span><span class="p">(</span><span class="n">models</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="n">code</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="s2">"コード"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">unique</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">validators</span><span class="o">=</span><span class="p">[</span><span class="n">code_validator</span><span class="p">])</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">CharField</span><span class="p">(</span><span class="s2">"名前"</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">120</span><span class="p">)</span>
+    <span class="n">start</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="s2">"開始日"</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">due</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateField</span><span class="p">(</span><span class="s2">"期日"</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">blank</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">created_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now_add</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">updated_at</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">DateTimeField</span><span class="p">(</span><span class="n">auto_now</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>部分</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CharField(max_length=32)</code></td>
+<td>最大 32 文字の文字列(列の型 <code>varchar(32)</code>)</td>
+</tr>
+<tr>
+<td><code>unique=True</code></td>
+<td>重複を許さない(一意制約)</td>
+</tr>
+<tr>
+<td><code>validators=[...]</code></td>
+<td>値の検査(英字で始まる、など)。<strong>フォームや API の入力で働く</strong>(DB には届かない)</td>
+</tr>
+<tr>
+<td><code>null=True</code></td>
+<td>DB に NULL を許す</td>
+</tr>
+<tr>
+<td><code>blank=True</code></td>
+<td>入力が空でもよい(検証の話。DB とは別)</td>
+</tr>
+<tr>
+<td><code>auto_now_add=True</code></td>
+<td>作ったときの時刻を自動で入れる</td>
+</tr>
+<tr>
+<td><code>auto_now=True</code></td>
+<td>保存のたびに時刻を更新</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong><code>null</code> と <code>blank</code> の違い</strong>は、初心者がいちばん間違えます。<code>null</code> = データベースの話(NULL を入れてよいか)、<code>blank</code> = 検証の話(空で通してよいか)。</p>
+</blockquote>
+<h3 id="queryset--あとで-sql-にするもの">QuerySet ― 「あとで SQL にするもの」</h3>
+<p>ORM の検索結果は、<strong>QuerySet</strong> です。<strong>遅延評価</strong>: 書いただけでは SQL は実行されず、<strong>中身が必要になった瞬間</strong>に 1 回だけ実行されます。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">django.contrib.auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_user_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">connection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.test.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaptureQueriesContext</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Project</span><span class="p">,</span> <span class="n">Step</span><span class="p">,</span> <span class="n">Task</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">"DEMO"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"デモ"</span><span class="p">)</span>
+<span class="n">entity</span> <span class="o">=</span> <span class="n">Entity</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"crate"</span><span class="p">)</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Step</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"order"</span><span class="p">)[:</span><span class="mi">3</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">steps</span><span class="p">:</span>
+    <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">CaptureQueriesContext</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span> <span class="k">as</span> <span class="n">ctx</span><span class="p">:</span>
+    <span class="n">qs</span> <span class="o">=</span> <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"id"</span><span class="p">)</span>     <span class="c1"># ここでは SQL は実行されない(遅延)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"組み立てただけ:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">captured_queries</span><span class="p">),</span> <span class="s2">"回"</span><span class="p">)</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>                                           <span class="c1"># 中身が要るので、ここで 1 回実行</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"list() した後 :"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">captured_queries</span><span class="p">),</span> <span class="s2">"回"</span><span class="p">,</span> <span class="s2">"/ 件数"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">first</span><span class="p">))</span>
+    <span class="n">again</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">qs</span><span class="p">)</span>                                           <span class="c1"># 同じ QuerySet はキャッシュされる</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">"もう一度      :"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ctx</span><span class="o">.</span><span class="n">captured_queries</span><span class="p">),</span> <span class="s2">"回"</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="s2">"done"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span><span class="o">.</span><span class="n">step</span><span class="o">.</span><span class="n">code</span><span class="p">)</span>    <span class="c1"># 無ければ None</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">組み立てただけ: 0 回
+list() した後 : 1 回 / 件数 3
+もう一度      : 1 回
+3 False
+model
+</code></pre>
+
+<h3 id="crud作る・読む・更新・削除">CRUD(作る・読む・更新・削除)</h3>
+<table>
+<thead>
+<tr>
+<th>操作</th>
+<th>ORM</th>
+<th>SQL(おおよそ)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>作成</td>
+<td><code>Task.objects.create(entity=e, step=s)</code></td>
+<td><code>INSERT</code></td>
+</tr>
+<tr>
+<td>取得(1 件)</td>
+<td><code>Task.objects.get(pk=1)</code>(無い・複数なら例外)</td>
+<td><code>SELECT ... WHERE id = 1</code></td>
+</tr>
+<tr>
+<td>絞り込み</td>
+<td><code>Task.objects.filter(status=&quot;review&quot;)</code></td>
+<td><code>WHERE</code></td>
+</tr>
+<tr>
+<td>除外</td>
+<td><code>.exclude(status=&quot;done&quot;)</code></td>
+<td><code>WHERE NOT</code></td>
+</tr>
+<tr>
+<td>並べ替え</td>
+<td><code>.order_by(&quot;due&quot;)</code> / <code>.order_by(&quot;-due&quot;)</code></td>
+<td><code>ORDER BY</code></td>
+</tr>
+<tr>
+<td>件数</td>
+<td><code>.count()</code></td>
+<td><code>SELECT COUNT(*)</code></td>
+</tr>
+<tr>
+<td>更新</td>
+<td><code>task.status = &quot;review&quot;; task.save()</code></td>
+<td><code>UPDATE</code></td>
+</tr>
+<tr>
+<td>一括更新</td>
+<td><code>qs.update(priority=&quot;high&quot;)</code></td>
+<td><code>UPDATE ... WHERE</code></td>
+</tr>
+<tr>
+<td>削除</td>
+<td><code>task.delete()</code></td>
+<td><code>DELETE</code></td>
+</tr>
+<tr>
+<td>無ければ作る</td>
+<td><code>get_or_create(...)</code></td>
+<td><code>SELECT</code> → <code>INSERT</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="リレーションの辿り方">リレーションの辿り方</h3>
+<p>外部キーは、**<code>__</code>(アンダースコア 2 つ)**で辿ります。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">tracker.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Project</span><span class="p">,</span> <span class="n">Step</span><span class="p">,</span> <span class="n">Task</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">"DEMO"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"デモ"</span><span class="p">)</span>
+<span class="n">entity</span> <span class="o">=</span> <span class="n">Entity</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"crate"</span><span class="p">)</span>
+<span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">Step</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">"fx"</span><span class="p">),</span> <span class="n">status</span><span class="o">=</span><span class="s2">"review"</span><span class="p">)</span>
+
+<span class="c1"># タスク → アセット → プロジェクト を、1 つの条件で辿る(SQL では JOIN になる)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity__project__code</span><span class="o">=</span><span class="s2">"DEMO"</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">entity__project__code</span><span class="o">=</span><span class="s2">"OTHER"</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+
+<span class="c1"># 逆向き: 親から子へ(related_name="tasks")</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">entity</span><span class="o">.</span><span class="n">tasks</span><span class="o">.</span><span class="n">count</span><span class="p">(),</span> <span class="n">project</span><span class="o">.</span><span class="n">entities</span><span class="o">.</span><span class="n">count</span><span class="p">())</span>
+
+<span class="c1"># TextChoices: 値・ラベル・一覧</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Task</span><span class="o">.</span><span class="n">Status</span><span class="p">(</span><span class="s2">"review"</span><span class="p">)</span><span class="o">.</span><span class="n">label</span><span class="p">,</span> <span class="n">Task</span><span class="o">.</span><span class="n">Status</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">1
+0
+1 1
+レビュー待ち [&#x27;todo&#x27;, &#x27;in_progress&#x27;, &#x27;review&#x27;, &#x27;done&#x27;]
+</code></pre>
+
+<h3 id="n1-問題--orm-の最大の落とし穴">N+1 問題 ― ORM の最大の落とし穴</h3>
+<p>「タスクの一覧に、アセット名も出したい」。素直に書くと:</p>
+<pre class="highlight"><code class="language-python"><span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>       <span class="c1"># 1 回目のクエリ: タスクを全部取る</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">task</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>           <span class="c1"># ← タスクごとに、アセットを取りに行く(N 回)</span>
+</code></pre>
+
+<p>タスクが 100 件なら、<strong>1 + 100 = 101 回</strong>のクエリ。これが <strong>N+1 問題</strong>です。<code>select_related</code> で、最初から JOIN して取れば 1 回で済みます。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">django.db</span><span class="w"> </span><span class="kn">import</span> <span class="n">connection</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">django.test.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">CaptureQueriesContext</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Entity</span><span class="p">,</span> <span class="n">Project</span><span class="p">,</span> <span class="n">Step</span><span class="p">,</span> <span class="n">Task</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="n">Project</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="s2">"DEMO"</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">"デモ"</span><span class="p">)</span>
+<span class="n">steps</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Step</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="s2">"order"</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">):</span>
+    <span class="n">entity</span> <span class="o">=</span> <span class="n">Entity</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">"asset</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+    <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">entity</span><span class="o">=</span><span class="n">entity</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">steps</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">names_slow</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">all</span><span class="p">()]</span>                         <span class="c1"># N+1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">names_fast</span><span class="p">():</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">t</span><span class="o">.</span><span class="n">entity</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">Task</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">select_related</span><span class="p">(</span><span class="s2">"entity"</span><span class="p">)]</span>      <span class="c1"># JOIN で 1 回</span>
+
+
+<span class="k">with</span> <span class="n">CaptureQueriesContext</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span> <span class="k">as</span> <span class="n">slow</span><span class="p">:</span>
+    <span class="n">names_slow</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">CaptureQueriesContext</span><span class="p">(</span><span class="n">connection</span><span class="p">)</span> <span class="k">as</span> <span class="n">fast</span><span class="p">:</span>
+    <span class="n">names_fast</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"N+1      :"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">slow</span><span class="o">.</span><span class="n">captured_queries</span><span class="p">),</span> <span class="s2">"回"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"JOIN     :"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">fast</span><span class="o">.</span><span class="n">captured_queries</span><span class="p">),</span> <span class="s2">"回"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">N+1      : 6 回
+JOIN     : 1 回
+</code></pre>
+
+<table>
+<thead>
+<tr>
+<th>使う場面</th>
+<th>道具</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>「1 対 1」「多 対 1」の相手(<code>task.entity</code>)を取る</td>
+<td><code>select_related(&quot;entity&quot;)</code>(JOIN)</td>
+</tr>
+<tr>
+<td>「1 対 多」の相手(<code>project.entities</code>)を取る</td>
+<td><code>prefetch_related(&quot;entities&quot;)</code>(別のクエリでまとめて取る)</td>
+</tr>
+</tbody>
+</table>
+<p>このアプリの一覧 API は、<code>select_related</code> と集計(<code>annotate</code>)を使って、<strong>ページ内の件数に依存せず、クエリ数が一定</strong>になるようにしています。</p>
+<h2 id="6-マイグレーション--表の変更を履歴として管理する">6. マイグレーション ― 表の変更を、履歴として管理する</h2>
+<p>モデルを変えたら、<strong>DB の表も同じように変える</strong>必要があります。これを手でやらず、**変更の手順書(マイグレーション)**を生成して流します。</p>
+<figure class="diagram"><svg id="m7c9194fc46fc8e71" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1397.84375px;" viewBox="0 0 1397.84375 142" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m7c9194fc46fc8e71{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m7c9194fc46fc8e71 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m7c9194fc46fc8e71 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m7c9194fc46fc8e71 .error-icon{fill:#552222;}#m7c9194fc46fc8e71 .error-text{fill:#552222;stroke:#552222;}#m7c9194fc46fc8e71 .edge-thickness-normal{stroke-width:1px;}#m7c9194fc46fc8e71 .edge-thickness-thick{stroke-width:3.5px;}#m7c9194fc46fc8e71 .edge-pattern-solid{stroke-dasharray:0;}#m7c9194fc46fc8e71 .edge-thickness-invisible{stroke-width:0;fill:none;}#m7c9194fc46fc8e71 .edge-pattern-dashed{stroke-dasharray:3;}#m7c9194fc46fc8e71 .edge-pattern-dotted{stroke-dasharray:2;}#m7c9194fc46fc8e71 .marker{fill:#666;stroke:#666;}#m7c9194fc46fc8e71 .marker.cross{stroke:#666;}#m7c9194fc46fc8e71 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m7c9194fc46fc8e71 p{margin:0;}#m7c9194fc46fc8e71 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m7c9194fc46fc8e71 .cluster-label text{fill:#333;}#m7c9194fc46fc8e71 .cluster-label span{color:#333;}#m7c9194fc46fc8e71 .cluster-label span p{background-color:transparent;}#m7c9194fc46fc8e71 .label text,#m7c9194fc46fc8e71 span{fill:#000000;color:#000000;}#m7c9194fc46fc8e71 .node rect,#m7c9194fc46fc8e71 .node circle,#m7c9194fc46fc8e71 .node ellipse,#m7c9194fc46fc8e71 .node polygon,#m7c9194fc46fc8e71 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m7c9194fc46fc8e71 .rough-node .label text,#m7c9194fc46fc8e71 .node .label text,#m7c9194fc46fc8e71 .image-shape .label,#m7c9194fc46fc8e71 .icon-shape .label{text-anchor:middle;}#m7c9194fc46fc8e71 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m7c9194fc46fc8e71 .rough-node .label,#m7c9194fc46fc8e71 .node .label,#m7c9194fc46fc8e71 .image-shape .label,#m7c9194fc46fc8e71 .icon-shape .label{text-align:center;}#m7c9194fc46fc8e71 .node.clickable{cursor:pointer;}#m7c9194fc46fc8e71 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m7c9194fc46fc8e71 .arrowheadPath{fill:#333333;}#m7c9194fc46fc8e71 .edgePaths .path{stroke:#666;stroke-width:1px;}#m7c9194fc46fc8e71 .flowchart-link{stroke:#666;fill:none;}#m7c9194fc46fc8e71 .edgeLabel{background-color:white;text-align:center;}#m7c9194fc46fc8e71 .edgeLabel p{background-color:white;}#m7c9194fc46fc8e71 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m7c9194fc46fc8e71 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m7c9194fc46fc8e71 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m7c9194fc46fc8e71 .cluster text{fill:#333;}#m7c9194fc46fc8e71 .cluster span{color:#333;}#m7c9194fc46fc8e71 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m7c9194fc46fc8e71 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m7c9194fc46fc8e71 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m7c9194fc46fc8e71 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m7c9194fc46fc8e71 rect.text{fill:none;stroke-width:0;}#m7c9194fc46fc8e71 .icon-shape,#m7c9194fc46fc8e71 .image-shape{background-color:white;text-align:center;}#m7c9194fc46fc8e71 .icon-shape p,#m7c9194fc46fc8e71 .image-shape p{background-color:white;padding:2px;}#m7c9194fc46fc8e71 .icon-shape .label rect,#m7c9194fc46fc8e71 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m7c9194fc46fc8e71 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m7c9194fc46fc8e71 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m7c9194fc46fc8e71 .node .neo-node{stroke:#999;}#m7c9194fc46fc8e71 [data-look="neo"].node rect,#m7c9194fc46fc8e71 [data-look="neo"].cluster rect,#m7c9194fc46fc8e71 [data-look="neo"].node polygon{stroke:url(#m7c9194fc46fc8e71-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m7c9194fc46fc8e71 [data-look="neo"].swimlane.cluster rect{filter:none;}#m7c9194fc46fc8e71 [data-look="neo"].node path{stroke:url(#m7c9194fc46fc8e71-gradient);stroke-width:1px;}#m7c9194fc46fc8e71 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m7c9194fc46fc8e71 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m7c9194fc46fc8e71 [data-look="neo"].node circle{stroke:url(#m7c9194fc46fc8e71-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m7c9194fc46fc8e71 [data-look="neo"].node circle .state-start{fill:#000000;}#m7c9194fc46fc8e71 [data-look="neo"].icon-shape .icon{fill:url(#m7c9194fc46fc8e71-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m7c9194fc46fc8e71 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m7c9194fc46fc8e71-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m7c9194fc46fc8e71 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m7c9194fc46fc8e71_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m7c9194fc46fc8e71_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M199.391,71L203.557,71C207.724,71,216.057,71,223.724,71C231.391,71,238.391,71,241.891,71L245.391,71" id="m7c9194fc46fc8e71-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MTk5LjM5MDYyNSwieSI6NzF9LHsieCI6MjI0LjM5MDYyNSwieSI6NzF9LHsieCI6MjQ5LjM5MDYyNSwieSI6NzF9XQ==" data-look="classic" marker-end="url(#m7c9194fc46fc8e71_flowchart-v2-pointEnd)"></path><path d="M509.391,71L513.557,71C517.724,71,526.057,71,533.724,71C541.391,71,548.391,71,551.891,71L555.391,71" id="m7c9194fc46fc8e71-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6NTA5LjM5MDYyNSwieSI6NzF9LHsieCI6NTM0LjM5MDYyNSwieSI6NzF9LHsieCI6NTU5LjM5MDYyNSwieSI6NzF9XQ==" data-look="classic" marker-end="url(#m7c9194fc46fc8e71_flowchart-v2-pointEnd)"></path><path d="M769.844,71L774.01,71C778.177,71,786.51,71,794.177,71C801.844,71,808.844,71,812.344,71L815.844,71" id="m7c9194fc46fc8e71-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6NzY5Ljg0Mzc1LCJ5Ijo3MX0seyJ4Ijo3OTQuODQzNzUsInkiOjcxfSx7IngiOjgxOS44NDM3NSwieSI6NzF9XQ==" data-look="classic" marker-end="url(#m7c9194fc46fc8e71_flowchart-v2-pointEnd)"></path><path d="M1079.844,71L1084.01,71C1088.177,71,1096.51,71,1104.177,71C1111.844,71,1118.844,71,1122.344,71L1125.844,71" id="m7c9194fc46fc8e71-L_D_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_E_0" data-points="W3sieCI6MTA3OS44NDM3NSwieSI6NzF9LHsieCI6MTEwNC44NDM3NSwieSI6NzF9LHsieCI6MTEyOS44NDM3NSwieSI6NzF9XQ==" data-look="classic" marker-end="url(#m7c9194fc46fc8e71_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_B_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_B_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_C_D_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_D_E_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m7c9194fc46fc8e71-flowchart-A-0" data-look="classic" transform="translate(103.6953125, 71)"><rect class="basic label-container" style="" x="-95.6953125" y="-27" width="191.390625" height="54"></rect><g class="label" style="" transform="translate(-65.6953125, -12)"><rect></rect><foreignObject width="131.390625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>models.py を直す</p></span></div></foreignObject></g></g><g class="node default" id="m7c9194fc46fc8e71-flowchart-B-1" data-look="classic" transform="translate(379.390625, 71)"><rect class="basic label-container" style="" x="-130" y="-63" width="260" height="126"></rect><g class="label" style="" transform="translate(-100, -48)"><rect></rect><foreignObject width="200" height="96"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>python manage.py makemigrations<br>差分から、変更の手順書を作る</p></span></div></foreignObject></g></g><g class="node default" id="m7c9194fc46fc8e71-flowchart-C-3" data-look="classic" transform="translate(664.6171875, 71)"><rect class="basic label-container" style="" x="-105.2265625" y="-27" width="210.453125" height="54"></rect><g class="label" style="" transform="translate(-75.2265625, -12)"><rect></rect><foreignObject width="150.453125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>0004_xxx.py を<b>読む</b></p></span></div></foreignObject></g></g><g class="node default" id="m7c9194fc46fc8e71-flowchart-D-5" data-look="classic" transform="translate(949.84375, 71)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>python manage.py migrate<br>未適用の手順を DB に流す</p></span></div></foreignObject></g></g><g class="node default" id="m7c9194fc46fc8e71-flowchart-E-7" data-look="classic" transform="translate(1259.84375, 71)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>適用済みの履歴が DB に記録される</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m7c9194fc46fc8e71-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m7c9194fc46fc8e71-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m7c9194fc46fc8e71-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p><code>tracker/migrations/</code> には、<strong>番号順の変更履歴</strong>があります。</p>
+<pre class="highlight"><code class="language-text">0001_initial.py           最初の表
+0002_default_steps.py     工程の初期データ(データマイグレーション)
+0003_integrity_constraints.py   制約の追加
+0004_quality_defects_bigint.py  列の型の変更
+0005_drop_status_index.py       索引の削除
+</code></pre>
+
+<p><strong>データそのものを入れるマイグレーション</strong>も書けます(工程の初期データ)。</p>
+<!-- excerpt: backend/tracker/migrations/0002_default_steps.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">add_steps</span><span class="p">(</span><span class="n">apps</span><span class="p">,</span> <span class="n">schema_editor</span><span class="p">):</span>
+    <span class="n">Step</span> <span class="o">=</span> <span class="n">apps</span><span class="o">.</span><span class="n">get_model</span><span class="p">(</span><span class="s2">"tracker"</span><span class="p">,</span> <span class="s2">"Step"</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">order</span><span class="p">,</span> <span class="p">(</span><span class="n">code</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">DEFAULT_STEPS</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">Step</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">get_or_create</span><span class="p">(</span><span class="n">code</span><span class="o">=</span><span class="n">code</span><span class="p">,</span> <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s2">"name"</span><span class="p">:</span> <span class="n">name</span><span class="p">,</span> <span class="s2">"order"</span><span class="p">:</span> <span class="n">order</span> <span class="o">*</span> <span class="mi">10</span><span class="p">})</span>
+</code></pre>
+
+<p><code>get_or_create</code> なので、<strong>何度流しても同じ結果</strong>になります(冪等)。</p>
+<table>
+<thead>
+<tr>
+<th>鉄則</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>生成されたマイグレーションを必ず読む</strong></td>
+<td>意図しない変更(列の削除など)が混ざっていないか</td>
+</tr>
+<tr>
+<td><strong>適用済みのマイグレーションは書き換えない</strong></td>
+<td>他の環境の DB と履歴が食い違う。変更は、新しい番号で足す</td>
+</tr>
+<tr>
+<td>制約を足すものは、<strong>既存データが違反しないか</strong>を先に確かめる</td>
+<td>違反していると、マイグレーションが失敗する(本番では特に危険)</td>
+</tr>
+<tr>
+<td>本番に流す前に<strong>バックアップ</strong></td>
+<td>前方向のみの変更。戻すなら、バックアップから</td>
+</tr>
+</tbody>
+</table>
+<h2 id="7-管理画面admin">7. 管理画面(admin)</h2>
+<p><code>admin.py</code> に登録するだけで、データを表で見て・編集できる<strong>管理画面</strong>が手に入ります。</p>
+<pre class="highlight"><code class="language-python"><span class="nd">@admin</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">Project</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProjectAdmin</span><span class="p">(</span><span class="n">admin</span><span class="o">.</span><span class="n">ModelAdmin</span><span class="p">):</span>
+    <span class="n">list_display</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"code"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">,</span> <span class="s2">"start"</span><span class="p">,</span> <span class="s2">"due"</span><span class="p">]</span>
+    <span class="n">search_fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"code"</span><span class="p">,</span> <span class="s2">"name"</span><span class="p">]</span>
+</code></pre>
+
+<p>このアプリでは、<strong>メンバーの追加・役割の変更</strong>は管理画面で行います(API・画面は未実装)。
+管理画面は強力なので、<strong>入口(<code>/admin/</code>)を Cloudflare Access などで保護</strong>します(<a href="L16-operations.html">L16</a>)。</p>
+<h2 id="8-管理コマンド">8. 管理コマンド</h2>
+<p><code>python manage.py &lt;名前&gt;</code> の <code>&lt;名前&gt;</code> は、<strong>自分で足せます</strong>。このアプリには次のものがあります。</p>
+<table>
+<thead>
+<tr>
+<th>コマンド</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>seed_demo --password ...</code></td>
+<td>デモデータの投入</td>
+</tr>
+<tr>
+<td><code>ensure_admin</code></td>
+<td>環境変数から管理者を 1 人作る(初回起動用)</td>
+</tr>
+<tr>
+<td><code>explain_queries</code></td>
+<td>主要なクエリの実行計画を出す</td>
+</tr>
+</tbody>
+</table>
+<p>作り方は <a href="L15-scripts.html">L15 スクリプトを読む</a> で、<code>seed_demo.py</code> を読みます。</p>
+<h2 id="よくある間違い">よくある間違い</h2>
+<table>
+<thead>
+<tr>
+<th>間違い</th>
+<th>正しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>null=True</code> と <code>blank=True</code> の混同</td>
+<td><code>null</code> = DB に NULL を入れてよいか、<code>blank</code> = 入力が空でよいか</td>
+</tr>
+<tr>
+<td>ループの中で関連オブジェクトを取る(N+1)</td>
+<td><code>select_related</code> / <code>prefetch_related</code>。クエリ数を数える</td>
+</tr>
+<tr>
+<td>適用済みのマイグレーションを編集</td>
+<td>新しいマイグレーションを足す</td>
+</tr>
+<tr>
+<td><code>DEBUG = True</code> のまま公開</td>
+<td>スタックトレース・設定が丸見えになる</td>
+</tr>
+<tr>
+<td><code>.get()</code> で「無い」を考えない</td>
+<td><code>DoesNotExist</code> を捕まえる、または <code>.filter().first()</code>(無ければ <code>None</code>)</td>
+</tr>
+<tr>
+<td><code>INSTALLED_APPS</code> に足し忘れる</td>
+<td>モデル・マイグレーションが認識されない</td>
+</tr>
+</tbody>
+</table>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li>ライブラリとフレームワークの違いを、「主導権」で説明せよ。</li>
+<li><code>RejectNulMiddleware</code> が <code>get_response</code> を呼ばずに返すと、何が起きるか。なぜ早い位置に置くのか。</li>
+<li><code>null=True</code> と <code>blank=True</code> の違いは。</li>
+<li>QuerySet が「遅延評価」とは、どういうことか。</li>
+<li>N+1 問題とは何か。直し方を 1 つ挙げよ。</li>
+<li>適用済みのマイグレーションを書き換えてはいけない理由は。</li>
+<li>制約を足すマイグレーションが、本番で失敗しうるのはなぜか。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li>ライブラリは自分のコードが呼ぶ。フレームワークは、決まった場面(リクエストが来たとき)にフレームワークが自分のコードを呼ぶ。</li>
+<li>内側(後ろのミドルウェア・ビュー)が実行されず、その場で応答になる。危険な入力を、セッションや DB に触れる前に安く拒否したいから。</li>
+<li><code>null</code> は DB に NULL を入れてよいか。<code>blank</code> は(フォーム・API の)検証で、空を許すか。</li>
+<li>書いただけでは SQL を実行せず、中身が必要になった瞬間に実行する。同じ QuerySet は結果がキャッシュされる。</li>
+<li>一覧 N 件の各行で関連オブジェクトを取りに行き、1 + N 回のクエリになる問題。<code>select_related</code>(JOIN)/ <code>prefetch_related</code> で直す。</li>
+<li>他の環境の DB はすでに適用済みで、履歴が食い違う。変更は新しい番号のマイグレーションで足す。</li>
+<li>既存のデータが、新しい制約(一意・CHECK)に違反していると、DB が拒否するから。</li>
+</ol>
+<h2 id="次へ">次へ</h2>
+<p><a href="L05-drf.html">L05 Django REST framework</a> ― モデルを、JSON の API として公開する仕組み。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L03-database.html"><span>← 前へ</span>L03 データベースと SQL ― 表・キー・索引・トランザクション</a><a class="next" href="L05-drf.html"><span>次へ →</span>L05 Django REST framework ― モデルを、安全な JSON の API にする</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-django-とは">1. Django とは</a></li><li class="lvl2"><a href="#2-プロジェクトの構造">2. プロジェクトの構造</a></li><li class="lvl2"><a href="#3-mtv-とリクエストの道">3. MTV と、リクエストの道</a></li><li class="lvl3"><a href="#ミドルウェア--玉ねぎの皮">ミドルウェア ― 玉ねぎの皮</a></li><li class="lvl3"><a href="#url-とビュー">URL とビュー</a></li><li class="lvl2"><a href="#4-設定settingspy">4. 設定(settings.py)</a></li><li class="lvl2"><a href="#5-モデルと-orm">5. モデルと ORM</a></li><li class="lvl3"><a href="#queryset--あとで-sql-にするもの">QuerySet ― 「あとで SQL にするもの」</a></li><li class="lvl3"><a href="#crud作る・読む・更新・削除">CRUD(作る・読む・更新・削除)</a></li><li class="lvl3"><a href="#リレーションの辿り方">リレーションの辿り方</a></li><li class="lvl3"><a href="#n1-問題--orm-の最大の落とし穴">N+1 問題 ― ORM の最大の落とし穴</a></li><li class="lvl2"><a href="#6-マイグレーション--表の変更を履歴として管理する">6. マイグレーション ― 表の変更を、履歴として管理する</a></li><li class="lvl2"><a href="#7-管理画面admin">7. 管理画面(admin)</a></li><li class="lvl2"><a href="#8-管理コマンド">8. 管理コマンド</a></li><li class="lvl2"><a href="#よくある間違い">よくある間違い</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#次へ">次へ</a></li></ul></nav>
+</div>
+</body>
+</html>

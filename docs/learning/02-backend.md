@@ -20,6 +20,19 @@
 
 ## 1. モデルとルール(`tracker/models.py`)
 ### 状態遷移
+```mermaid
+flowchart TD
+    S([transition_to を呼ぶ]) --> A{"遷移表に<br/>この組み合わせ?"}
+    A -- いいえ --> E1["InvalidTransition<br/>409 invalid_transition"]
+    A -- はい --> B{"書き込める役割?<br/>can_write"}
+    B -- いいえ --> E2["Forbidden<br/>403"]
+    B -- はい --> C{"レビュー待ち → 完了<br/>なのにレビュアーでない?"}
+    C -- はい --> E3["Forbidden<br/>403(管理者でも)"]
+    C -- いいえ --> D{"完了にするのに<br/>版が 0 件?(設定で外せる)"}
+    D -- はい --> E4["RuleViolation<br/>409 version_required"]
+    D -- いいえ --> OK["status を更新して保存"]
+```
+
 `Task.TRANSITIONS` が遷移表。`transition_to(to, user)` の検査の順序は固定:
 
 1. 表にない → `InvalidTransition`(**409** `invalid_transition`)。誰が試しても同じ。

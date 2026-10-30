@@ -1,0 +1,9 @@
+{
+  "name": "productiontracker-docs-tools",
+  "private": true,
+  "description": "docs の HTML 版を作るための道具(mermaid の図を SVG にする)。アプリ本体の依存ではない",
+  "type": "module",
+  "dependencies": {
+    "mermaid": "11.17.2"
+  }
+}

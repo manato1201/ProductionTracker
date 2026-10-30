@@ -16,6 +16,28 @@ ThemeModeProvider   テーマ(ライト/ダーク)。MUI のテーマ + data-the
 - `AuthProvider` は `setUnauthorizedHandler` で、**どの API が 401 を返しても** ログイン画面へ戻す。
 - API の URL は `api/endpoints.ts` に集約。fetch は `api/client.ts` だけが呼ぶ(CSRF ヘッダ・統一エラー `ApiError` はここ)。
 
+```mermaid
+flowchart TB
+    M[main.tsx] --> T[ThemeModeProvider]
+    T --> To[ToastProvider]
+    To --> R[BrowserRouter]
+    R --> Au[AuthProvider]
+    Au --> App[App.tsx]
+    App --> RA{RequireAuth}
+    RA -- 未ログイン --> L[LoginPage]
+    RA -- ログイン済み --> AL[AppLayout]
+    AL --> PP[ProjectsPage]
+    AL --> PL[ProjectLayout]
+    PL --> OV[OverviewPage]
+    PL --> BD[BoardPage]
+    PL --> EN[EntityPage]
+    AL --> MT[MyTasksPage]
+    BD --> BO[Board]
+    BD --> TD[TaskDrawer]
+    OV --> TD
+    EN --> TD
+```
+
 ## ルーティング(`App.tsx`)
 | ルート | 画面 | メモ |
 |---|---|---|

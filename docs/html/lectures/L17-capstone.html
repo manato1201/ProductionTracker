@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="c289404569815e4047fc">
+<title>L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書) — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html" aria-current="page" class="current">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L17-capstone.md"><code>docs/lectures/L17-capstone.md</code></a></p>
+    <article class="doc"><h1 id="l17-総合演習--機能を-1-つ足す設計--テスト--実装--文書">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>これまでの講義を使って、<strong>小さな機能を 1 つ、最初から最後まで</strong>自力で足す</li>
+<li>「仕様 → 失敗するテスト → 実装 → 全体の確認 → 文書」という<strong>手順</strong>を身につける</li>
+<li>変更の<strong>影響範囲</strong>を見積もり、<strong>やらないこと</strong>も決められる</li>
+</ul>
+<p>前提: L00〜L16(特に L06・L07・L12・L14)。</p>
+<hr />
+<h2 id="1-進め方--6-つの工程">1. 進め方 ― 6 つの工程</h2>
+<figure class="diagram"><svg id="m1c85ef5be7dfd806" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1620.28125px;" viewBox="0 0 1620.28125 141" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m1c85ef5be7dfd806{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m1c85ef5be7dfd806 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m1c85ef5be7dfd806 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m1c85ef5be7dfd806 .error-icon{fill:#552222;}#m1c85ef5be7dfd806 .error-text{fill:#552222;stroke:#552222;}#m1c85ef5be7dfd806 .edge-thickness-normal{stroke-width:1px;}#m1c85ef5be7dfd806 .edge-thickness-thick{stroke-width:3.5px;}#m1c85ef5be7dfd806 .edge-pattern-solid{stroke-dasharray:0;}#m1c85ef5be7dfd806 .edge-thickness-invisible{stroke-width:0;fill:none;}#m1c85ef5be7dfd806 .edge-pattern-dashed{stroke-dasharray:3;}#m1c85ef5be7dfd806 .edge-pattern-dotted{stroke-dasharray:2;}#m1c85ef5be7dfd806 .marker{fill:#666;stroke:#666;}#m1c85ef5be7dfd806 .marker.cross{stroke:#666;}#m1c85ef5be7dfd806 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m1c85ef5be7dfd806 p{margin:0;}#m1c85ef5be7dfd806 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m1c85ef5be7dfd806 .cluster-label text{fill:#333;}#m1c85ef5be7dfd806 .cluster-label span{color:#333;}#m1c85ef5be7dfd806 .cluster-label span p{background-color:transparent;}#m1c85ef5be7dfd806 .label text,#m1c85ef5be7dfd806 span{fill:#000000;color:#000000;}#m1c85ef5be7dfd806 .node rect,#m1c85ef5be7dfd806 .node circle,#m1c85ef5be7dfd806 .node ellipse,#m1c85ef5be7dfd806 .node polygon,#m1c85ef5be7dfd806 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m1c85ef5be7dfd806 .rough-node .label text,#m1c85ef5be7dfd806 .node .label text,#m1c85ef5be7dfd806 .image-shape .label,#m1c85ef5be7dfd806 .icon-shape .label{text-anchor:middle;}#m1c85ef5be7dfd806 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m1c85ef5be7dfd806 .rough-node .label,#m1c85ef5be7dfd806 .node .label,#m1c85ef5be7dfd806 .image-shape .label,#m1c85ef5be7dfd806 .icon-shape .label{text-align:center;}#m1c85ef5be7dfd806 .node.clickable{cursor:pointer;}#m1c85ef5be7dfd806 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m1c85ef5be7dfd806 .arrowheadPath{fill:#333333;}#m1c85ef5be7dfd806 .edgePaths .path{stroke:#666;stroke-width:1px;}#m1c85ef5be7dfd806 .flowchart-link{stroke:#666;fill:none;}#m1c85ef5be7dfd806 .edgeLabel{background-color:white;text-align:center;}#m1c85ef5be7dfd806 .edgeLabel p{background-color:white;}#m1c85ef5be7dfd806 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m1c85ef5be7dfd806 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m1c85ef5be7dfd806 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m1c85ef5be7dfd806 .cluster text{fill:#333;}#m1c85ef5be7dfd806 .cluster span{color:#333;}#m1c85ef5be7dfd806 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m1c85ef5be7dfd806 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m1c85ef5be7dfd806 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m1c85ef5be7dfd806 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m1c85ef5be7dfd806 rect.text{fill:none;stroke-width:0;}#m1c85ef5be7dfd806 .icon-shape,#m1c85ef5be7dfd806 .image-shape{background-color:white;text-align:center;}#m1c85ef5be7dfd806 .icon-shape p,#m1c85ef5be7dfd806 .image-shape p{background-color:white;padding:2px;}#m1c85ef5be7dfd806 .icon-shape .label rect,#m1c85ef5be7dfd806 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m1c85ef5be7dfd806 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m1c85ef5be7dfd806 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m1c85ef5be7dfd806 .node .neo-node{stroke:#999;}#m1c85ef5be7dfd806 [data-look="neo"].node rect,#m1c85ef5be7dfd806 [data-look="neo"].cluster rect,#m1c85ef5be7dfd806 [data-look="neo"].node polygon{stroke:url(#m1c85ef5be7dfd806-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m1c85ef5be7dfd806 [data-look="neo"].swimlane.cluster rect{filter:none;}#m1c85ef5be7dfd806 [data-look="neo"].node path{stroke:url(#m1c85ef5be7dfd806-gradient);stroke-width:1px;}#m1c85ef5be7dfd806 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m1c85ef5be7dfd806 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m1c85ef5be7dfd806 [data-look="neo"].node circle{stroke:url(#m1c85ef5be7dfd806-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m1c85ef5be7dfd806 [data-look="neo"].node circle .state-start{fill:#000000;}#m1c85ef5be7dfd806 [data-look="neo"].icon-shape .icon{fill:url(#m1c85ef5be7dfd806-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m1c85ef5be7dfd806 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m1c85ef5be7dfd806-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m1c85ef5be7dfd806 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m1c85ef5be7dfd806_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m1c85ef5be7dfd806_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M176.422,55.47L180.589,54.058C184.755,52.647,193.089,49.823,200.755,48.412C208.422,47,215.422,47,218.922,47L222.422,47" id="m1c85ef5be7dfd806-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MTc2LjQyMTg3NSwieSI6NTUuNDY5ODQ3NjI4NTg1NzR9LHsieCI6MjAxLjQyMTg3NSwieSI6NDd9LHsieCI6MjI2LjQyMTg3NSwieSI6NDd9XQ==" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path><path d="M442.281,47L446.448,47C450.615,47,458.948,47,466.615,47C474.281,47,481.281,47,484.781,47L488.281,47" id="m1c85ef5be7dfd806-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6NDQyLjI4MTI1LCJ5Ijo0N30seyJ4Ijo0NjcuMjgxMjUsInkiOjQ3fSx7IngiOjQ5Mi4yODEyNSwieSI6NDd9XQ==" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path><path d="M741.641,47L755.714,47C769.786,47,797.932,47,825.411,47C852.891,47,879.703,47,893.109,47L906.516,47" id="m1c85ef5be7dfd806-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6NzQxLjY0MDYyNSwieSI6NDd9LHsieCI6ODI2LjA3ODEyNSwieSI6NDd9LHsieCI6OTEwLjUxNTYyNSwieSI6NDd9XQ==" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path><path d="M1077.625,47L1081.792,47C1085.958,47,1094.292,47,1101.958,47C1109.625,47,1116.625,47,1120.125,47L1123.625,47" id="m1c85ef5be7dfd806-L_D_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_E_0" data-points="W3sieCI6MTA3Ny42MjUsInkiOjQ3fSx7IngiOjExMDIuNjI1LCJ5Ijo0N30seyJ4IjoxMTI3LjYyNSwieSI6NDd9XQ==" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path><path d="M1372.875,47L1377.042,47C1381.208,47,1389.542,47,1397.238,48.091C1404.934,49.182,1411.994,51.364,1415.524,52.455L1419.053,53.546" id="m1c85ef5be7dfd806-L_E_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_F_0" data-points="W3sieCI6MTM3Mi44NzUsInkiOjQ3fSx7IngiOjEzOTcuODc1LCJ5Ijo0N30seyJ4IjoxNDIyLjg3NSwieSI6NTQuNzI3NDUwNzI0NDQ4NX1d" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path><path d="M1422.875,113.273L1418.708,114.56C1414.542,115.848,1406.208,118.424,1377.438,119.712C1348.667,121,1299.458,121,1250.25,121C1201.042,121,1151.833,121,1109.137,121C1066.44,121,1030.255,121,984.164,121C938.073,121,882.076,121,819.224,121C756.372,121,686.667,121,626.867,121C567.068,121,517.174,121,470.073,121C422.971,121,378.661,121,334.352,121C290.042,121,245.732,121,220.042,119.802C194.351,118.605,187.281,116.209,183.746,115.011L180.21,113.814" id="m1c85ef5be7dfd806-L_F_A_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_A_0" data-points="W3sieCI6MTQyMi44NzUsInkiOjExMy4yNzI1NDkyNzU1NTE1fSx7IngiOjEzOTcuODc1LCJ5IjoxMjF9LHsieCI6MTI1MC4yNSwieSI6MTIxfSx7IngiOjExMDIuNjI1LCJ5IjoxMjF9LHsieCI6OTk0LjA3MDMxMjUsInkiOjEyMX0seyJ4Ijo4MjYuMDc4MTI1LCJ5IjoxMjF9LHsieCI6NjE2Ljk2MDkzNzUsInkiOjEyMX0seyJ4Ijo0NjcuMjgxMjUsInkiOjEyMX0seyJ4IjozMzQuMzUxNTYyNSwieSI6MTIxfSx7IngiOjIwMS40MjE4NzUsInkiOjEyMX0seyJ4IjoxNzYuNDIxODc1LCJ5IjoxMTIuNTMwMTUyMzcxNDE0MjZ9XQ==" data-look="classic" marker-end="url(#m1c85ef5be7dfd806_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_B_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_B_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_C_D_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_D_E_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_E_F_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(826.078125, 121)"><g class="label" data-id="L_F_A_0" transform="translate(-0.3125, -10)"><g><rect class="background" style="" x="-59.125" y="-2" width="118.875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">気づきがあれば</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="m1c85ef5be7dfd806-flowchart-A-0" data-look="classic" transform="translate(92.2109375, 84)"><rect class="basic label-container" style="" x="-84.2109375" y="-39" width="168.421875" height="78"></rect><g class="label" style="" transform="translate(-54.2109375, -24)"><rect></rect><foreignObject width="108.421875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>① 仕様を書く<br>(受け入れ条件)</p></span></div></foreignObject></g></g><g class="node default" id="m1c85ef5be7dfd806-flowchart-B-1" data-look="classic" transform="translate(334.3515625, 47)"><rect class="basic label-container" style="" x="-107.9296875" y="-39" width="215.859375" height="78"></rect><g class="label" style="" transform="translate(-77.9296875, -24)"><rect></rect><foreignObject width="155.859375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>② 影響範囲を調べる<br>(grep・型・テスト)</p></span></div></foreignObject></g></g><g class="node default" id="m1c85ef5be7dfd806-flowchart-C-3" data-look="classic" transform="translate(616.9609375, 47)"><rect class="basic label-container" style="" x="-124.6796875" y="-39" width="249.359375" height="78"></rect><g class="label" style="" transform="translate(-94.6796875, -24)"><rect></rect><foreignObject width="189.359375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>③ 失敗するテストを書く<br>(赤)</p></span></div></foreignObject></g></g><g class="node default" id="m1c85ef5be7dfd806-flowchart-D-5" data-look="classic" transform="translate(994.0703125, 47)"><rect class="basic label-container" style="" x="-83.5546875" y="-39" width="167.109375" height="78"></rect><g class="label" style="" transform="translate(-53.5546875, -24)"><rect></rect><foreignObject width="107.109375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>④ 最小の実装<br>(緑)</p></span></div></foreignObject></g></g><g class="node default" id="m1c85ef5be7dfd806-flowchart-E-7" data-look="classic" transform="translate(1250.25, 47)"><rect class="basic label-container" style="" x="-122.625" y="-39" width="245.25" height="78"></rect><g class="label" style="" transform="translate(-92.625, -24)"><rect></rect><foreignObject width="185.25" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>⑤ 全体を確かめる<br>(テスト・型・lint・両DB)</p></span></div></foreignObject></g></g><g class="node default" id="m1c85ef5be7dfd806-flowchart-F-9" data-look="classic" transform="translate(1517.578125, 84)"><rect class="basic label-container" style="" x="-94.703125" y="-39" width="189.40625" height="78"></rect><g class="label" style="" transform="translate(-64.703125, -24)"><rect></rect><foreignObject width="129.40625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>⑥ 文書と記録<br>(docs・学習ログ)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m1c85ef5be7dfd806-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m1c85ef5be7dfd806-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m1c85ef5be7dfd806-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<table>
+<thead>
+<tr>
+<th>工程</th>
+<th>やること</th>
+<th>よくある失敗</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>① 仕様</td>
+<td>「何ができたら完成か」を、<strong>確かめられる文</strong>で書く。<strong>やらないこと</strong>も書く</td>
+<td>曖昧なまま始める(終わりが分からない)</td>
+</tr>
+<tr>
+<td>② 影響範囲</td>
+<td>その名前・概念を使っている所を全部探す(<code>grep</code>・型エラー・既存テスト)</td>
+<td>1 か所だけ直して他を忘れる</td>
+</tr>
+<tr>
+<td>③ 赤</td>
+<td>先に<strong>失敗するテスト</strong>を書き、<strong>赤くなる理由が正しい</strong>ことを確認</td>
+<td>テストが最初から緑(何も確かめていない)</td>
+</tr>
+<tr>
+<td>④ 緑</td>
+<td>テストを通す<strong>最小</strong>の変更。ついでの改造はしない</td>
+<td>範囲が膨らむ</td>
+</tr>
+<tr>
+<td>⑤ 確認</td>
+<td>テスト全部・型・lint・(DB が絡むなら)PostgreSQL でも</td>
+<td>自分の変更だけ試して終わる</td>
+</tr>
+<tr>
+<td>⑥ 文書</td>
+<td>仕様・設計判断・学んだことを残す</td>
+<td>コードだけ直して、文書が古くなる</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>大切なこと</strong>: ①〜④ を行ったり来たりしてよい。ただし<strong>⑤⑥を飛ばさない</strong>。</p>
+</blockquote>
+<h2 id="2-テーマを選ぶ">2. テーマを選ぶ</h2>
+<p>自分の目的に合う 1 つを選んで挑戦します。難しさ: ★ = 1〜2 時間 / ★★ = 半日 / ★★★ = 1 日。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>テーマ</th>
+<th>難しさ</th>
+<th>主な学び</th>
+<th>触る場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td><strong>パスの NFC 正規化</strong>(macOS の濁点ずれを吸収)</td>
+<td>★</td>
+<td>文字列・テスト先行(<a href="L07-strings-paths.html">L07</a>)</td>
+<td><code>tracker/paths.py</code>・<code>test_paths.py</code></td>
+</tr>
+<tr>
+<td>B</td>
+<td><strong>コントラスト比を自動検査するテスト</strong></td>
+<td>★</td>
+<td>計算・トークン(<a href="L12-ui-css.html">L12</a>)</td>
+<td><code>frontend/src/styles/</code>・Vitest</td>
+</tr>
+<tr>
+<td>C</td>
+<td><strong>タスクに説明(description)を足す</strong></td>
+<td>★★</td>
+<td>モデル→API→画面を縦に通す</td>
+<td>models・migration・serializers・types・drawer</td>
+</tr>
+<tr>
+<td>D</td>
+<td><strong><code>ordering=priority</code>(優先度順)</strong></td>
+<td>★★</td>
+<td>ORM の <code>Case/When</code>・ファズ(<a href="L04-django.html">L04</a>・<a href="L14-testing.html">L14</a>)</td>
+<td>views・テスト</td>
+</tr>
+<tr>
+<td>E</td>
+<td><strong>取り込みスクリプトに <code>--since</code> を足す</strong></td>
+<td>★★</td>
+<td>スクリプト・冪等(<a href="L15-scripts.html">L15</a>)</td>
+<td><code>send_quality.py</code></td>
+</tr>
+<tr>
+<td>F</td>
+<td><strong>状態「保留(blocked)」を足す</strong></td>
+<td>★★★</td>
+<td>状態機械・全組み合わせ(<a href="L06-state-machine.html">L06</a>)</td>
+<td>models・migration・画面全体</td>
+</tr>
+</tbody>
+</table>
+<p>C・D・F は <a href="../learning/07-exercises.html">実践ガイドの演習</a> と <a href="../learning/04-recipes.html">レシピ</a> に、手順と答えの方針があります。ここでは、<strong>A を最後まで通した見本</strong>を示します。</p>
+<hr />
+<h2 id="3-見本-テーマ-aパスの-nfc-正規化">3. 見本: テーマ A「パスの NFC 正規化」</h2>
+<h3 id="3-1-①-仕様を書く">3-1. ① 仕様を書く</h3>
+<p><strong>背景</strong>(<a href="L07-strings-paths.html">L07</a>)。macOS のファイル名は、<code>が</code> を「か + 濁点(結合文字)」の <strong>NFD</strong> で持つことがある。登録済みの Entity のパス(NFC)と、取り込まれたパス(NFD)が、<strong>見た目は同じなのに一致しない</strong>。</p>
+<p><strong>受け入れ条件</strong></p>
+<ol>
+<li>NFD で来たパスが、NFC で登録された Entity と一致する(逆も)。</li>
+<li>既存の挙動(区切りの統一・大文字小文字の無視・最長一致)は<strong>変わらない</strong>。</li>
+<li>英数字だけのパスの結果は変わらない(回帰がない)。</li>
+</ol>
+<p><strong>やらないこと</strong></p>
+<ul>
+<li>全角英数を半角にする(NFKC)こと。別の文字を同一視してしまい、<strong>意図しない一致</strong>を生む恐れがある。今回は「同じ文字の別表現」だけを吸収する(NFC)。</li>
+<li>登録時の Entity.path を書き換える移行(必要なら別の作業にする)。</li>
+</ul>
+<h3 id="3-2-②-影響範囲を調べる">3-2. ② 影響範囲を調べる</h3>
+<p>パスの比較は、すべて <code>tracker/paths.py</code> の <code>_key</code> を通ります。呼び出し元を確認します。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">subprocess</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">root</span> <span class="o">=</span> <span class="n">Path</span><span class="o">.</span><span class="n">cwd</span><span class="p">()</span>
+<span class="k">while</span> <span class="ow">not</span> <span class="p">(</span><span class="n">root</span> <span class="o">/</span> <span class="s2">"backend"</span> <span class="o">/</span> <span class="s2">"tracker"</span> <span class="o">/</span> <span class="s2">"paths.py"</span><span class="p">)</span><span class="o">.</span><span class="n">exists</span><span class="p">():</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">parent</span>
+
+<span class="c1"># normalize_path / match_entity を使っている Python ファイル(テスト以外)</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+    <span class="p">[</span><span class="s2">"grep"</span><span class="p">,</span> <span class="s2">"-rlE"</span><span class="p">,</span> <span class="s2">"normalize_path|match_entity"</span><span class="p">,</span> <span class="s2">"backend/tracker"</span><span class="p">,</span> <span class="s2">"--include=*.py"</span><span class="p">,</span> <span class="s2">"--exclude-dir=tests"</span><span class="p">,</span> <span class="s2">"--exclude-dir=migrations"</span><span class="p">],</span>
+    <span class="n">cwd</span><span class="o">=</span><span class="n">root</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">[&#x27;backend/tracker/ingest.py&#x27;, &#x27;backend/tracker/paths.py&#x27;, &#x27;backend/tracker/serializers.py&#x27;]
+</code></pre>
+
+<p><code>paths.py</code> 自身と、それを使う側(<code>ingest.py</code>・<code>serializers.py</code>)の 3 つだけが出ます。使う側は関数を呼ぶだけなので、<strong>変更を <code>paths.py</code> の中に閉じ込められる</strong>(<code>_key</code> だけ直せばよい)ことが分かりました。これが「1 か所に集める」設計の恩恵です。</p>
+<h3 id="3-3-③-失敗するテストを書く赤">3-3. ③ 失敗するテストを書く(赤)</h3>
+<p><strong>今の実装で</strong>、問題が再現することを確かめます。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_entity</span>
+
+<span class="n">composed</span> <span class="o">=</span> <span class="s2">"assets/props/が"</span>                          <span class="c1"># NFC</span>
+<span class="n">decomposed</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFD"</span><span class="p">,</span> <span class="n">composed</span><span class="p">)</span>    <span class="c1"># NFD(濁点が別の文字になる)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"見た目は同じ:"</span><span class="p">,</span> <span class="n">composed</span><span class="p">,</span> <span class="n">decomposed</span><span class="p">,</span> <span class="s2">"| 文字列として等しい:"</span><span class="p">,</span> <span class="n">composed</span> <span class="o">==</span> <span class="n">decomposed</span><span class="p">)</span>
+
+<span class="n">entities</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">composed</span><span class="p">)]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"NFC で登録 → NFD で検索:"</span><span class="p">,</span> <span class="n">match_entity</span><span class="p">(</span><span class="n">decomposed</span><span class="p">,</span> <span class="n">entities</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">見た目は同じ: assets/props/が assets/props/が | 文字列として等しい: False
+NFC で登録 → NFD で検索: None
+</code></pre>
+
+<p><code>None</code>(一致しない)― バグを<strong>再現できました</strong>。これをテストとして書きます(実際に足すなら <code>test_paths.py</code> へ)。</p>
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">test_nfd_and_nfc_paths_match</span><span class="p">():</span>
+    <span class="n">composed</span> <span class="o">=</span> <span class="s2">"assets/props/が"</span>
+    <span class="n">decomposed</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFD"</span><span class="p">,</span> <span class="n">composed</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">match_entity</span><span class="p">(</span><span class="n">decomposed</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">composed</span><span class="p">)])</span> <span class="o">==</span> <span class="mi">1</span>
+    <span class="k">assert</span> <span class="n">match_entity</span><span class="p">(</span><span class="n">composed</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">decomposed</span><span class="p">)])</span> <span class="o">==</span> <span class="mi">1</span>
+</code></pre>
+
+<blockquote>
+<p>このテストは、<strong>今は失敗する</strong>(赤)。赤くなる理由が「一致しない」であることが、仕様と合っているかを確かめる ― 別の理由(タイプミスなど)で赤くなっていないか。</p>
+</blockquote>
+<h3 id="3-4-④-最小の実装緑">3-4. ④ 最小の実装(緑)</h3>
+<p><code>_key</code> の 1 行を直します。<strong>本物のファイルは変えず</strong>、ここでは同じ関数を手元で作って確かめます。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">key_nfc</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># 変更点はここだけ: NFC にそろえてから、これまでどおり正規化 → casefold</span>
+    <span class="k">return</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFC"</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">match_entity_nfc</span><span class="p">(</span><span class="n">asset_path</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">key_nfc</span><span class="p">(</span><span class="n">asset_path</span><span class="p">)</span>
+    <span class="n">best_id</span><span class="p">,</span> <span class="n">best_len</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">entity_path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">key_nfc</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">target</span> <span class="o">==</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">"/"</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">best_len</span><span class="p">:</span>
+            <span class="n">best_id</span><span class="p">,</span> <span class="n">best_len</span> <span class="o">=</span> <span class="n">entity_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best_id</span>
+
+<span class="n">composed</span> <span class="o">=</span> <span class="s2">"assets/props/が"</span>
+<span class="n">decomposed</span> <span class="o">=</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFD"</span><span class="p">,</span> <span class="n">composed</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"NFC 登録 / NFD 検索:"</span><span class="p">,</span> <span class="n">match_entity_nfc</span><span class="p">(</span><span class="n">decomposed</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">composed</span><span class="p">)]))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"NFD 登録 / NFC 検索:"</span><span class="p">,</span> <span class="n">match_entity_nfc</span><span class="p">(</span><span class="n">composed</span><span class="p">,</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="n">decomposed</span><span class="p">)]))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">NFC 登録 / NFD 検索: 1
+NFD 登録 / NFC 検索: 1
+</code></pre>
+
+<h3 id="3-5-⑤-回帰がないか確かめる受け入れ条件-2・3">3-5. ⑤ 回帰がないか確かめる(受け入れ条件 2・3)</h3>
+<p>「<strong>変えないはずのもの</strong>が変わっていない」ことを、<strong>元の実装と新しい実装を突き合わせて</strong>確かめます。ランダムなパスを大量に流し、結果が同じであることを見ます(種を固定)。</p>
+<!-- test:django -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_entity</span><span class="p">,</span> <span class="n">normalize_path</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">key_nfc</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFC"</span><span class="p">,</span> <span class="n">path</span><span class="p">))</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">match_entity_nfc</span><span class="p">(</span><span class="n">asset_path</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">key_nfc</span><span class="p">(</span><span class="n">asset_path</span><span class="p">)</span>
+    <span class="n">best_id</span><span class="p">,</span> <span class="n">best_len</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">entity_path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">key_nfc</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">target</span> <span class="o">==</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">"/"</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">best_len</span><span class="p">:</span>
+            <span class="n">best_id</span><span class="p">,</span> <span class="n">best_len</span> <span class="o">=</span> <span class="n">entity_id</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">best_id</span>
+
+<span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">parts</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"props"</span><span class="p">,</span> <span class="s2">"Props"</span><span class="p">,</span> <span class="s2">"crate"</span><span class="p">,</span> <span class="s2">"chars"</span><span class="p">,</span> <span class="s2">"hero"</span><span class="p">,</span> <span class="s2">"."</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"x y"</span><span class="p">]</span>   <span class="c1"># ASCII 中心(日本語は含めない)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_path</span><span class="p">():</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">([</span><span class="s2">"/"</span><span class="p">,</span> <span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"//"</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">sep</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">parts</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)))</span>
+
+<span class="n">differences</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5000</span><span class="p">):</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="n">random_path</span><span class="p">())</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">))]</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">random_path</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">match_entity</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">candidates</span><span class="p">)</span> <span class="o">!=</span> <span class="n">match_entity_nfc</span><span class="p">(</span><span class="n">target</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+        <span class="n">differences</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"ASCII のパス 5000 組で、元と新しい実装の結果が違った数:"</span><span class="p">,</span> <span class="n">differences</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">ASCII のパス 5000 組で、元と新しい実装の結果が違った数: 0
+</code></pre>
+
+<p><strong>0 件</strong> ― 英数字のパスの挙動は変わっていません(受け入れ条件 3)。</p>
+<blockquote>
+<p><strong>補足</strong>: これは<strong>差分テスト</strong>(differential testing)の考え方です。「正解」が分からなくても、「<strong>変えないはずの部分が元と同じ</strong>」なら確かめられます。リファクタリングで特に強力です。</p>
+</blockquote>
+<h3 id="3-6-⑥-文書と記録">3-6. ⑥ 文書と記録</h3>
+<ul>
+<li><code>paths.py</code> の先頭の説明に「NFC にそろえる」と追記する。</li>
+<li><a href="L07-strings-paths.html">L07</a> の「既知の限界」を更新する。</li>
+<li><code>docs/decisions.md</code> に判断を残す(<strong>なぜ NFC で NFKC ではないか</strong>)。</li>
+<li><code>docs/learning-log.md</code> に、詰まった点や気づきを書く。</li>
+</ul>
+<p>判断の記録は、<strong>未来の自分(や他の人)が「なぜこうなっているのか」を調べる手がかり</strong>です。コードに書けない「やらなかったこと」と、その理由を残します。</p>
+<hr />
+<h2 id="4-自分のテーマで進めるときの手引き">4. 自分のテーマで進めるときの手引き</h2>
+<h3 id="4-1-仕様のテンプレート">4-1. 仕様のテンプレート</h3>
+<pre class="highlight"><code class="language-text">テーマ: （一行で）
+背景:   （何が困っているか。誰が困るか）
+受け入れ条件:
+  1. …（確かめられる文で）
+  2. …
+  3. 既存の挙動は変わらない（回帰）
+やらないこと:
+  - …
+影響範囲:
+  - 触るファイル: …
+  - 影響を受けるテスト: …
+危うい点（失敗しうること）:
+  - …
+</code></pre>
+
+<h3 id="4-2-影響範囲の調べ方">4-2. 影響範囲の調べ方</h3>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>使いどころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>grep -rn &quot;名前&quot; backend frontend/src docs</code></td>
+<td>その名前の全使用箇所</td>
+</tr>
+<tr>
+<td><code>npm run typecheck</code>(TypeScript)</td>
+<td>型を変えたとき、直す場所を機械が教えてくれる</td>
+</tr>
+<tr>
+<td>テストを先に全部走らせる</td>
+<td>変更前に緑であることを確認(元から赤を混ぜない)</td>
+</tr>
+<tr>
+<td><code>git log -p -- ファイル</code></td>
+<td>過去に同じ所を直した理由</td>
+</tr>
+<tr>
+<td>ドキュメントの検索</td>
+<td>設計判断(<code>decisions.md</code>)に反していないか</td>
+</tr>
+</tbody>
+</table>
+<h3 id="4-3-完成のチェックリスト">4-3. 完成のチェックリスト</h3>
+<p><strong>コード</strong></p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 受け入れ条件の<strong>すべて</strong>にテストがある(正常・異常・境界)。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 拒否するときに<strong>データが変わらない</strong>ことを確かめた。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 権限(閲覧者・部外者・未ログイン)を確かめた。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 悪い入力で 500 にならない(ファズの表に足した)。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> N+1 が起きない(一覧を足したなら、クエリ数を固定した)。</li>
+</ul>
+<p><strong>確認</strong></p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> バックエンド: <code>pytest</code>(SQLite)/ PostgreSQL でも緑。<code>ruff</code> が通る。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> フロントエンド: <code>npm run typecheck</code> と <code>npm test</code> が緑。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> マイグレーションを足したなら、<code>makemigrations --check</code> で差分なし、<strong>既存データがあっても通る</strong>。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 画面を足したなら、キーボードだけで操作できる。360px で横スクロールが出ない。ライト/ダークで読める。</li>
+</ul>
+<p><strong>文書</strong></p>
+<ul class="contains-task-list">
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 仕様・設計判断を記録した(<code>decisions.md</code>)。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 変更した挙動を、関係する文書に反映した(図も)。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 文書内のコードは、テストを通る(<code>pytest tracker/tests/test_docs.py</code>)。HTML 版を作り直した(<code>python docs/tools/build_html.py</code>)。</li>
+<li class="task-list-item"><input class="task-list-item-checkbox" disabled="disabled" type="checkbox"> 学習ログに、気づきを 1 つ以上残した。</li>
+</ul>
+<h3 id="4-4-評価の観点自己採点用">4-4. 評価の観点(自己採点用)</h3>
+<table>
+<thead>
+<tr>
+<th>観点</th>
+<th>4(優れている)</th>
+<th>2(あと一歩)</th>
+<th>0(不足)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>仕様</td>
+<td>条件が確かめられる文。やらないことも明記</td>
+<td>条件が曖昧な箇所がある</td>
+<td>仕様がない</td>
+</tr>
+<tr>
+<td>テスト</td>
+<td>赤→緑を踏んだ。正常・異常・境界・権限・回帰</td>
+<td>正常系だけ</td>
+<td>テストがない</td>
+</tr>
+<tr>
+<td>設計</td>
+<td>変更が 1 か所に集まる。既存の流儀に沿う</td>
+<td>一部に重複・例外扱いがある</td>
+<td>流儀を無視</td>
+</tr>
+<tr>
+<td>安全</td>
+<td>入力検査・権限・秘密・失敗時の整合を考えた</td>
+<td>一部だけ</td>
+<td>考慮がない</td>
+</tr>
+<tr>
+<td>影響範囲</td>
+<td>他への影響を調べ、回帰を確かめた</td>
+<td>一部だけ</td>
+<td>調べていない</td>
+</tr>
+<tr>
+<td>文書</td>
+<td>判断の理由まで残した</td>
+<td>コードの説明だけ</td>
+<td>なし</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-発展-次に挑戦できること">5. 発展: 次に挑戦できること</h2>
+<table>
+<thead>
+<tr>
+<th>テーマ</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>テーマ B の実装</td>
+<td><code>_tokens.scss</code> を読み、全トークンの組合せのコントラストを検査するテスト(Vitest か Node)を書く。L12 の計算がそのまま使える</td>
+</tr>
+<tr>
+<td>権限の追加</td>
+<td>新しい役割(例: コーディネーター)を足す。権限の表(<a href="../security.html">security.md</a>)とテストの表を同時に更新</td>
+</tr>
+<tr>
+<td>新しい取り込み口</td>
+<td>別ツールの結果を取り込む API。冪等・API キー・入力検査・件数照合を、<code>ingest.py</code> の流儀で</td>
+</tr>
+<tr>
+<td>国際化</td>
+<td>画面の文言を辞書に分け、英語を足す(React の Context が使える)</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>1 万件のタスクで一覧が遅い → <code>test_query_plans.py</code>・索引・ページネーションの見直し</td>
+</tr>
+<tr>
+<td>ブラウザテスト</td>
+<td>Playwright で、ログイン → 移動 → 完了の流れを自動化</td>
+</tr>
+</tbody>
+</table>
+<h2 id="6-振り返り--学んだことを言葉にする">6. 振り返り ― 学んだことを言葉にする</h2>
+<p>最後に、自分の言葉で次を書いてみましょう(<code>docs/learning-log.md</code> の形式で)。</p>
+<ol>
+<li><strong>何を作ったか</strong>(一文)。</li>
+<li><strong>一番詰まったところ</strong>と、どう解決したか。</li>
+<li><strong>最初の想定と違ったこと</strong>。</li>
+<li><strong>次に同じことをするなら、変えること</strong>。</li>
+<li><strong>まだ分からないこと</strong>(次の学習の入口)。</li>
+</ol>
+<blockquote>
+<p>「分からないこと」を書き出せることが、保守・拡張できる人の条件です。分からないことを<strong>分からないと認識できている</strong>なら、調べる道筋はもう見えています。</p>
+</blockquote>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li>「失敗するテストを先に書く」のは、なぜか。赤くなる理由まで確かめるのは、なぜか。</li>
+<li>見本のテーマ A で、NFKC でなく NFC を選んだ理由は。</li>
+<li>差分テスト(元の実装との突き合わせ)は、どんな場面で有効か。</li>
+<li>「やらないこと」を仕様に書くのは、なぜか。</li>
+<li>変更が 1 か所(<code>_key</code>)に閉じ込められたのは、設計のどんな工夫のおかげか。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li>本当にそのバグ(要件)を検出できるテストか確かめるため。テストが最初から緑なら何も確かめていない。赤い理由が別(タイプミスなど)だと、直しても要件を満たした保証にならない。</li>
+<li>NFKC は全角/半角など<strong>別の文字</strong>まで同一視し、意図しない一致を生む恐れがある。今回は「同じ文字の別表現」だけを吸収すればよい。</li>
+<li>「変えないはずの挙動」を守りたいとき(リファクタリング・小さな改修)。正解が分からなくても、元の実装との一致を確認できる。</li>
+<li>範囲の膨張を防ぎ、終わりを明確にするため。また、やらなかった理由が判断の記録になる。</li>
+<li>パスの比較を <code>_key</code> に集め、すべての呼び出しがそれを通る設計(ルールを 1 か所に)。</li>
+</ol>
+<h2 id="おわりに">おわりに</h2>
+<p>ここまでで、<strong>Web の仕組みから、画面・API・データベース・アルゴリズム・テスト・運用まで</strong>を一通り扱いました。</p>
+<ul>
+<li>迷ったら、まず<strong>テストと文書を読む</strong>(動くコードが、いちばん正確な仕様です)。</li>
+<li>分からない言葉は <a href="glossary.html">用語集</a> へ。</li>
+<li>手順を知りたいときは <a href="../learning/README.html">実践ガイド</a> へ。</li>
+</ul>
+<p>あなたの変更が、次の人の学習資料になります。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L16-operations.html"><span>← 前へ</span>L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a><a class="next" href="glossary.html"><span>次へ →</span>用語集</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-進め方--6-つの工程">1. 進め方 ― 6 つの工程</a></li><li class="lvl2"><a href="#2-テーマを選ぶ">2. テーマを選ぶ</a></li><li class="lvl2"><a href="#3-見本-テーマ-aパスの-nfc-正規化">3. 見本: テーマ A「パスの NFC 正規化」</a></li><li class="lvl3"><a href="#3-1-①-仕様を書く">3-1. ① 仕様を書く</a></li><li class="lvl3"><a href="#3-2-②-影響範囲を調べる">3-2. ② 影響範囲を調べる</a></li><li class="lvl3"><a href="#3-3-③-失敗するテストを書く赤">3-3. ③ 失敗するテストを書く(赤)</a></li><li class="lvl3"><a href="#3-4-④-最小の実装緑">3-4. ④ 最小の実装(緑)</a></li><li class="lvl3"><a href="#3-5-⑤-回帰がないか確かめる受け入れ条件-2・3">3-5. ⑤ 回帰がないか確かめる(受け入れ条件 2・3)</a></li><li class="lvl3"><a href="#3-6-⑥-文書と記録">3-6. ⑥ 文書と記録</a></li><li class="lvl2"><a href="#4-自分のテーマで進めるときの手引き">4. 自分のテーマで進めるときの手引き</a></li><li class="lvl3"><a href="#4-1-仕様のテンプレート">4-1. 仕様のテンプレート</a></li><li class="lvl3"><a href="#4-2-影響範囲の調べ方">4-2. 影響範囲の調べ方</a></li><li class="lvl3"><a href="#4-3-完成のチェックリスト">4-3. 完成のチェックリスト</a></li><li class="lvl3"><a href="#4-4-評価の観点自己採点用">4-4. 評価の観点(自己採点用)</a></li><li class="lvl2"><a href="#5-発展-次に挑戦できること">5. 発展: 次に挑戦できること</a></li><li class="lvl2"><a href="#6-振り返り--学んだことを言葉にする">6. 振り返り ― 学んだことを言葉にする</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#おわりに">おわりに</a></li></ul></nav>
+</div>
+</body>
+</html>

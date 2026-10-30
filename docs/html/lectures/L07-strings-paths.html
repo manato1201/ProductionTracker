@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="1677454caa6239803634">
+<title>L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木 — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html" aria-current="page" class="current">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/L07-strings-paths.md"><code>docs/lectures/L07-strings-paths.md</code></a></p>
+    <article class="doc"><h1 id="l07-アルゴリズム②-文字列とパス--正規化・最長前方一致・計算量・トライ木">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</h1>
+<p><strong>この回の目標</strong></p>
+<ul>
+<li>表記ゆれのある文字列を、<strong>正規化</strong>して比べる考え方を説明できる</li>
+<li>「前方一致」の落とし穴(<code>crate</code> と <code>crater</code>)を、コードで示して直せる</li>
+<li><strong>最長一致</strong>を実装でき、その<strong>計算量</strong>を <code>O(N · L)</code> と答えられる</li>
+<li><strong>トライ木</strong>で、同じ問題を速く解ける理由を説明でき、実装できる</li>
+<li>取り込み(集計 → 突き合わせ → 保存)の流れを、コードで読み解ける</li>
+</ul>
+<p>前提: <a href="L02-python.html">L02</a>。</p>
+<hr />
+<h2 id="1-解きたい問題">1. 解きたい問題</h2>
+<p>品質スキャン(AssetDataInsightSuite)は、<strong>ファイルのパスごとに欠陥の数</strong>を出します。
+でも、画面は<strong>アセットごと</strong>に見せたい。「このパスは、どのアセットのもの?」を決める必要があります。</p>
+<figure class="diagram"><svg id="mc52178b14f61a3bc" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 820.8125px;" viewBox="0 0 820.8125 532" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mc52178b14f61a3bc{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mc52178b14f61a3bc .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mc52178b14f61a3bc .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mc52178b14f61a3bc .error-icon{fill:#552222;}#mc52178b14f61a3bc .error-text{fill:#552222;stroke:#552222;}#mc52178b14f61a3bc .edge-thickness-normal{stroke-width:1px;}#mc52178b14f61a3bc .edge-thickness-thick{stroke-width:3.5px;}#mc52178b14f61a3bc .edge-pattern-solid{stroke-dasharray:0;}#mc52178b14f61a3bc .edge-thickness-invisible{stroke-width:0;fill:none;}#mc52178b14f61a3bc .edge-pattern-dashed{stroke-dasharray:3;}#mc52178b14f61a3bc .edge-pattern-dotted{stroke-dasharray:2;}#mc52178b14f61a3bc .marker{fill:#666;stroke:#666;}#mc52178b14f61a3bc .marker.cross{stroke:#666;}#mc52178b14f61a3bc svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#mc52178b14f61a3bc p{margin:0;}#mc52178b14f61a3bc .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#mc52178b14f61a3bc .cluster-label text{fill:#333;}#mc52178b14f61a3bc .cluster-label span{color:#333;}#mc52178b14f61a3bc .cluster-label span p{background-color:transparent;}#mc52178b14f61a3bc .label text,#mc52178b14f61a3bc span{fill:#000000;color:#000000;}#mc52178b14f61a3bc .node rect,#mc52178b14f61a3bc .node circle,#mc52178b14f61a3bc .node ellipse,#mc52178b14f61a3bc .node polygon,#mc52178b14f61a3bc .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mc52178b14f61a3bc .rough-node .label text,#mc52178b14f61a3bc .node .label text,#mc52178b14f61a3bc .image-shape .label,#mc52178b14f61a3bc .icon-shape .label{text-anchor:middle;}#mc52178b14f61a3bc .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mc52178b14f61a3bc .rough-node .label,#mc52178b14f61a3bc .node .label,#mc52178b14f61a3bc .image-shape .label,#mc52178b14f61a3bc .icon-shape .label{text-align:center;}#mc52178b14f61a3bc .node.clickable{cursor:pointer;}#mc52178b14f61a3bc .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#mc52178b14f61a3bc .arrowheadPath{fill:#333333;}#mc52178b14f61a3bc .edgePaths .path{stroke:#666;stroke-width:1px;}#mc52178b14f61a3bc .flowchart-link{stroke:#666;fill:none;}#mc52178b14f61a3bc .edgeLabel{background-color:white;text-align:center;}#mc52178b14f61a3bc .edgeLabel p{background-color:white;}#mc52178b14f61a3bc .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mc52178b14f61a3bc .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#mc52178b14f61a3bc .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#mc52178b14f61a3bc .cluster text{fill:#333;}#mc52178b14f61a3bc .cluster span{color:#333;}#mc52178b14f61a3bc .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#mc52178b14f61a3bc .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#mc52178b14f61a3bc div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#mc52178b14f61a3bc .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#mc52178b14f61a3bc rect.text{fill:none;stroke-width:0;}#mc52178b14f61a3bc .icon-shape,#mc52178b14f61a3bc .image-shape{background-color:white;text-align:center;}#mc52178b14f61a3bc .icon-shape p,#mc52178b14f61a3bc .image-shape p{background-color:white;padding:2px;}#mc52178b14f61a3bc .icon-shape .label rect,#mc52178b14f61a3bc .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#mc52178b14f61a3bc .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mc52178b14f61a3bc .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mc52178b14f61a3bc .node .neo-node{stroke:#999;}#mc52178b14f61a3bc [data-look="neo"].node rect,#mc52178b14f61a3bc [data-look="neo"].cluster rect,#mc52178b14f61a3bc [data-look="neo"].node polygon{stroke:url(#mc52178b14f61a3bc-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mc52178b14f61a3bc [data-look="neo"].swimlane.cluster rect{filter:none;}#mc52178b14f61a3bc [data-look="neo"].node path{stroke:url(#mc52178b14f61a3bc-gradient);stroke-width:1px;}#mc52178b14f61a3bc [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mc52178b14f61a3bc [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#mc52178b14f61a3bc [data-look="neo"].node circle{stroke:url(#mc52178b14f61a3bc-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mc52178b14f61a3bc [data-look="neo"].node circle .state-start{fill:#000000;}#mc52178b14f61a3bc [data-look="neo"].icon-shape .icon{fill:url(#mc52178b14f61a3bc-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mc52178b14f61a3bc [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mc52178b14f61a3bc-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mc52178b14f61a3bc :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="mc52178b14f61a3bc_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mc52178b14f61a3bc_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mc52178b14f61a3bc_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mc52178b14f61a3bc_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mc52178b14f61a3bc_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mc52178b14f61a3bc_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mc52178b14f61a3bc_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"><g class="cluster" id="mc52178b14f61a3bc-アセット" data-look="classic"><rect style="" x="502.8125" y="31" width="310" height="381"></rect><g class="cluster-label" transform="translate(569.65625, 31)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">アプリのアセット(path)</tspan></tspan></text></g></g></g><g class="cluster" id="mc52178b14f61a3bc-ツールの結果" data-look="classic"><rect style="" x="8" y="8" width="344.421875" height="516"></rect><g class="cluster-label" transform="translate(101.0625, 8)"><g><rect class="background" style="stroke: none"></rect><text y="-10.1" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">スキャンの結果(パス)</tspan></tspan></text></g></g></g></g><g class="edgePaths"><path d="M327.422,82L331.589,82C335.755,82,344.089,82,360.788,82C377.487,82,402.552,82,427.617,82C452.682,82,477.747,82,504.599,87.912C531.45,93.824,560.087,105.649,574.406,111.561L588.725,117.473" id="mc52178b14f61a3bc-L_P1_E1_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P1_E1_0" data-points="W3sieCI6MzI3LjQyMTg3NSwieSI6ODJ9LHsieCI6MzUyLjQyMTg3NSwieSI6ODJ9LHsieCI6NDI3LjYxNzE4NzUsInkiOjgyfSx7IngiOjUwMi44MTI1LCJ5Ijo4Mn0seyJ4Ijo1OTIuNDIxODc1LCJ5IjoxMTl9XQ==" data-look="classic" marker-end="url(#mc52178b14f61a3bc_flowchart-v2-pointEnd)"></path><path d="M315.688,210L321.81,210C327.932,210,340.177,210,358.832,210C377.487,210,402.552,210,427.617,210C452.682,210,477.747,210,504.599,204.088C531.45,198.176,560.087,186.351,574.406,180.439L588.725,174.527" id="mc52178b14f61a3bc-L_P2_E1_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P2_E1_0" data-points="W3sieCI6MzE1LjY4NzUsInkiOjIxMH0seyJ4IjozNTIuNDIxODc1LCJ5IjoyMTB9LHsieCI6NDI3LjYxNzE4NzUsInkiOjIxMH0seyJ4Ijo1MDIuODEyNSwieSI6MjEwfSx7IngiOjU5Mi40MjE4NzUsInkiOjE3M31d" data-look="classic" marker-end="url(#mc52178b14f61a3bc_flowchart-v2-pointEnd)"></path><path d="M326.461,338L330.788,338C335.115,338,343.768,338,360.628,338C377.487,338,402.552,338,427.617,338C452.682,338,477.747,338,493.78,338C509.813,338,516.813,338,520.313,338L523.813,338" id="mc52178b14f61a3bc-L_P3_E2_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P3_E2_0" data-points="W3sieCI6MzI2LjQ2MDkzNzUsInkiOjMzOH0seyJ4IjozNTIuNDIxODc1LCJ5IjozMzh9LHsieCI6NDI3LjYxNzE4NzUsInkiOjMzOH0seyJ4Ijo1MDIuODEyNSwieSI6MzM4fSx7IngiOjUyNy44MTI1LCJ5IjozMzh9XQ==" data-look="classic" marker-end="url(#mc52178b14f61a3bc_flowchart-v2-pointEnd)"></path><path d="M290.586,462L300.892,462C311.198,462,331.81,462,354.648,462C377.487,462,402.552,462,427.617,462C452.682,462,477.747,462,510.447,462C543.146,462,583.479,462,603.646,462L623.813,462" id="mc52178b14f61a3bc-L_P4_X_0" class="edge-thickness-normal edge-pattern-dotted edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P4_X_0" data-points="W3sieCI6MjkwLjU4NTkzNzUsInkiOjQ2Mn0seyJ4IjozNTIuNDIxODc1LCJ5Ijo0NjJ9LHsieCI6NDI3LjYxNzE4NzUsInkiOjQ2Mn0seyJ4Ijo1MDIuODEyNSwieSI6NDYyfSx7IngiOjYyNy44MTI1LCJ5Ijo0NjJ9XQ==" data-look="classic" marker-end="url(#mc52178b14f61a3bc_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_P1_E1_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_P2_E1_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_P3_E2_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(427.6171875, 462)"><g class="label" data-id="L_P4_X_0" transform="translate(0, -18.799999237060547)"><g><rect class="background" style="" x="-50.1953125" y="-2" width="100.390625" height="41.599998474121094"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">対応なし</tspan></tspan><tspan class="text-outer-tspan row" x="0" y="1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">(unmatched)</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="mc52178b14f61a3bc-flowchart-P1-0" data-look="classic" transform="translate(180.2109375, 82)"><rect class="basic label-container" style="" x="-147.2109375" y="-39" width="294.421875" height="78"></rect><g class="label" style="" transform="translate(-117.2109375, -24)"><rect></rect><foreignObject width="234.421875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>assets\\props\\Crate\\crate.fbx : 3</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-P2-1" data-look="classic" transform="translate(180.2109375, 210)"><rect class="basic label-container" style="" x="-135.4765625" y="-39" width="270.953125" height="78"></rect><g class="label" style="" transform="translate(-105.4765625, -24)"><rect></rect><foreignObject width="210.953125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>assets/props/crate/lod1.fbx : 2</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-P3-2" data-look="classic" transform="translate(180.2109375, 338)"><rect class="basic label-container" style="" x="-146.25" y="-39" width="292.5" height="78"></rect><g class="label" style="" transform="translate(-116.25, -24)"><rect></rect><foreignObject width="232.5" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>assets/chars/dragon/body.fbx : 1</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-P4-3" data-look="classic" transform="translate(180.2109375, 462)"><rect class="basic label-container" style="" x="-110.375" y="-27" width="220.75" height="54"></rect><g class="label" style="" transform="translate(-80.375, -12)"><rect></rect><foreignObject width="160.75" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>assets/other/x.fbx : 4</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-E1-4" data-look="classic" transform="translate(657.8125, 146)"><rect class="basic label-container" style="" x="-127.1875" y="-27" width="254.375" height="54"></rect><g class="label" style="" transform="translate(-97.1875, -12)"><rect></rect><foreignObject width="194.375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>crate : assets/props/crate</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-E2-5" data-look="classic" transform="translate(657.8125, 338)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>dragon : assets/chars/dragon</p></span></div></foreignObject></g></g><g class="node default" id="mc52178b14f61a3bc-flowchart-X-13" data-look="classic" transform="translate(657.8125, 462)"><rect class="basic label-container" style="" x="-30" y="-15" width="60" height="30"></rect><g class="label" style="" transform="translate(0, 0)"><rect></rect><foreignObject width="0" height="0"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"></span></div></foreignObject></g></g></g></g></g><defs><filter id="mc52178b14f61a3bc-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mc52178b14f61a3bc-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="mc52178b14f61a3bc-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p><strong>同じアセットの下にあるファイルは、パスの先頭が同じ</strong>です(<code>assets/props/crate/</code> で始まる)。だから「<strong>前方一致</strong>」で結びつけます。
+ところが、実際のデータには、表記ゆれがあります。</p>
+<table>
+<thead>
+<tr>
+<th>ゆれ</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>区切り文字</td>
+<td><code>assets\props\crate</code>(Windows)と <code>assets/props/crate</code></td>
+</tr>
+<tr>
+<td>連続する区切り</td>
+<td><code>assets//props///crate</code></td>
+</tr>
+<tr>
+<td>先頭の <code>./</code></td>
+<td><code>./assets/props/crate</code></td>
+</tr>
+<tr>
+<td>末尾の <code>/</code></td>
+<td><code>assets/props/crate/</code></td>
+</tr>
+<tr>
+<td>大文字小文字</td>
+<td><code>P:</code> と <code>p:</code>(Windows のドライブ文字)、<code>Crate</code> と <code>crate</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>比べる前に、表記を 1 つに揃える(正規化)</strong>。これが最初の考え方です。</p>
+<h2 id="2-正規化">2. 正規化</h2>
+<!-- excerpt: backend/tracker/paths.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">"</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"/"</span><span class="p">)</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="n">_MULTI_SLASH</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">"/"</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+    <span class="k">while</span> <span class="n">p</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"./"</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">p</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">p</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">"/"</span><span class="p">)</span>
+</code></pre>
+
+<p>1 行ずつ(<code>_MULTI_SLASH</code> は <code>re.compile(r&quot;/{2,}&quot;)</code>、「<code>/</code> が 2 つ以上」)。</p>
+<table>
+<thead>
+<tr>
+<th>行</th>
+<th>処理</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>前後の空白を取り、<code>\</code> を <code>/</code> に</td>
+<td><code>&quot; assets\\props &quot;</code> → <code>&quot;assets/props&quot;</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td>連続する <code>/</code> を 1 つに</td>
+<td><code>a//b</code> → <code>a/b</code></td>
+</tr>
+<tr>
+<td>3</td>
+<td>先頭の <code>./</code> を取る(何度でも)</td>
+<td><code>././a</code> → <code>a</code></td>
+</tr>
+<tr>
+<td>4</td>
+<td>末尾の <code>/</code> を取る</td>
+<td><code>a/</code> → <code>a</code></td>
+</tr>
+</tbody>
+</table>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_path</span>
+
+<span class="k">for</span> <span class="n">raw</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"assets</span><span class="se">\\</span><span class="s2">props</span><span class="se">\\</span><span class="s2">crate</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"  ./assets//props/crate/  "</span><span class="p">,</span> <span class="s2">"P:</span><span class="se">\\</span><span class="s2">proj</span><span class="se">\\</span><span class="s2">a.fbx"</span><span class="p">,</span> <span class="s2">"././x"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"./"</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="n">raw</span><span class="p">),</span> <span class="s2">"→"</span><span class="p">,</span> <span class="nb">repr</span><span class="p">(</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">raw</span><span class="p">)))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">&#x27;assets\\props\\crate\\&#x27; → &#x27;assets/props/crate&#x27;
+&#x27;  ./assets//props/crate/  &#x27; → &#x27;assets/props/crate&#x27;
+&#x27;P:\\proj\\a.fbx&#x27; → &#x27;P:/proj/a.fbx&#x27;
+&#x27;././x&#x27; → &#x27;x&#x27;
+&#x27;&#x27; → &#x27;&#x27;
+&#x27;./&#x27; → &#x27;&#x27;
+</code></pre>
+
+<p><strong>正規化は「冪等」であるべきです</strong>: 2 回かけても、1 回と同じ結果。<code>normalize(normalize(x)) == normalize(x)</code>。そうでないと、保存時と比較時で結果が食い違います。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_path</span>
+
+<span class="n">samples</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"assets</span><span class="se">\\</span><span class="s2">props</span><span class="se">\\</span><span class="s2">crate</span><span class="se">\\</span><span class="s2">"</span><span class="p">,</span> <span class="s2">"  ./assets//props/crate/  "</span><span class="p">,</span> <span class="s2">"P:</span><span class="se">\\</span><span class="s2">proj</span><span class="se">\\</span><span class="s2">a.fbx"</span><span class="p">,</span> <span class="s2">"././x"</span><span class="p">,</span> <span class="s2">""</span><span class="p">,</span> <span class="s2">"./"</span><span class="p">,</span> <span class="s2">"a//b///c/"</span><span class="p">]</span>
+<span class="k">assert</span> <span class="nb">all</span><span class="p">(</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">==</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">samples</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"冪等:"</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">samples</span><span class="p">),</span> <span class="s2">"個すべて OK"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">冪等: 7 個すべて OK
+</code></pre>
+
+<h3 id="大文字小文字--lower-でなく-casefold">大文字小文字 ― <code>lower()</code> でなく <code>casefold()</code></h3>
+<p>比べるための「鍵」を作る関数が、これです。</p>
+<!-- excerpt: backend/tracker/paths.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">_key</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+</code></pre>
+
+<p><strong>保存するのは元の表記</strong>(正規化のみ)で、<strong>比べるときだけ</strong>大文字小文字を畳みます。「見た目は元のまま、比較は寛容に」。</p>
+<h3 id="落とし穴-見た目が同じでも文字が違うunicode">落とし穴: 見た目が同じでも、文字が違う(Unicode)</h3>
+<p>日本語のファイル名には、もう 1 つ罠があります。<strong>同じ「が」が、2 通りの作り方</strong>があるのです。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">unicodedata</span>
+
+<span class="n">composed</span> <span class="o">=</span> <span class="s2">"が"</span>                       <span class="c1"># U+304C: 1 文字(NFC)</span>
+<span class="n">decomposed</span> <span class="o">=</span> <span class="s2">"か</span><span class="se">\u3099</span><span class="s2">"</span>               <span class="c1"># か + 濁点(結合文字): 2 文字(NFD)。macOS のファイル名はこちらで来ることがある</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">composed</span> <span class="o">==</span> <span class="n">decomposed</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">composed</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">decomposed</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="s2">"NFC"</span><span class="p">,</span> <span class="n">decomposed</span><span class="p">)</span> <span class="o">==</span> <span class="n">composed</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">False 1 2
+True
+</code></pre>
+
+<p>画面では同じに見えるのに、<code>==</code> は <strong>False</strong>。このアプリの <code>_key</code> は、まだ NFC 正規化をしていません(<strong>既知の限界</strong>)。
+日本語のアセット名を macOS から取り込む場合は、<code>unicodedata.normalize(&quot;NFC&quot;, ...)</code> を足す必要があります。<a href="L17-capstone.html">総合演習</a>の候補の 1 つです。</p>
+<h2 id="3-前方一致の落とし穴">3. 前方一致の落とし穴</h2>
+<p>素直に書くと、こうなります。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">naive_match</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">entity_path</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span>          <span class="c1"># 素朴な前方一致</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="n">naive_match</span><span class="p">(</span><span class="s2">"assets/props/crate/a.fbx"</span><span class="p">,</span> <span class="s2">"assets/props/crate"</span><span class="p">))</span>     <span class="c1"># 正しい</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">naive_match</span><span class="p">(</span><span class="s2">"assets/props/crater/a.fbx"</span><span class="p">,</span> <span class="s2">"assets/props/crate"</span><span class="p">))</span>    <span class="c1"># 誤り: crater は crate の下ではない</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">True
+True
+</code></pre>
+
+<p>文字列として前方一致していても、<strong>パスとしては別のフォルダ</strong>です。直し方は、「<strong>区切りの <code>/</code> まで含めて</strong>一致させる」こと。</p>
+<!-- excerpt: backend/tracker/paths.py -->
+<pre class="highlight"><code class="language-python"><span class="k">if</span> <span class="p">(</span><span class="n">target</span> <span class="o">==</span> <span class="n">prefix</span> <span class="ow">or</span> <span class="n">target</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">prefix</span> <span class="o">+</span> <span class="s2">"/"</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">prefix</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">best_len</span><span class="p">:</span>
+</code></pre>
+
+<ul>
+<li><code>target == prefix</code> — ちょうど同じ(フォルダそのもの)</li>
+<li><code>target.startswith(prefix + &quot;/&quot;)</code> — <code>prefix</code> の<strong>下にある</strong>(区切りを付けて調べる)</li>
+</ul>
+<h2 id="4-最長一致">4. 最長一致</h2>
+<p>アセットが入れ子になっていると、複数が前方一致します。</p>
+<pre class="highlight"><code class="language-text">assets/props         ← アセット A
+assets/props/crate   ← アセット B
+</code></pre>
+
+<p><code>assets/props/crate/a.fbx</code> は <strong>A にも B にも前方一致</strong>。どちらに結びつけるべきでしょう。<strong>より具体的な(長い)B</strong> です。これが<strong>最長一致</strong>です。</p>
+<!-- excerpt: backend/tracker/paths.py -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">match_entity</span><span class="p">(</span><span class="n">asset_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""`candidates` = [(entity_id, entity_path)]。最も長く前方一致した Entity の id を返す。"""</span>
+    <span class="n">target</span> <span class="o">=</span> <span class="n">_key</span><span class="p">(</span><span class="n">asset_path</span><span class="p">)</span>
+    <span class="n">best_id</span><span class="p">,</span> <span class="n">best_len</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">entity_path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">_key</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="k">continue</span>
+</code></pre>
+
+<p>アルゴリズムは単純です。</p>
+<ol>
+<li>結果の入れ物 <code>best_id</code>(まだ無い)と、一致の長さ <code>best_len = -1</code> を用意する。</li>
+<li>候補を<strong>全部</strong>順に調べる。</li>
+<li>区切りまで含めて前方一致し、<strong>かつ今までで一番長い</strong>なら、入れ替える。</li>
+<li>最後に残ったものが、最長一致。</li>
+</ol>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_entity</span>
+
+<span class="n">candidates</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"assets/props"</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"assets/props/crate"</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">""</span><span class="p">)]</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">[</span>
+    <span class="s2">"assets/props/crate/crate.fbx"</span><span class="p">,</span>        <span class="c1"># A と B の両方 → 長い B(2)</span>
+    <span class="s2">"assets/props/barrel.fbx"</span><span class="p">,</span>             <span class="c1"># A だけ(1)</span>
+    <span class="s2">"assets/props/crate"</span><span class="p">,</span>                  <span class="c1"># B と完全一致(2)</span>
+    <span class="s2">"assets/props/crater/x.fbx"</span><span class="p">,</span>           <span class="c1"># crate の下ではない → A(1)</span>
+    <span class="s2">"ASSETS</span><span class="se">\\</span><span class="s2">Props</span><span class="se">\\</span><span class="s2">Crate</span><span class="se">\\</span><span class="s2">x.fbx"</span><span class="p">,</span>         <span class="c1"># 区切り・大文字小文字のゆれを吸収(2)</span>
+    <span class="s2">"assets/chars/x.fbx"</span><span class="p">,</span>                  <span class="c1"># どれにも合わない(None)</span>
+    <span class="s2">"other/assets/props/x.fbx"</span><span class="p">,</span>            <span class="c1"># 先頭から一致しない(None)</span>
+<span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">:</span><span class="s2">32</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">match_entity</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">candidates</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">assets/props/crate/crate.fbx     → 2
+assets/props/barrel.fbx          → 1
+assets/props/crate               → 2
+assets/props/crater/x.fbx        → 1
+ASSETS\Props\Crate\x.fbx         → 2
+assets/chars/x.fbx               → None
+other/assets/props/x.fbx         → None
+</code></pre>
+
+<p>(空の <code>path</code> を持つ候補 <code>(3, &quot;&quot;)</code> は、<code>if not prefix: continue</code> で<strong>無視</strong>されます。パス未設定のアセットが、全部に一致してしまう事故を防ぐため。)</p>
+<h2 id="5-計算量--どれくらい遅くなるかを見積もる">5. 計算量 ― 「どれくらい遅くなるか」を見積もる</h2>
+<p>アルゴリズムの良し悪しは、<strong>入力が増えたときに、手数がどれくらい増えるか</strong>で測ります(<strong>計算量</strong>、<code>O(...)</code> 記法)。</p>
+<table>
+<thead>
+<tr>
+<th>記号</th>
+<th>意味</th>
+<th>例</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>O(1)</code></td>
+<td>入力によらず一定</td>
+<td>辞書の引き・遷移表の引き</td>
+</tr>
+<tr>
+<td><code>O(log N)</code></td>
+<td>倍になっても +1 回程度</td>
+<td>二分探索・B 木の索引</td>
+</tr>
+<tr>
+<td><code>O(N)</code></td>
+<td>入力に比例</td>
+<td>リストを 1 回なめる</td>
+</tr>
+<tr>
+<td><code>O(N log N)</code></td>
+<td></td>
+<td>並べ替え</td>
+</tr>
+<tr>
+<td><code>O(N²)</code></td>
+<td>2 乗</td>
+<td>二重ループ</td>
+</tr>
+</tbody>
+</table>
+<p><code>match_entity</code> は、<strong>候補 N 個を全部</strong>調べます。1 回の比較は、パスの長さ L に比例(文字を比べる)。1 つのパスにつき <code>O(N · L)</code>。
+スキャンのパスが M 個なら、<strong>全体で <code>O(M · N · L)</code></strong>。</p>
+<table>
+<thead>
+<tr>
+<th>M(パス数)</th>
+<th>N(アセット数)</th>
+<th>L(長さ)</th>
+<th>おおよその手数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1,000</td>
+<td>50</td>
+<td>50</td>
+<td>250万</td>
+</tr>
+<tr>
+<td>50,000</td>
+<td>500</td>
+<td>80</td>
+<td>20 億</td>
+</tr>
+</tbody>
+</table>
+<p>小さなうちは問題ありません。でも、<strong>パスが 5 万・アセットが 500</strong> になると、手数が一気に膨らみます。
+このアプリは、プロジェクトのアセットが数十〜数百の想定なので、今の実装で十分、という判断です。<strong>でも、速くする方法を知っておく</strong>のが、この回のねらいです。</p>
+<h2 id="6-トライ木--先頭が同じを木で共有する">6. トライ木 ― 「先頭が同じ」を木で共有する</h2>
+<p><strong>トライ木</strong>(prefix tree)は、<strong>文字列の先頭を共有して</strong>木にするデータ構造です。前方一致の問題に最適です。
+ここでは、文字でなく**パスの区切りごと(フォルダ名)**を 1 段にします。</p>
+<figure class="diagram"><svg id="mf25e348d5a500e12" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 577.515625px;" viewBox="0 0 577.515625 406" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mf25e348d5a500e12{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mf25e348d5a500e12 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mf25e348d5a500e12 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mf25e348d5a500e12 .error-icon{fill:#552222;}#mf25e348d5a500e12 .error-text{fill:#552222;stroke:#552222;}#mf25e348d5a500e12 .edge-thickness-normal{stroke-width:1px;}#mf25e348d5a500e12 .edge-thickness-thick{stroke-width:3.5px;}#mf25e348d5a500e12 .edge-pattern-solid{stroke-dasharray:0;}#mf25e348d5a500e12 .edge-thickness-invisible{stroke-width:0;fill:none;}#mf25e348d5a500e12 .edge-pattern-dashed{stroke-dasharray:3;}#mf25e348d5a500e12 .edge-pattern-dotted{stroke-dasharray:2;}#mf25e348d5a500e12 .marker{fill:#666;stroke:#666;}#mf25e348d5a500e12 .marker.cross{stroke:#666;}#mf25e348d5a500e12 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#mf25e348d5a500e12 p{margin:0;}#mf25e348d5a500e12 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#mf25e348d5a500e12 .cluster-label text{fill:#333;}#mf25e348d5a500e12 .cluster-label span{color:#333;}#mf25e348d5a500e12 .cluster-label span p{background-color:transparent;}#mf25e348d5a500e12 .label text,#mf25e348d5a500e12 span{fill:#000000;color:#000000;}#mf25e348d5a500e12 .node rect,#mf25e348d5a500e12 .node circle,#mf25e348d5a500e12 .node ellipse,#mf25e348d5a500e12 .node polygon,#mf25e348d5a500e12 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mf25e348d5a500e12 .rough-node .label text,#mf25e348d5a500e12 .node .label text,#mf25e348d5a500e12 .image-shape .label,#mf25e348d5a500e12 .icon-shape .label{text-anchor:middle;}#mf25e348d5a500e12 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mf25e348d5a500e12 .rough-node .label,#mf25e348d5a500e12 .node .label,#mf25e348d5a500e12 .image-shape .label,#mf25e348d5a500e12 .icon-shape .label{text-align:center;}#mf25e348d5a500e12 .node.clickable{cursor:pointer;}#mf25e348d5a500e12 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#mf25e348d5a500e12 .arrowheadPath{fill:#333333;}#mf25e348d5a500e12 .edgePaths .path{stroke:#666;stroke-width:1px;}#mf25e348d5a500e12 .flowchart-link{stroke:#666;fill:none;}#mf25e348d5a500e12 .edgeLabel{background-color:white;text-align:center;}#mf25e348d5a500e12 .edgeLabel p{background-color:white;}#mf25e348d5a500e12 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mf25e348d5a500e12 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#mf25e348d5a500e12 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#mf25e348d5a500e12 .cluster text{fill:#333;}#mf25e348d5a500e12 .cluster span{color:#333;}#mf25e348d5a500e12 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#mf25e348d5a500e12 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#mf25e348d5a500e12 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#mf25e348d5a500e12 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#mf25e348d5a500e12 rect.text{fill:none;stroke-width:0;}#mf25e348d5a500e12 .icon-shape,#mf25e348d5a500e12 .image-shape{background-color:white;text-align:center;}#mf25e348d5a500e12 .icon-shape p,#mf25e348d5a500e12 .image-shape p{background-color:white;padding:2px;}#mf25e348d5a500e12 .icon-shape .label rect,#mf25e348d5a500e12 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#mf25e348d5a500e12 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mf25e348d5a500e12 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mf25e348d5a500e12 .node .neo-node{stroke:#999;}#mf25e348d5a500e12 [data-look="neo"].node rect,#mf25e348d5a500e12 [data-look="neo"].cluster rect,#mf25e348d5a500e12 [data-look="neo"].node polygon{stroke:url(#mf25e348d5a500e12-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mf25e348d5a500e12 [data-look="neo"].swimlane.cluster rect{filter:none;}#mf25e348d5a500e12 [data-look="neo"].node path{stroke:url(#mf25e348d5a500e12-gradient);stroke-width:1px;}#mf25e348d5a500e12 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mf25e348d5a500e12 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#mf25e348d5a500e12 [data-look="neo"].node circle{stroke:url(#mf25e348d5a500e12-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mf25e348d5a500e12 [data-look="neo"].node circle .state-start{fill:#000000;}#mf25e348d5a500e12 [data-look="neo"].icon-shape .icon{fill:url(#mf25e348d5a500e12-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mf25e348d5a500e12 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mf25e348d5a500e12-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mf25e348d5a500e12 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="mf25e348d5a500e12_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mf25e348d5a500e12_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mf25e348d5a500e12_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mf25e348d5a500e12_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mf25e348d5a500e12_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mf25e348d5a500e12_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mf25e348d5a500e12_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M286.906,62L286.906,66.167C286.906,70.333,286.906,78.667,286.906,86.333C286.906,94,286.906,101,286.906,104.5L286.906,108" id="mf25e348d5a500e12-L_R_A_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_R_A_0" data-points="W3sieCI6Mjg2LjkwNjI1LCJ5Ijo2Mn0seyJ4IjoyODYuOTA2MjUsInkiOjg3fSx7IngiOjI4Ni45MDYyNSwieSI6MTEyfV0=" data-look="classic" marker-end="url(#mf25e348d5a500e12_flowchart-v2-pointEnd)"></path><path d="M232.539,157.525L216.165,163.104C199.792,168.683,167.044,179.842,150.671,188.921C134.297,198,134.297,205,134.297,208.5L134.297,212" id="mf25e348d5a500e12-L_A_P_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_P_0" data-points="W3sieCI6MjMyLjUzOTA2MjUsInkiOjE1Ny41MjUwMzMyNzUzMTQ4M30seyJ4IjoxMzQuMjk2ODc1LCJ5IjoxOTF9LHsieCI6MTM0LjI5Njg3NSwieSI6MjE2fV0=" data-look="classic" marker-end="url(#mf25e348d5a500e12_flowchart-v2-pointEnd)"></path><path d="M341.273,157.525L357.647,163.104C374.021,168.683,406.768,179.842,423.142,188.921C439.516,198,439.516,205,439.516,208.5L439.516,212" id="mf25e348d5a500e12-L_A_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_C_0" data-points="W3sieCI6MzQxLjI3MzQzNzUsInkiOjE1Ny41MjUwMzMyNzUzMTQ4M30seyJ4Ijo0MzkuNTE1NjI1LCJ5IjoxOTF9LHsieCI6NDM5LjUxNTYyNSwieSI6MjE2fV0=" data-look="classic" marker-end="url(#mf25e348d5a500e12_flowchart-v2-pointEnd)"></path><path d="M134.297,270L134.297,274.167C134.297,278.333,134.297,286.667,134.297,296.333C134.297,306,134.297,317,134.297,322.5L134.297,328" id="mf25e348d5a500e12-L_P_CR_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_P_CR_0" data-points="W3sieCI6MTM0LjI5Njg3NSwieSI6MjcwfSx7IngiOjEzNC4yOTY4NzUsInkiOjI5NX0seyJ4IjoxMzQuMjk2ODc1LCJ5IjozMzJ9XQ==" data-look="classic" marker-end="url(#mf25e348d5a500e12_flowchart-v2-pointEnd)"></path><path d="M439.516,270L439.516,274.167C439.516,278.333,439.516,286.667,439.516,294.333C439.516,302,439.516,309,439.516,312.5L439.516,316" id="mf25e348d5a500e12-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6NDM5LjUxNTYyNSwieSI6MjcwfSx7IngiOjQzOS41MTU2MjUsInkiOjI5NX0seyJ4Ijo0MzkuNTE1NjI1LCJ5IjozMjB9XQ==" data-look="classic" marker-end="url(#mf25e348d5a500e12_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_R_A_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_A_P_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_A_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_P_CR_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_C_D_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="mf25e348d5a500e12-flowchart-R-0" data-look="classic" transform="translate(286.90625, 35)"><rect class="basic label-container" style="" x="-43.8359375" y="-27" width="87.671875" height="54"></rect><g class="label" style="" transform="translate(-13.8359375, -12)"><rect></rect><foreignObject width="27.671875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>(根)</p></span></div></foreignObject></g></g><g class="node default" id="mf25e348d5a500e12-flowchart-A-1" data-look="classic" transform="translate(286.90625, 139)"><rect class="basic label-container" style="" x="-54.3671875" y="-27" width="108.734375" height="54"></rect><g class="label" style="" transform="translate(-24.3671875, -12)"><rect></rect><foreignObject width="48.734375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>assets</p></span></div></foreignObject></g></g><g class="node default" id="mf25e348d5a500e12-flowchart-P-3" data-look="classic" transform="translate(134.296875, 243)"><rect class="basic label-container" style="" x="-126.296875" y="-27" width="252.59375" height="54"></rect><g class="label" style="" transform="translate(-96.296875, -12)"><rect></rect><foreignObject width="192.59375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>props ★アセット A (id=1)</p></span></div></foreignObject></g></g><g class="node default" id="mf25e348d5a500e12-flowchart-C-5" data-look="classic" transform="translate(439.515625, 243)"><rect class="basic label-container" style="" x="-51.03125" y="-27" width="102.0625" height="54"></rect><g class="label" style="" transform="translate(-21.03125, -12)"><rect></rect><foreignObject width="42.0625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>chars</p></span></div></foreignObject></g></g><g class="node default" id="mf25e348d5a500e12-flowchart-CR-7" data-look="classic" transform="translate(134.296875, 359)"><rect class="basic label-container" style="" x="-125.21875" y="-27" width="250.4375" height="54"></rect><g class="label" style="" transform="translate(-95.21875, -12)"><rect></rect><foreignObject width="190.4375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>crate ★アセット B (id=2)</p></span></div></foreignObject></g></g><g class="node default" id="mf25e348d5a500e12-flowchart-D-9" data-look="classic" transform="translate(439.515625, 359)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>dragon ★アセット C (id=3)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mf25e348d5a500e12-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mf25e348d5a500e12-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="mf25e348d5a500e12-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<p><strong>探し方</strong>: パスをフォルダ名に分け、根から<strong>1 段ずつ降りる</strong>。途中で通った「★(アセットがある)」のうち、<strong>一番深いもの</strong>が最長一致です。
+降りる回数は、パスの深さ(フォルダの数)だけ。<strong>アセットの数 N に、手数が依存しません</strong>。1 つのパスにつき <code>O(L)</code>。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_entity</span><span class="p">,</span> <span class="n">normalize_path</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PathTrie</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">"""フォルダ名を 1 段とするトライ木。最長一致を O(パスの深さ)で探す。"""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">{}</span>                                        <span class="c1"># {フォルダ名: 子の辞書}。"★" キーにアセットの id</span>
+        <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">entity_path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">continue</span>                                      <span class="c1"># 空の path は無視(match_entity と同じ)</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">"★"</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity_id</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">asset_path</span><span class="p">):</span>
+        <span class="n">node</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">asset_path</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">"★"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="s2">"★"</span><span class="p">]</span>                              <span class="c1"># 通った中で、一番深いものを残す</span>
+        <span class="k">return</span> <span class="n">best</span>
+
+
+<span class="n">candidates</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="s2">"assets/props"</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="s2">"assets/props/crate"</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="s2">"assets/chars/dragon"</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="s2">""</span><span class="p">)]</span>
+<span class="n">trie</span> <span class="o">=</span> <span class="n">PathTrie</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">path</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"assets/props/crate/crate.fbx"</span><span class="p">,</span> <span class="s2">"assets/props/barrel.fbx"</span><span class="p">,</span> <span class="s2">"assets/props/crater/x.fbx"</span><span class="p">,</span> <span class="s2">"ASSETS</span><span class="se">\\</span><span class="s2">Chars</span><span class="se">\\</span><span class="s2">Dragon</span><span class="se">\\</span><span class="s2">b.fbx"</span><span class="p">,</span> <span class="s2">"assets/other/x.fbx"</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">path</span><span class="si">:</span><span class="s2">32</span><span class="si">}</span><span class="s2"> → </span><span class="si">{</span><span class="n">trie</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">assets/props/crate/crate.fbx     → 2
+assets/props/barrel.fbx          → 1
+assets/props/crater/x.fbx        → 1
+ASSETS\Chars\Dragon\b.fbx        → 3
+assets/other/x.fbx               → None
+</code></pre>
+
+<h3 id="正しさを確かめる--元の実装との照合">正しさを確かめる ― 元の実装との照合</h3>
+<p>新しい実装が、<strong>元の実装と全く同じ答え</strong>を出すことを、ランダムな入力で確かめます(<strong>性質ベースのテスト</strong>の考え方)。乱数の種を固定すれば、毎回同じ入力になります。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">import</span><span class="w"> </span><span class="nn">random</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">match_entity</span><span class="p">,</span> <span class="n">normalize_path</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">PathTrie</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">root</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">entity_id</span><span class="p">,</span> <span class="n">entity_path</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">entity_path</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+                <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">"★"</span><span class="p">]</span> <span class="o">=</span> <span class="n">entity_id</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">asset_path</span><span class="p">):</span>
+        <span class="n">node</span><span class="p">,</span> <span class="n">best</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">normalize_path</span><span class="p">(</span><span class="n">asset_path</span><span class="p">)</span><span class="o">.</span><span class="n">casefold</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"/"</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">"★"</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+                <span class="n">best</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="s2">"★"</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">best</span>
+
+
+<span class="n">rng</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>                                       <span class="c1"># 種を固定: 何度やっても同じ入力</span>
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"props"</span><span class="p">,</span> <span class="s2">"crate"</span><span class="p">,</span> <span class="s2">"crater"</span><span class="p">,</span> <span class="s2">"chars"</span><span class="p">,</span> <span class="s2">"dragon"</span><span class="p">,</span> <span class="s2">"x"</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">random_path</span><span class="p">(</span><span class="n">max_depth</span><span class="p">):</span>
+    <span class="k">return</span> <span class="s2">"/"</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">names</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_depth</span><span class="p">)))</span>
+
+
+<span class="c1"># 候補はパスが重複しない(Entity.path に同じ値を 2 つ持たせない前提)ようにして、同じ答えになることを確かめる</span>
+<span class="n">paths</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">({</span><span class="n">random_path</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">12</span><span class="p">)})</span>
+<span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">paths</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+<span class="n">trie</span> <span class="o">=</span> <span class="n">PathTrie</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+
+<span class="n">checked</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2000</span><span class="p">):</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="n">random_path</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">trie</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">==</span> <span class="n">match_entity</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">candidates</span><span class="p">),</span> <span class="n">path</span>
+    <span class="n">checked</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"元の実装と同じ答え:"</span><span class="p">,</span> <span class="n">checked</span><span class="p">,</span> <span class="s2">"件"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">元の実装と同じ答え: 2000 件
+</code></pre>
+
+<blockquote>
+<p>大文字小文字・区切り・入れ子を混ぜた入力でも、2 つの実装が<strong>一致</strong>しました。<strong>速い実装に替えるときは、必ずこの照合を先に書く</strong>。これが「安全なリファクタリング」の基本です。</p>
+</blockquote>
+<h3 id="比較の回数で計算量の差を見る">比較の回数で、計算量の差を見る</h3>
+<p>実時間は環境で変わるので、<strong>比較の回数</strong>を数えて差を確かめます。</p>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="k">def</span><span class="w"> </span><span class="nf">count_naive</span><span class="p">(</span><span class="n">path_parts</span><span class="p">,</span> <span class="n">candidates_parts</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""候補を全部なめる方式: 比べたフォルダ名の数。"""</span>
+    <span class="n">comparisons</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="n">candidates_parts</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">path_parts</span><span class="p">,</span> <span class="n">cand</span><span class="p">):</span>
+            <span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">:</span>
+                <span class="k">break</span>
+    <span class="k">return</span> <span class="n">comparisons</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">count_trie</span><span class="p">(</span><span class="n">path_parts</span><span class="p">,</span> <span class="n">root</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""木を降りる方式: 比べたフォルダ名の数。"""</span>
+    <span class="n">comparisons</span><span class="p">,</span> <span class="n">node</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">root</span>
+    <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">path_parts</span><span class="p">:</span>
+        <span class="n">comparisons</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">part</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="p">[</span><span class="n">part</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">comparisons</span>
+
+
+<span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1000</span><span class="p">):</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="p">[(</span><span class="s2">"assets"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"group</span><span class="si">{</span><span class="n">i</span><span class="w"> </span><span class="o">%</span><span class="w"> </span><span class="mi">10</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="sa">f</span><span class="s2">"item</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+    <span class="n">root</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">cand</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
+        <span class="n">node</span> <span class="o">=</span> <span class="n">root</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">cand</span><span class="p">:</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">part</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">path</span> <span class="o">=</span> <span class="p">(</span><span class="s2">"assets"</span><span class="p">,</span> <span class="s2">"group3"</span><span class="p">,</span> <span class="s2">"item3"</span><span class="p">,</span> <span class="s2">"a.fbx"</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"アセット </span><span class="si">{</span><span class="n">n</span><span class="si">:</span><span class="s2">&gt;4</span><span class="si">}</span><span class="s2"> 個:  全部なめる </span><span class="si">{</span><span class="n">count_naive</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">candidates</span><span class="p">)</span><span class="si">:</span><span class="s2">&gt;5</span><span class="si">}</span><span class="s2"> 回  /  木を降りる </span><span class="si">{</span><span class="n">count_trie</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="w"> </span><span class="n">root</span><span class="p">)</span><span class="si">}</span><span class="s2"> 回"</span><span class="p">)</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">アセット   10 個:  全部なめる    21 回  /  木を降りる 4 回
+アセット  100 個:  全部なめる   210 回  /  木を降りる 4 回
+アセット 1000 個:  全部なめる  2100 回  /  木を降りる 4 回
+</code></pre>
+
+<p>アセットが 100 倍になっても、<strong>木を降りる方式は数回のまま</strong>です。これが「N に依存しない」の意味です。</p>
+<p><strong>トレードオフ</strong>: 木は、<strong>作るための手間とメモリ</strong>がかかります。パスが数個なら、素朴な方式のほうが簡単で速いこともあります。
+<strong>「速くする」より先に「測る」</strong>。今のアプリの規模では、素朴な実装で十分と判断しています。</p>
+<h2 id="7-取り込みの全体--集計--突き合わせ--保存">7. 取り込みの全体 ― 集計 → 突き合わせ → 保存</h2>
+<p>最後に、実際の取り込み関数を通して読みます。</p>
+<!-- excerpt: backend/tracker/ingest.py -->
+<pre class="highlight"><code class="language-python"><span class="n">defects_by_path</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+    <span class="n">defects_by_path</span><span class="p">[</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"asset_path"</span><span class="p">])]</span> <span class="o">+=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"defects"</span><span class="p">]</span>
+
+<span class="n">candidates</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">Entity</span><span class="o">.</span><span class="n">objects</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">project</span><span class="o">=</span><span class="n">project</span><span class="p">)</span><span class="o">.</span><span class="n">exclude</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">""</span><span class="p">)</span><span class="o">.</span><span class="n">values_list</span><span class="p">(</span><span class="s2">"id"</span><span class="p">,</span> <span class="s2">"path"</span><span class="p">))</span>
+</code></pre>
+
+<figure class="diagram"><svg id="m3106c2dd56ae305a" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 507.25px;" viewBox="0 0 507.25 878.40625" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#m3106c2dd56ae305a{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#m3106c2dd56ae305a .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#m3106c2dd56ae305a .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#m3106c2dd56ae305a .error-icon{fill:#552222;}#m3106c2dd56ae305a .error-text{fill:#552222;stroke:#552222;}#m3106c2dd56ae305a .edge-thickness-normal{stroke-width:1px;}#m3106c2dd56ae305a .edge-thickness-thick{stroke-width:3.5px;}#m3106c2dd56ae305a .edge-pattern-solid{stroke-dasharray:0;}#m3106c2dd56ae305a .edge-thickness-invisible{stroke-width:0;fill:none;}#m3106c2dd56ae305a .edge-pattern-dashed{stroke-dasharray:3;}#m3106c2dd56ae305a .edge-pattern-dotted{stroke-dasharray:2;}#m3106c2dd56ae305a .marker{fill:#666;stroke:#666;}#m3106c2dd56ae305a .marker.cross{stroke:#666;}#m3106c2dd56ae305a svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#m3106c2dd56ae305a p{margin:0;}#m3106c2dd56ae305a .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#m3106c2dd56ae305a .cluster-label text{fill:#333;}#m3106c2dd56ae305a .cluster-label span{color:#333;}#m3106c2dd56ae305a .cluster-label span p{background-color:transparent;}#m3106c2dd56ae305a .label text,#m3106c2dd56ae305a span{fill:#000000;color:#000000;}#m3106c2dd56ae305a .node rect,#m3106c2dd56ae305a .node circle,#m3106c2dd56ae305a .node ellipse,#m3106c2dd56ae305a .node polygon,#m3106c2dd56ae305a .node path{fill:#eee;stroke:#999;stroke-width:1px;}#m3106c2dd56ae305a .rough-node .label text,#m3106c2dd56ae305a .node .label text,#m3106c2dd56ae305a .image-shape .label,#m3106c2dd56ae305a .icon-shape .label{text-anchor:middle;}#m3106c2dd56ae305a .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#m3106c2dd56ae305a .rough-node .label,#m3106c2dd56ae305a .node .label,#m3106c2dd56ae305a .image-shape .label,#m3106c2dd56ae305a .icon-shape .label{text-align:center;}#m3106c2dd56ae305a .node.clickable{cursor:pointer;}#m3106c2dd56ae305a .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#m3106c2dd56ae305a .arrowheadPath{fill:#333333;}#m3106c2dd56ae305a .edgePaths .path{stroke:#666;stroke-width:1px;}#m3106c2dd56ae305a .flowchart-link{stroke:#666;fill:none;}#m3106c2dd56ae305a .edgeLabel{background-color:white;text-align:center;}#m3106c2dd56ae305a .edgeLabel p{background-color:white;}#m3106c2dd56ae305a .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#m3106c2dd56ae305a .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#m3106c2dd56ae305a .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#m3106c2dd56ae305a .cluster text{fill:#333;}#m3106c2dd56ae305a .cluster span{color:#333;}#m3106c2dd56ae305a .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#m3106c2dd56ae305a .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#m3106c2dd56ae305a div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#m3106c2dd56ae305a .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#m3106c2dd56ae305a rect.text{fill:none;stroke-width:0;}#m3106c2dd56ae305a .icon-shape,#m3106c2dd56ae305a .image-shape{background-color:white;text-align:center;}#m3106c2dd56ae305a .icon-shape p,#m3106c2dd56ae305a .image-shape p{background-color:white;padding:2px;}#m3106c2dd56ae305a .icon-shape .label rect,#m3106c2dd56ae305a .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#m3106c2dd56ae305a .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#m3106c2dd56ae305a .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#m3106c2dd56ae305a .node .neo-node{stroke:#999;}#m3106c2dd56ae305a [data-look="neo"].node rect,#m3106c2dd56ae305a [data-look="neo"].cluster rect,#m3106c2dd56ae305a [data-look="neo"].node polygon{stroke:url(#m3106c2dd56ae305a-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3106c2dd56ae305a [data-look="neo"].swimlane.cluster rect{filter:none;}#m3106c2dd56ae305a [data-look="neo"].node path{stroke:url(#m3106c2dd56ae305a-gradient);stroke-width:1px;}#m3106c2dd56ae305a [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3106c2dd56ae305a [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#m3106c2dd56ae305a [data-look="neo"].node circle{stroke:url(#m3106c2dd56ae305a-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3106c2dd56ae305a [data-look="neo"].node circle .state-start{fill:#000000;}#m3106c2dd56ae305a [data-look="neo"].icon-shape .icon{fill:url(#m3106c2dd56ae305a-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3106c2dd56ae305a [data-look="neo"].icon-shape .icon-neo path{stroke:url(#m3106c2dd56ae305a-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#m3106c2dd56ae305a :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="m3106c2dd56ae305a_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="m3106c2dd56ae305a_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3106c2dd56ae305a_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3106c2dd56ae305a_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3106c2dd56ae305a_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="m3106c2dd56ae305a_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="m3106c2dd56ae305a_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M255.461,86L255.461,90.167C255.461,94.333,255.461,102.667,255.461,110.333C255.461,118,255.461,125,255.461,128.5L255.461,132" id="m3106c2dd56ae305a-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MjU1LjQ2MDkzNzUsInkiOjg2fSx7IngiOjI1NS40NjA5Mzc1LCJ5IjoxMTF9LHsieCI6MjU1LjQ2MDkzNzUsInkiOjEzNn1d" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M255.461,238L255.461,242.167C255.461,246.333,255.461,254.667,255.461,262.333C255.461,270,255.461,277,255.461,280.5L255.461,284" id="m3106c2dd56ae305a-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6MjU1LjQ2MDkzNzUsInkiOjIzOH0seyJ4IjoyNTUuNDYwOTM3NSwieSI6MjYzfSx7IngiOjI1NS40NjA5Mzc1LCJ5IjoyODh9XQ==" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M255.461,366L255.461,370.167C255.461,374.333,255.461,382.667,255.461,390.333C255.461,398,255.461,405,255.461,408.5L255.461,412" id="m3106c2dd56ae305a-L_C_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_D_0" data-points="W3sieCI6MjU1LjQ2MDkzNzUsInkiOjM2Nn0seyJ4IjoyNTUuNDYwOTM3NSwieSI6MzkxfSx7IngiOjI1NS40NjA5Mzc1LCJ5Ijo0MTZ9XQ==" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M209.993,544.938L195.019,558.683C180.045,572.428,150.097,599.917,135.123,621.162C120.148,642.406,120.148,657.406,120.148,664.906L120.148,672.406" id="m3106c2dd56ae305a-L_D_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_E_0" data-points="W3sieCI6MjA5Ljk5Mjg3NDI1MTE1OSwieSI6NTQ0LjkzODE4Njc1MTE1OX0seyJ4IjoxMjAuMTQ4NDM3NSwieSI6NjI3LjQwNjI1fSx7IngiOjEyMC4xNDg0Mzc1LCJ5Ijo2NzYuNDA2MjV9XQ==" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M300.929,544.938L315.903,558.683C330.877,572.428,360.825,599.917,375.799,619.162C390.773,638.406,390.773,649.406,390.773,654.906L390.773,660.406" id="m3106c2dd56ae305a-L_D_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_F_0" data-points="W3sieCI6MzAwLjkyOTAwMDc0ODg0MDk2LCJ5Ijo1NDQuOTM4MTg2NzUxMTU5fSx7IngiOjM5MC43NzM0Mzc1LCJ5Ijo2MjcuNDA2MjV9LHsieCI6MzkwLjc3MzQzNzUsInkiOjY2NC40MDYyNX1d" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M120.148,730.406L120.148,736.573C120.148,742.74,120.148,755.073,128.355,765.121C136.562,775.169,152.975,782.933,161.182,786.814L169.389,790.696" id="m3106c2dd56ae305a-L_E_G_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_G_0" data-points="W3sieCI6MTIwLjE0ODQzNzUsInkiOjczMC40MDYyNX0seyJ4IjoxMjAuMTQ4NDM3NSwieSI6NzY3LjQwNjI1fSx7IngiOjE3My4wMDQ4ODI4MTI1LCJ5Ijo3OTIuNDA2MjV9XQ==" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path><path d="M390.773,742.406L390.773,746.573C390.773,750.74,390.773,759.073,382.567,767.121C374.36,775.169,357.946,782.933,349.74,786.814L341.533,790.696" id="m3106c2dd56ae305a-L_F_G_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_G_0" data-points="W3sieCI6MzkwLjc3MzQzNzUsInkiOjc0Mi40MDYyNX0seyJ4IjozOTAuNzczNDM3NSwieSI6NzY3LjQwNjI1fSx7IngiOjMzNy45MTY5OTIxODc1LCJ5Ijo3OTIuNDA2MjV9XQ==" data-look="classic" marker-end="url(#m3106c2dd56ae305a_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_B_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_B_C_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_C_D_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(120.1484375, 627.40625)"><g class="label" data-id="L_D_E_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-42.75" y="-2" width="85.5" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">見つかった</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(390.7734375, 627.40625)"><g class="label" data-id="L_D_F_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">なし</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_E_G_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_F_G_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="m3106c2dd56ae305a-flowchart-A-0" data-look="classic" transform="translate(255.4609375, 47)"><rect class="basic label-container" style="" x="-127.921875" y="-39" width="255.84375" height="78"></rect><g class="label" style="" transform="translate(-97.921875, -24)"><rect></rect><foreignObject width="195.84375" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>rows<br>[{asset_path, defects}, ...]</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-B-1" data-look="classic" transform="translate(255.4609375, 187)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>正規化して、同じパスの欠陥数を合算<br>defaultdict(int)</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-C-3" data-look="classic" transform="translate(255.4609375, 327)"><rect class="basic label-container" style="" x="-127.875" y="-39" width="255.75" height="78"></rect><g class="label" style="" transform="translate(-97.875, -24)"><rect></rect><foreignObject width="195.75" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>候補: Entity の (id, path)<br>パスが空のアセットは除く</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-D-5" data-look="classic" transform="translate(255.4609375, 503.203125)"><polygon points="87.203125,0 174.40625,-87.203125 87.203125,-174.40625 0,-87.203125" class="label-container" transform="translate(-86.703125, 87.203125)"></polygon><g class="label" style="" transform="translate(-48.203125, -24)"><rect></rect><foreignObject width="96.40625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>パスごとに<br>match_entity</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-E-7" data-look="classic" transform="translate(120.1484375, 703.40625)"><rect class="basic label-container" style="" x="-112.1484375" y="-27" width="224.296875" height="54"></rect><g class="label" style="" transform="translate(-82.1484375, -12)"><rect></rect><foreignObject width="164.296875" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>entity_id を付けて保存</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-F-9" data-look="classic" transform="translate(390.7734375, 703.40625)"><rect class="basic label-container" style="" x="-108.4765625" y="-39" width="216.953125" height="78"></rect><g class="label" style="" transform="translate(-78.4765625, -24)"><rect></rect><foreignObject width="156.953125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>entity = NULL で保存<br>+ unmatched に追加</p></span></div></foreignObject></g></g><g class="node default" id="m3106c2dd56ae305a-flowchart-G-11" data-look="classic" transform="translate(255.4609375, 831.40625)"><rect class="basic label-container" style="" x="-99.265625" y="-39" width="198.53125" height="78"></rect><g class="label" style="" transform="translate(-69.265625, -24)"><rect></rect><foreignObject width="138.53125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>bulk_create<br>(まとめて INSERT)</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="m3106c2dd56ae305a-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="m3106c2dd56ae305a-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="m3106c2dd56ae305a-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<ul>
+<li><code>defaultdict(int)</code>: 無いキーを引くと、自動で <code>0</code> で作られる辞書。「キーごとの合計」を数えるときの定番。</li>
+<li><strong>同じパスは 1 回だけ</strong>扱う(辞書のキーが重複しない)ので、<code>bulk_create</code> に重複が入らない。</li>
+<li>欠陥数の<strong>合計</strong>(<code>defects_total</code>)は、突き合わせが成功したかに<strong>よらず</strong>、受け取った全てを合算する。だから、元のデータの件数と一致する。</li>
+</ul>
+<!-- test -->
+<pre class="highlight"><code class="language-python"><span class="kn">from</span><span class="w"> </span><span class="nn">collections</span><span class="w"> </span><span class="kn">import</span> <span class="n">defaultdict</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">tracker.paths</span><span class="w"> </span><span class="kn">import</span> <span class="n">normalize_path</span>
+
+<span class="n">rows</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">{</span><span class="s2">"asset_path"</span><span class="p">:</span> <span class="s2">"assets</span><span class="se">\\</span><span class="s2">props</span><span class="se">\\</span><span class="s2">crate</span><span class="se">\\</span><span class="s2">a.fbx"</span><span class="p">,</span> <span class="s2">"defects"</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span>
+    <span class="p">{</span><span class="s2">"asset_path"</span><span class="p">:</span> <span class="s2">"assets/props/crate/a.fbx"</span><span class="p">,</span> <span class="s2">"defects"</span><span class="p">:</span> <span class="mi">2</span><span class="p">},</span>       <span class="c1"># 表記は違うが、正規化すると同じパス</span>
+    <span class="p">{</span><span class="s2">"asset_path"</span><span class="p">:</span> <span class="s2">"assets/props/crate/b.fbx"</span><span class="p">,</span> <span class="s2">"defects"</span><span class="p">:</span> <span class="mi">4</span><span class="p">},</span>
+<span class="p">]</span>
+<span class="n">by_path</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+    <span class="n">by_path</span><span class="p">[</span><span class="n">normalize_path</span><span class="p">(</span><span class="n">row</span><span class="p">[</span><span class="s2">"asset_path"</span><span class="p">])]</span> <span class="o">+=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"defects"</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">by_path</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"合計:"</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">by_path</span><span class="o">.</span><span class="n">values</span><span class="p">()),</span> <span class="s2">"= 元の合計:"</span><span class="p">,</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">"defects"</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">))</span>
+</code></pre>
+
+<!-- output -->
+<pre class="highlight"><code class="language-text">{&#x27;assets/props/crate/a.fbx&#x27;: 3, &#x27;assets/props/crate/b.fbx&#x27;: 4}
+合計: 7 = 元の合計: 7
+</code></pre>
+
+<h2 id="よくある間違い">よくある間違い</h2>
+<table>
+<thead>
+<tr>
+<th>間違い</th>
+<th>正しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>startswith(prefix)</code> だけで判定</td>
+<td><code>prefix + &quot;/&quot;</code> まで含める(<code>crate</code> と <code>crater</code>)</td>
+</tr>
+<tr>
+<td>比べるたびに正規化する</td>
+<td>保存時に 1 回(+ 比較用の鍵を作る)。ただし、元の表記も残す</td>
+</tr>
+<tr>
+<td><code>lower()</code> で大文字小文字を畳む</td>
+<td><code>casefold()</code>。さらに、日本語のファイル名なら NFC 正規化も</td>
+</tr>
+<tr>
+<td>「速そう」で複雑にする</td>
+<td><strong>測って</strong>から。小さなデータなら、素朴な実装が正解</td>
+</tr>
+<tr>
+<td>速い実装に替えて、確かめない</td>
+<td>元の実装との<strong>照合テスト</strong>を先に書く</td>
+</tr>
+<tr>
+<td>空のパスを前方一致に使う</td>
+<td>空は何にでも前方一致してしまう。<code>if not prefix: continue</code> で除く</td>
+</tr>
+</tbody>
+</table>
+<h2 id="確認問題">確認問題</h2>
+<ol>
+<li>正規化をしてから比べる理由を、<code>P:\Crate</code> と <code>p:/crate</code> で説明せよ。</li>
+<li><code>normalize_path</code> が「冪等」であるとは、どういうことか。なぜ必要か。</li>
+<li><code>&quot;assets/props/crater/x.fbx&quot;.startswith(&quot;assets/props/crate&quot;)</code> は True。これを正しく直すには。</li>
+<li>最長一致で、「長いほうを採る」理由は。</li>
+<li><code>match_entity</code> の計算量を、M 個のパス・N 個の候補・長さ L で答えよ。トライ木だと。</li>
+<li>速いアルゴリズムに書き換えるとき、何を最初にするべきか。</li>
+<li><code>defaultdict(int)</code> を使うと、何が楽になるか。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li>区切りも大文字小文字も違うが、同じ場所を指している。正規化して <code>casefold()</code> すれば、同じ鍵になり、一致と判定できる。</li>
+<li>2 回かけても結果が同じ。保存時と比較時で正規化を重ねても、結果が食い違わないようにするため。</li>
+<li><code>prefix + &quot;/&quot;</code> まで含めて前方一致させる(または完全一致)。</li>
+<li>入れ子のとき、より具体的な(深い)アセットに結びつけるのが、実際の持ち主だから。</li>
+<li><code>O(M · N · L)</code>。トライ木は 1 つのパスにつき <code>O(L)</code>(木を作る手間は別に 1 回)で、<code>O(M · L)</code>。</li>
+<li>元の実装と<strong>同じ答え</strong>になることを確かめる照合テストを書く(できれば乱数・固定の種で大量に)。</li>
+<li>「キーがあるか」を毎回調べずに、<code>d[key] += 値</code> と書ける(無ければ 0 から始まる)。</li>
+</ol>
+<h2 id="次へ">次へ</h2>
+<p><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性</a> ― 「同時に」「何度も」届く処理を、壊さずに扱う方法。</p>
+</article>
+    <nav class="pager"><a class="prev" href="L06-state-machine.html"><span>← 前へ</span>L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a><a class="next" href="L08-concurrency.html"><span>次へ →</span>L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-解きたい問題">1. 解きたい問題</a></li><li class="lvl2"><a href="#2-正規化">2. 正規化</a></li><li class="lvl3"><a href="#大文字小文字--lower-でなく-casefold">大文字小文字 ― lower() でなく casefold()</a></li><li class="lvl3"><a href="#落とし穴-見た目が同じでも文字が違うunicode">落とし穴: 見た目が同じでも、文字が違う(Unicode)</a></li><li class="lvl2"><a href="#3-前方一致の落とし穴">3. 前方一致の落とし穴</a></li><li class="lvl2"><a href="#4-最長一致">4. 最長一致</a></li><li class="lvl2"><a href="#5-計算量--どれくらい遅くなるかを見積もる">5. 計算量 ― 「どれくらい遅くなるか」を見積もる</a></li><li class="lvl2"><a href="#6-トライ木--先頭が同じを木で共有する">6. トライ木 ― 「先頭が同じ」を木で共有する</a></li><li class="lvl3"><a href="#正しさを確かめる--元の実装との照合">正しさを確かめる ― 元の実装との照合</a></li><li class="lvl3"><a href="#比較の回数で計算量の差を見る">比較の回数で、計算量の差を見る</a></li><li class="lvl2"><a href="#7-取り込みの全体--集計--突き合わせ--保存">7. 取り込みの全体 ― 集計 → 突き合わせ → 保存</a></li><li class="lvl2"><a href="#よくある間違い">よくある間違い</a></li><li class="lvl2"><a href="#確認問題">確認問題</a></li><li class="lvl2"><a href="#答え">答え</a></li><li class="lvl2"><a href="#次へ">次へ</a></li></ul></nav>
+</div>
+</body>
+</html>

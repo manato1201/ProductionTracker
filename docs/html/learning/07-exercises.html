@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="9d20e52a0c26be0f1315">
+<title>7. 演習と確認問題 — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="../lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="../lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="../lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="../lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="../lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="../lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="../lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="../lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="../lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="../lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="../lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="../lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="../lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="../lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="../lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="../lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="../lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="../lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="../lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="../lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="01-overview.html">1. 全体像</a></li><li><a href="02-backend.html">2. バックエンドの道案内</a></li><li><a href="03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="04-recipes.html">4. 拡張レシピ</a></li><li><a href="05-testing.html">5. テストの書き方</a></li><li><a href="06-troubleshooting.html">6. 困ったとき</a></li><li><a href="07-exercises.html" aria-current="page" class="current">7. 演習と確認問題</a></li><li><a href="08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../learning/07-exercises.md"><code>docs/learning/07-exercises.md</code></a></p>
+    <article class="doc"><h1 id="7-演習と確認問題">7. 演習と確認問題</h1>
+<h2 id="進め方">進め方</h2>
+<ol>
+<li><strong>ブランチを切る</strong>。1 つの演習 = 1 ブランチ。</li>
+<li><strong>受け入れ条件をテストにする</strong>(先に書いて赤にする)→ 直す → 緑にする。</li>
+<li>終わったら <a href="04-recipes.html#%E5%A4%89%E6%9B%B4%E3%82%92%E5%87%BA%E3%81%99%E5%89%8D%E3%81%AE%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%88">04 の変更前チェックリスト</a>を通す。</li>
+<li>詰まった点は <a href="../learning-log.html">learning-log.md</a> に残す。</li>
+</ol>
+<p>難しさ: ★ = 1 時間以内 / ★★ = 半日 / ★★★ = 1 日以上。<strong>答えの方針</strong>は各演習の末尾(まず見ずに挑戦する)。</p>
+<hr />
+<h2 id="演習-1タスクに説明を足す">演習 1(★)タスクに「説明」を足す</h2>
+<p><strong>目標</strong>: タスクに自由記述の説明を持たせ、ドロワーに表示・編集できるようにする。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li>作成と PATCH で <code>description</code> が往復する(API のテスト)。</li>
+<li>閲覧者は変更できない(403)。</li>
+<li>ドロワーの詳細に表示される。360px で横スクロールしない。
+<strong>ヒント</strong>: <a href="04-recipes.html#a-%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AB%E9%A0%85%E7%9B%AE%E3%82%92%E8%B6%B3%E3%81%99%E4%BE%8B-description">レシピ A</a> そのもの。型チェックが指摘する場所を順に直す。
+<strong>答えの方針</strong>: モデル → マイグレーション → シリアライザ → 型 → 表示。</li>
+</ul>
+<h2 id="演習-2並べ替えに優先度順を足す">演習 2(★)並べ替えに「優先度順」を足す</h2>
+<p><strong>目標</strong>: <code>GET /tasks/?ordering=priority</code>(緊急 → 高 → 中 → 低)と、概要の「タスク」タブの並べ替えチップ。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li>緊急・高・中・低の 4 件を作り、<code>ordering=priority</code> で緊急が先頭、<code>-priority</code> で逆順(API のテスト)。</li>
+<li>許可リストにない値は 400 のまま。</li>
+<li>チップを押すと並び替わる。
+<strong>ヒント</strong>: <code>TaskViewSet.ORDERING</code> は許可リスト。優先度は文字列なので、アルファベット順ではなく <strong><code>Case</code> / <code>When</code> で数値に写して</strong>並べる。同順位は id で固定される(<code>apply_ordering</code>)。
+<strong>落とし穴</strong>: <code>&quot;priority&quot;</code> をそのまま <code>order_by</code> に渡すと「high, low, normal, urgent」順になる。</li>
+</ul>
+<h2 id="演習-3状態保留blockedを足す">演習 3(★★)状態「保留(blocked)」を足す</h2>
+<p><strong>目標</strong>: 進行中 ⇄ 保留 を行き来できる 5 つめの状態。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li>遷移表の全組み合わせのテストが通る(新しい遷移を <code>ALLOWED</code> に足す)。</li>
+<li>かんばんに 5 列目が出る。900px 以上で 5 列が収まり、未満は 1 列。</li>
+<li>積み上げバー・凡例・自分のタスクに出る。ライト/ダークで読める(4.5:1)。
+<strong>ヒント</strong>: <a href="04-recipes.html#b-%E3%82%BF%E3%82%B9%E3%82%AF%E3%81%AE%E7%8A%B6%E6%85%8B%E3%82%92-1-%E3%81%A4%E8%B6%B3%E3%81%99%E4%BE%8B-%E4%BF%9D%E7%95%99-blocked">レシピ B</a>。<strong>サーバーは <code>models.py</code> だけ</strong>で、落ちるテストは 4 件のはず。
+<strong>答えの方針</strong>: 状態の追加は「表」と「見た目」。ルール(遷移表)をまず決めて、テストを直し、見た目を足す。</li>
+</ul>
+<h2 id="演習-4ノートの編集と削除自分のノートだけ">演習 4(★★)ノートの編集と削除(自分のノートだけ)</h2>
+<p><strong>目標</strong>: ノートを書いた本人だけが、編集・削除できる(レビュアーは削除のみ可、など方針を自分で決めて文書化する)。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li><code>PATCH /notes/{id}/</code>・<code>DELETE /notes/{id}/</code> を追加。他人のノートは 403、見えないノートは 404。</li>
+<li>UI: 自分のノートに「編集」「削除」。削除前に確認。
+<strong>ヒント</strong>: <code>NoteViewSet</code> は今 <code>List</code> と <code>Create</code> だけ。<code>get_queryset</code> は <strong>対象を必須にしている</strong>(一覧用)ので、詳細・更新では <code>visible_*</code> 経由で引き直す必要がある。方針(誰が消せるか)は <code>models.py</code> のメソッドか <code>permissions.py</code> に置く。
+<strong>落とし穴</strong>: ノートの取得に使う <code>ContentType</code> の絞り込みを、更新でも通す(他プロジェクトのノートを書き換えられない)ように。</li>
+</ul>
+<h2 id="演習-5プロジェクトのメンバー管理-api-と画面">演習 5(★★)プロジェクトのメンバー管理 API と画面</h2>
+<p><strong>目標</strong>: 今は管理画面でしか変えられないメンバーを、レビュアーが画面から追加・変更・削除できる。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li><code>POST /projects/{id}/members/</code>・<code>PATCH</code>・<code>DELETE</code>。<strong>レビュアーだけ</strong>(管理者は可)。</li>
+<li><strong>最後のレビュアーは消せない / 役割を下げられない</strong>(承認できなくなるため)→ 409。</li>
+<li>重複して追加できない(400)。
+<strong>ヒント</strong>: <code>ProjectViewSet.members</code> は今 GET だけ。業務ルール(最後のレビュアーを守る)は <strong>モデルのメソッド</strong>に書き、<code>DomainError</code> のサブクラスで投げる。
+<strong>落とし穴</strong>: 自分自身の役割を変えるとき、変更後に自分の権限がどうなるか。</li>
+</ul>
+<h2 id="演習-6shot-に対応する">演習 6(★★)<code>shot</code> に対応する</h2>
+<p><strong>目標</strong>: アセットと同じ画面で <code>shot</code> も扱う。
+<strong>受け入れ条件</strong>: <a href="04-recipes.html#g-shot%E3%82%B7%E3%83%A7%E3%83%83%E3%83%88%E3%81%AB%E5%AF%BE%E5%BF%9C%E3%81%99%E3%82%8B">レシピ G</a> の 4 点。種別での絞り込み(<code>?kind=</code>)が UI から使える。
+<strong>答えの方針</strong>: 制限は <code>validate_kind</code> の 1 か所だけ。残りは UI。</p>
+<h2 id="演習-7外部-id-基盤の認証クラスを差し込む">演習 7(★★★)外部 ID 基盤の認証クラスを差し込む</h2>
+<p><strong>目標</strong>: <code>Authorization: Bearer &lt;JWT&gt;</code> でログインできるようにする(検証は、鍵を環境変数から読む HS256 の簡易版で十分)。
+<strong>受け入れ条件</strong></p>
+<ul>
+<li>正しい JWT で <code>/me/</code> が 200、改ざん・期限切れは 401。</li>
+<li>既存のセッション・トークン認証は壊れない。</li>
+<li><strong>ビューと権限のコードを変更していない</strong>(<code>API_AUTHENTICATION_CLASSES</code> に足すだけ)。
+<strong>ヒント</strong>: <a href="../auth.html">auth.md</a>。<code>BaseAuthentication</code> を継承し、<code>authenticate_header</code> を返して <strong>401</strong> にする(返さないと 403 になる。過去にはまった点)。
+<strong>落とし穴</strong>: トークンを <strong>ログ・Sentry に出さない</strong>(<code>tracker/sentry.py</code> の除去対象に <code>Authorization</code> が入っている)。</li>
+</ul>
+<h2 id="演習-8新しい取り込み口ビルド結果">演習 8(★★★)新しい取り込み口(ビルド結果)</h2>
+<p><strong>目標</strong>: ビルドツールの結果(<code>build_id</code>・成否・所要秒)を、版に紐づけて取り込み、画面に出す。
+<strong>受け入れ条件</strong>: <a href="04-recipes.html#e-%E6%96%B0%E3%81%97%E3%81%84%E5%8F%96%E3%82%8A%E8%BE%BC%E3%81%BF%E5%8F%A3%E3%82%92%E8%B6%B3%E3%81%99%E4%BE%8B-%E3%83%93%E3%83%AB%E3%83%89%E7%B5%90%E6%9E%9C">レシピ E</a> の 7 点(キーなし 401、再送で重複しない、不正入力 400、元データと件数一致、時刻のタイムゾーン必須、図と文書の更新)。</p>
+<h2 id="演習-9図を直す">演習 9(★)図を直す</h2>
+<p><strong>目標</strong>: <a href="../../diagrams/architecture.svg">システム構成図</a>に、演習 8 の「ビルドツール」を足す。
+<strong>受け入れ条件</strong>: <code>docs/diagrams/build.py</code> を直して再生成。<strong>文字と線が重ならない</strong>(ブラウザで見る)。360px ではなく、README で縮小表示されても読める。
+<strong>ヒント</strong>: <a href="../diagrams/README.html">diagrams/README.md</a>。矢印は折れ線の座標列。終点はグループ枠の縁で止める。</p>
+<hr />
+<h1 id="確認問題">確認問題</h1>
+<p>答えは下。<strong>コードかテストで裏を取ってから</strong>答え合わせをすること。</p>
+<ol>
+<li>状態の遷移が許されるかどうかを決めているのは、どのファイルのどの関数か。画面はそれを判断しているか。</li>
+<li>「未着手 → 完了」を、レビュアーが API で試すと、何が返るか。</li>
+<li>アーティストが「レビュー待ち → 完了」を試すと。</li>
+<li>レビュアーが、版が 1 つも無いタスクを「完了」にしようとすると。それを許すには何を変えるか。</li>
+<li><code>is_staff</code> のユーザーは、承認できるか。</li>
+<li>同じ <code>Idempotency-Key</code> で、別のタスクに版を登録すると。</li>
+<li>同じ <code>scan_run_id</code> で品質を 2 回取り込むと、2 回目は何が返り、DB はどうなるか。</li>
+<li>すでに <code>DEMO</code> があるときに <code>demo</code> を作ろうとすると。</li>
+<li><code>X-API-Key</code> で <code>GET /api/v1/projects/</code> を呼ぶと。</li>
+<li>ノートの対象に <code>project</code> を指定すると。</li>
+<li>DB を止めると <code>/healthz</code> は何を返すか。</li>
+<li>かんばんの「⋮」ボタンは、なぜ <code>mousedown</code> を止めているのか。</li>
+<li>ドロワーで状態を変えたあと、概要の「タスク」タブの一覧を更新するのは何か。</li>
+<li><code>visible_tasks</code> を使わずに、<code>Task.objects.all()</code> から始めたビューは何が悪いか。</li>
+<li>取り込みの時刻に、タイムゾーンが無いと。</li>
+</ol>
+<h2 id="答え">答え</h2>
+<ol>
+<li><code>backend/tracker/models.py</code> の <code>Task.transition_to</code>(表は <code>Task.TRANSITIONS</code>)。画面は判断しない。拒否されたら元の列へ戻し、サーバーが返した理由を表示するだけ。メニューの候補は <code>task.next_statuses</code>。</li>
+<li><strong>409</strong> <code>{&quot;code&quot;: &quot;invalid_transition&quot;}</code>。誰が試しても同じ(遷移表が最初に検査される)。</li>
+<li><strong>403</strong> <code>permission_denied</code>(承認はレビュアーのみ)。表の検査は通るが、次の権限の検査で止まる。</li>
+<li><strong>409</strong> <code>version_required</code>。許すには <code>REQUIRE_VERSION_FOR_COMPLETION=0</code>。</li>
+<li><strong>できない</strong>。<code>can_review_as</code> はレビュアーの役割だけを見る。管理者は全プロジェクトを見られ、承認以外は編集できる。</li>
+<li><strong>409</strong> <code>idempotency_conflict</code>。同じ鍵が同じタスクなら、新規作成せず同じ版を <strong>200</strong> で返す。鍵はユーザーごとに一意。</li>
+<li><strong>200</strong>(新規は 201)。<code>(project, scan_run_id)</code> の行は <strong>全て置き換わる</strong>ので、件数は増えない。</li>
+<li><strong>400</strong> <code>validation_error</code>(大文字小文字の違いも同じ扱い)。DB にも <code>Lower(code)</code> の一意制約がある。</li>
+<li><strong>401</strong>。<code>X-API-Key</code> は取り込み API 専用で、画面の API には使えない。</li>
+<li><strong>400</strong>。<code>target_type</code> は <code>entity</code> / <code>task</code> / <code>version</code> のみ。</li>
+<li><strong>503</strong> <code>{&quot;status&quot;: &quot;error&quot;, &quot;db&quot;: false}</code>。例外の中身は返さない。</li>
+<li>dnd-kit の <code>MouseSensor</code> は <code>mousedown</code> を見る。ボタンの上でマウスを動かすとドラッグが始まってしまうのを防ぐ。<code>pointerdown</code> を止めても <code>mousedown</code> は届く。</li>
+<li><code>OverviewPage</code> の <code>tasksRevision</code>(ドロワーの <code>onChanged</code> で増やす)。更新日時や件数から推測しない。</li>
+<li><strong>見えないはずのタスクが見える</strong>(他のプロジェクトのデータが漏れる)。<code>visible_*</code> で最初に絞るのが原則。</li>
+<li><strong>400</strong>(<code>AwareDateTimeField</code>)。黙って補うと、取り込み元と時刻がずれても気づけないため。<code>send_quality.py</code> は <code>--naive-offset</code> で明示させる。</li>
+</ol>
+</article>
+    <nav class="pager"><a class="prev" href="06-troubleshooting.html"><span>← 前へ</span>6. 困ったとき</a><a class="next" href="08-security-and-database.html"><span>次へ →</span>8. セキュリティとデータベースの見方</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#進め方">進め方</a></li><li class="lvl2"><a href="#演習-1タスクに説明を足す">演習 1(★)タスクに「説明」を足す</a></li><li class="lvl2"><a href="#演習-2並べ替えに優先度順を足す">演習 2(★)並べ替えに「優先度順」を足す</a></li><li class="lvl2"><a href="#演習-3状態保留blockedを足す">演習 3(★★)状態「保留(blocked)」を足す</a></li><li class="lvl2"><a href="#演習-4ノートの編集と削除自分のノートだけ">演習 4(★★)ノートの編集と削除(自分のノートだけ)</a></li><li class="lvl2"><a href="#演習-5プロジェクトのメンバー管理-api-と画面">演習 5(★★)プロジェクトのメンバー管理 API と画面</a></li><li class="lvl2"><a href="#演習-6shot-に対応する">演習 6(★★)shot に対応する</a></li><li class="lvl2"><a href="#演習-7外部-id-基盤の認証クラスを差し込む">演習 7(★★★)外部 ID 基盤の認証クラスを差し込む</a></li><li class="lvl2"><a href="#演習-8新しい取り込み口ビルド結果">演習 8(★★★)新しい取り込み口(ビルド結果)</a></li><li class="lvl2"><a href="#演習-9図を直す">演習 9(★)図を直す</a></li><li class="lvl2"><a href="#答え">答え</a></li></ul></nav>
+</div>
+</body>
+</html>

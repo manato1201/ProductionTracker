@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="e554e6aba00be6c8def1">
+<title>データベースの点検(SQL の指針) — ProductionTracker</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="learning/01-overview.html">1. 全体像</a></li><li><a href="learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="learning/05-testing.html">5. テストの書き方</a></li><li><a href="learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="ui-rules.html">UI の決めごと表</a></li><li><a href="er.html">ER 図(実装済みモデル)</a></li><li><a href="integration.html">既存ツールとの連携</a></li><li><a href="auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="database.html" aria-current="page" class="current">データベースの点検(SQL の指針)</a></li><li><a href="operations.html">運用手順(Phase 7)</a></li><li><a href="decisions.html">実装時の判断記録</a></li><li><a href="learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../database.md"><code>docs/database.md</code></a></p>
+    <article class="doc"><h1 id="データベースの点検sql-の指針">データベースの点検(SQL の指針)</h1>
+<p>設計書の追補「第4弾の外部資料(Z32 SQL)」の指針で、データモデルとクエリを点検した結果。
+資料は Cloudflare D1(SQLite)向けで、このアプリは PostgreSQL(テストは SQLite)だが、指針そのものは同じように使える。</p>
+<table>
+<thead>
+<tr>
+<th>指針</th>
+<th>結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>主キー・外部キーを必ず定義</td>
+<td>対策済み</td>
+</tr>
+<tr>
+<td>正規化は 3NF 〜 BCNF を目安</td>
+<td>対策済み(例外は理由つき)</td>
+</tr>
+<tr>
+<td>索引は<strong>値の種類が多い列</strong>に</td>
+<td><strong>確定</strong>(<code>status</code> 単独の索引を削除)</td>
+</tr>
+<tr>
+<td>関数をかけた列・先頭が <code>%</code> の <code>LIKE</code> は索引が効かない</td>
+<td><strong>確定</strong>(<code>iexact</code> の式を修正)/ 先頭 <code>%</code> は許容(理由あり)</td>
+</tr>
+<tr>
+<td><code>LIMIT</code>(ページ送り)には <code>ORDER BY</code></td>
+<td>対策済み(テストで強制)</td>
+</tr>
+<tr>
+<td><code>COUNT(列)</code> は NULL を数えない</td>
+<td>対策済み(意図どおり)</td>
+</tr>
+<tr>
+<td>実行計画は <code>EXPLAIN</code> で確認</td>
+<td>対策済み(コマンドとテスト)</td>
+</tr>
+</tbody>
+</table>
+<figure class="diagram"><svg id="mef19aec0b50bab42" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 1151.875px;" viewBox="0 0 1151.875 1370.875" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mef19aec0b50bab42{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mef19aec0b50bab42 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mef19aec0b50bab42 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mef19aec0b50bab42 .error-icon{fill:#552222;}#mef19aec0b50bab42 .error-text{fill:#552222;stroke:#552222;}#mef19aec0b50bab42 .edge-thickness-normal{stroke-width:1px;}#mef19aec0b50bab42 .edge-thickness-thick{stroke-width:3.5px;}#mef19aec0b50bab42 .edge-pattern-solid{stroke-dasharray:0;}#mef19aec0b50bab42 .edge-thickness-invisible{stroke-width:0;fill:none;}#mef19aec0b50bab42 .edge-pattern-dashed{stroke-dasharray:3;}#mef19aec0b50bab42 .edge-pattern-dotted{stroke-dasharray:2;}#mef19aec0b50bab42 .marker{fill:#666;stroke:#666;}#mef19aec0b50bab42 .marker.cross{stroke:#666;}#mef19aec0b50bab42 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#mef19aec0b50bab42 p{margin:0;}#mef19aec0b50bab42 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#mef19aec0b50bab42 .cluster-label text{fill:#333;}#mef19aec0b50bab42 .cluster-label span{color:#333;}#mef19aec0b50bab42 .cluster-label span p{background-color:transparent;}#mef19aec0b50bab42 .label text,#mef19aec0b50bab42 span{fill:#000000;color:#000000;}#mef19aec0b50bab42 .node rect,#mef19aec0b50bab42 .node circle,#mef19aec0b50bab42 .node ellipse,#mef19aec0b50bab42 .node polygon,#mef19aec0b50bab42 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mef19aec0b50bab42 .rough-node .label text,#mef19aec0b50bab42 .node .label text,#mef19aec0b50bab42 .image-shape .label,#mef19aec0b50bab42 .icon-shape .label{text-anchor:middle;}#mef19aec0b50bab42 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mef19aec0b50bab42 .rough-node .label,#mef19aec0b50bab42 .node .label,#mef19aec0b50bab42 .image-shape .label,#mef19aec0b50bab42 .icon-shape .label{text-align:center;}#mef19aec0b50bab42 .node.clickable{cursor:pointer;}#mef19aec0b50bab42 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#mef19aec0b50bab42 .arrowheadPath{fill:#333333;}#mef19aec0b50bab42 .edgePaths .path{stroke:#666;stroke-width:1px;}#mef19aec0b50bab42 .flowchart-link{stroke:#666;fill:none;}#mef19aec0b50bab42 .edgeLabel{background-color:white;text-align:center;}#mef19aec0b50bab42 .edgeLabel p{background-color:white;}#mef19aec0b50bab42 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mef19aec0b50bab42 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#mef19aec0b50bab42 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#mef19aec0b50bab42 .cluster text{fill:#333;}#mef19aec0b50bab42 .cluster span{color:#333;}#mef19aec0b50bab42 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#mef19aec0b50bab42 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#mef19aec0b50bab42 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#mef19aec0b50bab42 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#mef19aec0b50bab42 rect.text{fill:none;stroke-width:0;}#mef19aec0b50bab42 .icon-shape,#mef19aec0b50bab42 .image-shape{background-color:white;text-align:center;}#mef19aec0b50bab42 .icon-shape p,#mef19aec0b50bab42 .image-shape p{background-color:white;padding:2px;}#mef19aec0b50bab42 .icon-shape .label rect,#mef19aec0b50bab42 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#mef19aec0b50bab42 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mef19aec0b50bab42 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mef19aec0b50bab42 .node .neo-node{stroke:#999;}#mef19aec0b50bab42 [data-look="neo"].node rect,#mef19aec0b50bab42 [data-look="neo"].cluster rect,#mef19aec0b50bab42 [data-look="neo"].node polygon{stroke:url(#mef19aec0b50bab42-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mef19aec0b50bab42 [data-look="neo"].swimlane.cluster rect{filter:none;}#mef19aec0b50bab42 [data-look="neo"].node path{stroke:url(#mef19aec0b50bab42-gradient);stroke-width:1px;}#mef19aec0b50bab42 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mef19aec0b50bab42 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#mef19aec0b50bab42 [data-look="neo"].node circle{stroke:url(#mef19aec0b50bab42-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mef19aec0b50bab42 [data-look="neo"].node circle .state-start{fill:#000000;}#mef19aec0b50bab42 [data-look="neo"].icon-shape .icon{fill:url(#mef19aec0b50bab42-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mef19aec0b50bab42 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mef19aec0b50bab42-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mef19aec0b50bab42 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="mef19aec0b50bab42_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mef19aec0b50bab42_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mef19aec0b50bab42_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mef19aec0b50bab42_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mef19aec0b50bab42_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mef19aec0b50bab42_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mef19aec0b50bab42_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M435.359,86L435.359,90.167C435.359,94.333,435.359,102.667,435.359,110.333C435.359,118,435.359,125,435.359,128.5L435.359,132" id="mef19aec0b50bab42-L_Q_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_Q_E_0" data-points="W3sieCI6NDM1LjM1OTM3NSwieSI6ODZ9LHsieCI6NDM1LjM1OTM3NSwieSI6MTExfSx7IngiOjQzNS4zNTkzNzUsInkiOjEzNn1d" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M435.359,214L435.359,218.167C435.359,222.333,435.359,230.667,435.359,238.333C435.359,246,435.359,253,435.359,256.5L435.359,260" id="mef19aec0b50bab42-L_E_S_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_S_0" data-points="W3sieCI6NDM1LjM1OTM3NSwieSI6MjE0fSx7IngiOjQzNS4zNTkzNzUsInkiOjIzOX0seyJ4Ijo0MzUuMzU5Mzc1LCJ5IjoyNjR9XQ==" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M370.756,501.397L358.093,518.33C345.431,535.264,320.106,569.132,307.444,605.738C294.781,642.344,294.781,681.688,294.781,701.359L294.781,721.031" id="mef19aec0b50bab42-L_S_OK_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_OK_0" data-points="W3sieCI6MzcwLjc1NTg3NTA3MTMzMDEsInkiOjUwMS4zOTY1MDAwNzEzMzAxfSx7IngiOjI5NC43ODEyNSwieSI6NjAzfSx7IngiOjI5NC43ODEyNSwieSI6NzI1LjAzMTI1fV0=" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M499.963,501.397L512.625,518.33C525.288,535.264,550.613,569.132,563.275,591.566C575.938,614,575.938,625,575.938,630.5L575.938,636" id="mef19aec0b50bab42-L_S_W_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_S_W_0" data-points="W3sieCI6NDk5Ljk2Mjg3NDkyODY2OTksInkiOjUwMS4zOTY1MDAwNzEzMzAxfSx7IngiOjU3NS45Mzc1LCJ5Ijo2MDN9LHsieCI6NTc1LjkzNzUsInkiOjY0MH1d" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M501.384,789.509L464.398,808.101C427.412,826.693,353.44,863.878,316.455,891.912C279.469,919.945,279.469,938.828,279.469,948.27L279.469,957.711" id="mef19aec0b50bab42-L_W_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_W_C_0" data-points="W3sieCI6NTAxLjM4MzU5NTA2NTIzNTcsInkiOjc4OS41MDg1OTUwNjUyMzU3fSx7IngiOjI3OS40Njg3NSwieSI6OTAxLjA2MjV9LHsieCI6Mjc5LjQ2ODc1LCJ5Ijo5NjEuNzEwOTM3NX1d" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M232.406,1116.164L216.672,1134.116C200.937,1152.068,169.469,1187.971,153.734,1211.423C138,1234.875,138,1245.875,138,1251.375L138,1256.875" id="mef19aec0b50bab42-L_C_ADD_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_ADD_0" data-points="W3sieCI6MjMyLjQwNjE2MDUyNTQzMzM0LCJ5IjoxMTE2LjE2Mzk3MzAyNTQzMzN9LHsieCI6MTM4LCJ5IjoxMjIzLjg3NX0seyJ4IjoxMzgsInkiOjEyNjAuODc1fV0=" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M326.531,1116.164L342.266,1134.116C358,1152.068,389.469,1187.971,405.203,1213.423C420.938,1238.875,420.938,1253.875,420.938,1261.375L420.938,1268.875" id="mef19aec0b50bab42-L_C_NO_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_NO_0" data-points="W3sieCI6MzI2LjUzMTMzOTQ3NDU2NjY2LCJ5IjoxMTE2LjE2Mzk3MzAyNTQzMzN9LHsieCI6NDIwLjkzNzUsInkiOjEyMjMuODc1fSx7IngiOjQyMC45Mzc1LCJ5IjoxMjcyLjg3NX1d" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M649.317,790.683L684.244,809.079C719.17,827.476,789.022,864.269,823.949,888.166C858.875,912.063,858.875,923.063,858.875,928.563L858.875,934.063" id="mef19aec0b50bab42-L_W_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_W_F_0" data-points="W3sieCI6NjQ5LjMxNzQ0MTk0NDU4NTEsInkiOjc5MC42ODI1NTgwNTU0MTQ5fSx7IngiOjg1OC44NzUsInkiOjkwMS4wNjI1fSx7IngiOjg1OC44NzUsInkiOjkzOC4wNjI1fV0=" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M797.931,1125.931L782.255,1142.255C766.579,1158.579,735.227,1191.227,719.551,1215.051C703.875,1238.875,703.875,1253.875,703.875,1261.375L703.875,1268.875" id="mef19aec0b50bab42-L_F_FIX_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_FIX_0" data-points="W3sieCI6Nzk3LjkzMTI5NjI5NjI5NjMsInkiOjExMjUuOTMxMjk2Mjk2Mjk2M30seyJ4Ijo3MDMuODc1LCJ5IjoxMjIzLjg3NX0seyJ4Ijo3MDMuODc1LCJ5IjoxMjcyLjg3NX1d" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path><path d="M919.819,1125.931L935.495,1142.255C951.171,1158.579,982.523,1191.227,998.199,1213.051C1013.875,1234.875,1013.875,1245.875,1013.875,1251.375L1013.875,1256.875" id="mef19aec0b50bab42-L_F_ST_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_ST_0" data-points="W3sieCI6OTE5LjgxODcwMzcwMzcwMzcsInkiOjExMjUuOTMxMjk2Mjk2Mjk2M30seyJ4IjoxMDEzLjg3NSwieSI6MTIyMy44NzV9LHsieCI6MTAxMy44NzUsInkiOjEyNjAuODc1fV0=" data-look="classic" marker-end="url(#mef19aec0b50bab42_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_Q_E_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_E_S_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(294.78125, 603)"><g class="label" data-id="L_S_OK_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-26.5625" y="-2" width="53.125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">いいえ</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(575.9375, 603)"><g class="label" data-id="L_S_W_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">はい</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(279.46875, 901.0625)"><g class="label" data-id="L_W_C_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">ない</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(138, 1223.875)"><g class="label" data-id="L_C_ADD_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">はい</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(420.9375, 1223.875)"><g class="label" data-id="L_C_NO_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-64.7734375" y="-2" width="129.546875" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">いいえ(状態など)</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(858.875, 901.0625)"><g class="label" data-id="L_W_F_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">ある</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(703.875, 1223.875)"><g class="label" data-id="L_F_FIX_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">はい</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(1013.875, 1223.875)"><g class="label" data-id="L_F_ST_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-26.5625" y="-2" width="53.125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">いいえ</tspan></tspan></text></g></g></g></g><g class="nodes"><g class="node default" id="mef19aec0b50bab42-flowchart-Q-0" data-look="classic" transform="translate(435.359375, 47)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>クエリが遅い / 遅くなりそう</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-E-1" data-look="classic" transform="translate(435.359375, 175)"><rect class="basic label-container" style="" x="-114.40625" y="-39" width="228.8125" height="78"></rect><g class="label" style="" transform="translate(-84.40625, -24)"><rect></rect><foreignObject width="168.8125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>EXPLAIN で計画を見る<br>explain_queries</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-S-3" data-look="classic" transform="translate(435.359375, 415)"><polygon points="151,0 302,-151 151,-302 0,-151" class="label-container" transform="translate(-150.5, 151)"></polygon><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>大きな表で<br>全件走査(Seq Scan / SCAN)?</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-OK-5" data-look="classic" transform="translate(294.78125, 752.03125)"><rect class="basic label-container" style="" x="-119.125" y="-27" width="238.25" height="54"></rect><g class="label" style="" transform="translate(-89.125, -12)"><rect></rect><foreignObject width="178.25" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>索引は効いている。次へ</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-W-7" data-look="classic" transform="translate(575.9375, 752.03125)"><polygon points="112.03125,0 224.0625,-112.03125 112.03125,-224.0625 0,-112.03125" class="label-container" transform="translate(-111.53125, 112.03125)"></polygon><g class="label" style="" transform="translate(-85.03125, -12)"><rect></rect><foreignObject width="170.0625" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>条件の列に索引はある?</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-C-9" data-look="classic" transform="translate(279.46875, 1062.46875)"><polygon points="100.7578125,0 201.515625,-100.7578125 100.7578125,-201.515625 0,-100.7578125" class="label-container" transform="translate(-100.2578125, 100.7578125)"></polygon><g class="label" style="" transform="translate(-61.7578125, -24)"><rect></rect><foreignObject width="123.515625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>値の種類は多い?<br>(ID・日付・名前)</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-ADD-11" data-look="classic" transform="translate(138, 1311.875)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>索引を足す<br>(複数列なら等価の列 → 範囲 / 並べ替えの順)</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-NO-13" data-look="classic" transform="translate(420.9375, 1311.875)"><rect class="basic label-container" style="" x="-102.9375" y="-39" width="205.875" height="78"></rect><g class="label" style="" transform="translate(-72.9375, -24)"><rect></rect><foreignObject width="145.875" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>索引を足さない<br>他の条件と組にする</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-F-15" data-look="classic" transform="translate(858.875, 1062.46875)"><polygon points="124.40625,0 248.8125,-124.40625 124.40625,-248.8125 0,-124.40625" class="label-container" transform="translate(-123.90625, 124.40625)"></polygon><g class="label" style="" transform="translate(-85.40625, -24)"><rect></rect><foreignObject width="170.8125" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>列に関数をかけている?<br>先頭が % の LIKE?</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-FIX-17" data-look="classic" transform="translate(703.875, 1311.875)"><rect class="basic label-container" style="" x="-130" y="-39" width="260" height="78"></rect><g class="label" style="" transform="translate(-100, -24)"><rect></rect><foreignObject width="200" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>式を索引にそろえる / pg_trgm を検討</p></span></div></foreignObject></g></g><g class="node default" id="mef19aec0b50bab42-flowchart-ST-19" data-look="classic" transform="translate(1013.875, 1311.875)"><rect class="basic label-container" style="" x="-130" y="-51" width="260" height="102"></rect><g class="label" style="" transform="translate(-100, -36)"><rect></rect><foreignObject width="200" height="72"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table; white-space: break-spaces; line-height: 1.5; max-width: 200px; text-align: center; width: 200px;"><span class="nodeLabel"><p>統計が古い? ANALYZE。<br>行が少ないだけ(全件のほうが速い)かも</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mef19aec0b50bab42-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mef19aec0b50bab42-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="mef19aec0b50bab42-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h2 id="1-主キー・外部キー">1. 主キー・外部キー</h2>
+<ul>
+<li>全ての表の主キーは整数の自動採番(<code>BigAutoField</code>)。外部への公開識別子は別の項目(<code>Project.code</code>)。</li>
+<li>外部キーは全て定義済みで、Django が外部キーの列に索引を作る。<code>on_delete</code> の方針:</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>外部キー</th>
+<th>方針</th>
+<th>理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Entity → Project、Task → Entity、Version → Task、ProjectMember → Project / User、QualityReport → Project、VisualResult → Version</td>
+<td><code>CASCADE</code></td>
+<td>親が消えたら子は意味を失う</td>
+</tr>
+<tr>
+<td>Task → Step</td>
+<td><code>PROTECT</code></td>
+<td>使われている工程を消させない</td>
+</tr>
+<tr>
+<td>Task.assignee、Version.created_by、Note.author</td>
+<td><code>SET_NULL</code></td>
+<td>ユーザーを消しても、仕事の記録は残す</td>
+</tr>
+<tr>
+<td>QualityReport.entity</td>
+<td><code>SET_NULL</code></td>
+<td>アセットを消しても、スキャンの記録(パスと件数)は残す</td>
+</tr>
+<tr>
+<td>Note → 対象</td>
+<td>外部キーではない(<code>GenericForeignKey</code>)</td>
+<td>対象を消すと連鎖して消えるよう、3 つのモデルに <code>GenericRelation</code> を足した</td>
+</tr>
+</tbody>
+</table>
+<h2 id="2-正規化3nf--bcnf">2. 正規化(3NF 〜 BCNF)</h2>
+<p>派生する値は<strong>保存せず、計算する</strong>(プロジェクトの進捗・状態別の件数・<code>is_overdue</code>・<code>next_statuses</code>・<code>version_count</code>)。保存すると、更新のたびにずれる危険が増えるため。</p>
+<p>意図的な非正規化(理由つき):</p>
+<table>
+<thead>
+<tr>
+<th>項目</th>
+<th>なぜ重複して持つか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QualityReport.asset_path</code>(<code>Entity.path</code> と重複しうる)</td>
+<td>取り込んだ<strong>元データの表記</strong>を残す。アセットに対応しない行(<code>entity</code> が NULL)も保存して、元の件数と一致させるため</td>
+</tr>
+<tr>
+<td><code>QualityReport.project</code>(<code>entity.project</code> から分かる)</td>
+<td><code>entity</code> が NULL の行でも、どのプロジェクトのスキャンか分かる必要がある</td>
+</tr>
+<tr>
+<td><code>Version.idempotency_key</code></td>
+<td>再送の判定のためだけの値</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-索引">3. 索引</h2>
+<p><strong>索引の方針</strong>: 値の種類が多い列(ID・日付・名前)に付ける。種類が少ない列(状態の 4 種類・真偽)の単独の索引は、ほとんど効かず、書き込みを遅くするだけ。</p>
+<table>
+<thead>
+<tr>
+<th>表</th>
+<th>索引</th>
+<th>使う場面</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Task</td>
+<td><code>entity_id</code>(外部キー)/ <code>assignee_id</code>(外部キー)/ <code>step_id</code> / <code>due</code> / 一意 <code>(entity, step)</code></td>
+<td>アセットのタスク一覧、「自分のタスク」、期限切れ</td>
+</tr>
+<tr>
+<td>Version</td>
+<td><code>task_id</code>(外部キー)/ 一意 <code>(task, number)</code> / 一意 <code>(created_by, idempotency_key)</code>(鍵があるとき)</td>
+<td>版の一覧、採番、再送の判定</td>
+</tr>
+<tr>
+<td>Note</td>
+<td><code>(content_type, object_id)</code></td>
+<td>対象ごとのノート</td>
+</tr>
+<tr>
+<td>QualityReport</td>
+<td><code>(entity, -scanned_at)</code> / 一意 <code>(project, scan_run_id, asset_path)</code></td>
+<td>アセットの品質(新しい順)、同じ実行の置き換え</td>
+</tr>
+<tr>
+<td>VisualResult</td>
+<td>一意 <code>(run_id, version)</code> / <code>version_id</code></td>
+<td>再送の判定、版ごとの結果</td>
+</tr>
+<tr>
+<td>Project</td>
+<td>一意 <code>code</code> / 一意 <code>LOWER(code)</code></td>
+<td>URL の指定、大文字小文字を区別しない一意</td>
+</tr>
+<tr>
+<td>ProjectMember</td>
+<td>一意 <code>(project, user)</code> / <code>user_id</code></td>
+<td>「見えるプロジェクト」の判定(最も頻繁)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>直したこと(F4)</strong></p>
+<ol>
+<li><strong><code>Task.status</code> 単独の索引を削除</strong>(マイグレーション <code>0005</code>)。値が 4 種類しか無く、絞り込みはほぼ必ずプロジェクト・担当者・期日と一緒に使うため、単独では選ばれない。</li>
+<li><strong><code>Project.code</code> の大文字小文字を区別しない一意の確認</strong>を、<code>code__iexact</code>(PostgreSQL では <code>UPPER(code) = UPPER(...)</code>)から、制約の索引と同じ <strong><code>LOWER(code)</code></strong> の式に変えた。「関数をかけた列には、同じ関数の索引が要る」。</li>
+</ol>
+<p><strong>許容していること</strong></p>
+<ul>
+<li>検索(<code>?q=</code>)の <code>icontains</code> は <code>LIKE '%…%'</code>(先頭が <code>%</code>)で、索引が効かない。アセット名・工程名の検索で、件数が数千のうちは問題にならない。<strong>増えたら</strong>、PostgreSQL の <code>pg_trgm</code>(三文字索引)を検討する。</li>
+</ul>
+<h2 id="4-limit-には-order-by">4. <code>LIMIT</code> には <code>ORDER BY</code></h2>
+<p>ページ送りは <code>LIMIT / OFFSET</code> なので、並び順が決まっていないと、ページをまたいで同じ行が出たり抜けたりする。</p>
+<ul>
+<li>一覧は全て並び順を明示している(<code>apply_ordering</code>。同順位は id で固定)。</li>
+<li><strong>テストで強制</strong>: <code>test_every_list_queryset_is_ordered</code>(全ての一覧ビューの QuerySet が <code>ordered</code>)。新しい一覧を足して並び順を忘れると落ちる。</li>
+</ul>
+<h2 id="5-count列-は-null-を数えない">5. <code>COUNT(列)</code> は NULL を数えない</h2>
+<p>集計は全て「<strong>NULL でない行を数える</strong>」意図で、列を指定した <code>COUNT</code> を使っている。</p>
+<table>
+<thead>
+<tr>
+<th>集計</th>
+<th>意図</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Count(&quot;entities__tasks&quot;, filter=..., distinct=True)</code>(状態別の件数)</td>
+<td>結合で一致しなかった行(NULL)は数えない → タスクが無いプロジェクトは 0</td>
+</tr>
+<tr>
+<td><code>Count(&quot;tasks&quot;, distinct=True)</code>(アセットごと)</td>
+<td>同上</td>
+</tr>
+<tr>
+<td><code>Count(&quot;versions&quot;, distinct=True)</code>(タスクごと)</td>
+<td>同上</td>
+</tr>
+</tbody>
+</table>
+<p><code>distinct=True</code> は、複数の結合で行が増えても重複して数えないため。</p>
+<h2 id="6-実行計画explain">6. 実行計画(<code>EXPLAIN</code>)</h2>
+<ul>
+<li><strong>自動</strong>: <code>tests/test_query_plans.py</code>。主要な 16 のクエリ(<code>tracker/query_catalog.py</code>)の <code>EXPLAIN QUERY PLAN</code> に、大きくなる表の<strong>全件走査(SCAN)が無い</strong>こと。SQLite は、使える索引があれば小さな表でも使うので、決定的に確かめられる(PostgreSQL では行数が少ないと索引を使わないので、このテストは SQLite のときだけ走る)。</li>
+<li><strong>実データ</strong>: <code>python manage.py explain_queries</code>(<code>--analyze</code> で実測)。PostgreSQL では <code>Seq Scan</code> が出ていないか、並べ替えの <code>Sort</code> が不要になっているか、行数の見積もりが実際と合っているかを見る(<code>ANALYZE</code> を先に)。</li>
+<li>新しいクエリを足したら、<code>query_catalog.py</code> に 1 行足す。</li>
+</ul>
+<h2 id="7-その他">7. その他</h2>
+<ul>
+<li><strong>CHECK 制約</strong>: <code>estimate_h &gt;= 0</code>、<code>diff_ratio</code> は 0〜1。<strong>一意制約</strong>: 重複を DB が防ぐ(<a href="er.html">er.md</a>)。</li>
+<li><strong>同時実行</strong>: 状態遷移・版の採番・取り込みは、行のロック(<code>select_for_update</code>)と一意制約の併用。</li>
+<li><strong>マイグレーション</strong>: 制約を足すものは、既存データが違反していると失敗する。バックアップ → 別 DB で試す(<a href="operations.html">operations.md</a>)。</li>
+</ul>
+</article>
+    <nav class="pager"><a class="prev" href="security.html"><span>← 前へ</span>セキュリティ点検(OWASP API Security Top 10 : 2023)</a><a class="next" href="operations.html"><span>次へ →</span>運用手順(Phase 7)</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#1-主キー・外部キー">1. 主キー・外部キー</a></li><li class="lvl2"><a href="#2-正規化3nf--bcnf">2. 正規化(3NF 〜 BCNF)</a></li><li class="lvl2"><a href="#3-索引">3. 索引</a></li><li class="lvl2"><a href="#4-limit-には-order-by">4. LIMIT には ORDER BY</a></li><li class="lvl2"><a href="#5-count列-は-null-を数えない">5. COUNT(列) は NULL を数えない</a></li><li class="lvl2"><a href="#6-実行計画explain">6. 実行計画(EXPLAIN)</a></li><li class="lvl2"><a href="#7-その他">7. その他</a></li></ul></nav>
+</div>
+</body>
+</html>

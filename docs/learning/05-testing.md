@@ -19,6 +19,25 @@ npx tsc --noEmit                   # 型チェック(テスト用データの型
 npm run build                      # 型チェック + ビルド
 ```
 
+```mermaid
+flowchart TB
+    subgraph fast["速い・多い(数秒)"]
+        U["純粋な関数<br/>paths / format / status"]
+        R["ルール<br/>遷移表の全組み合わせ"]
+        AP["API(認可・検証・冪等)<br/>APIClient + DB"]
+        FZ["壊れた入力<br/>test_robustness"]
+        SA["セキュリティの点検<br/>test_security_audit"]
+        QP["実行計画<br/>test_query_plans(SQLite)"]
+    end
+    subgraph mid["画面の部品(Vitest)"]
+        CT["Board / StatusLabel / AsciiPlant"]
+    end
+    subgraph slow["手で確認(ブラウザ)"]
+        MN["ドラッグ・360px・ダーク・グレースケール"]
+    end
+    fast --> mid --> slow
+```
+
 ## 何をどこでテストしているか
 | 層 | 場所 | 例 |
 |---|---|---|

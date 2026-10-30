@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="fcdd70cdccbb814b8b82">
+<title>8. セキュリティとデータベースの見方 — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="../lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="../lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="../lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="../lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="../lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="../lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="../lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="../lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="../lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="../lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="../lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="../lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="../lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="../lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="../lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="../lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="../lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="../lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="../lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="../lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="01-overview.html">1. 全体像</a></li><li><a href="02-backend.html">2. バックエンドの道案内</a></li><li><a href="03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="04-recipes.html">4. 拡張レシピ</a></li><li><a href="05-testing.html">5. テストの書き方</a></li><li><a href="06-troubleshooting.html">6. 困ったとき</a></li><li><a href="07-exercises.html">7. 演習と確認問題</a></li><li><a href="08-security-and-database.html" aria-current="page" class="current">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../learning/08-security-and-database.md"><code>docs/learning/08-security-and-database.md</code></a></p>
+    <article class="doc"><h1 id="8-セキュリティとデータベースの見方">8. セキュリティとデータベースの見方</h1>
+<p>機能を足す・直すときに、<strong>何を確かめるか</strong>の手引き。結果の一覧は <a href="../security.html">security.md</a>・<a href="../database.html">database.md</a>。この章は「自分で点検できる」ようになるための読み方。</p>
+<h2 id="考え方3-つ">考え方(3 つ)</h2>
+<ol>
+<li><strong>点検は文章でなく、テストにする。</strong> 一度見たきりの点検は、次の変更で崩れる。「全エンドポイントは未認証で 401」のように、<strong>新しい機能が自動で対象になる</strong>テストにすると、足し忘れが起きない。</li>
+<li><strong>正しい入力の次に、壊れた入力を試す。</strong> 500 が出たら、それは不具合(4xx で拒否するか、正しく扱う)。DB が違うと落ち方も違う(PostgreSQL は NUL 文字、SQLite は巨大な整数)ので、<strong>両方の DB で流す</strong>。</li>
+<li><strong>最小権限。</strong> 誰に・何を許すかを表にして、表のとおりにテストする。表にないものは許さない(許可リスト)。</li>
+</ol>
+<h2 id="owasp-api-top-10-をこのアプリで見る">OWASP API Top 10 を、このアプリで見る</h2>
+<table>
+<thead>
+<tr>
+<th>リスク</th>
+<th>自分で確かめる問い</th>
+<th>見る場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API1 オブジェクト単位の認可</td>
+<td><strong>他のプロジェクトの ID</strong> を URL に入れたら、読めて・書ける?</td>
+<td><code>permissions.py</code> の <code>visible_*</code>、<code>test_objects_of_another_project_are_invisible</code></td>
+</tr>
+<tr>
+<td>API2 認証</td>
+<td>ログインを何度も間違えたら? トークンは盗まれたらどうなる?</td>
+<td><code>views_auth.py</code>(制限)、<code>cf_access.py</code></td>
+</tr>
+<tr>
+<td>API3 プロパティ単位の認可</td>
+<td>PATCH に <code>status</code> や <code>id</code> を混ぜたら書き換わる? 応答に余計な個人情報は?</td>
+<td><code>serializers.py</code> の <code>read_only_fields</code></td>
+</tr>
+<tr>
+<td>API4 資源の消費</td>
+<td>巨大な本文・1 秒に 1000 回・<code>page_size=1000000</code> は?</td>
+<td><code>settings.py</code> のレート、<code>StandardPagination</code>、<code>MAX_JSON_CHARS</code></td>
+</tr>
+<tr>
+<td>API5 機能単位の認可</td>
+<td>閲覧者が書ける? アーティストが承認できる?</td>
+<td><code>test_authorization_matrix</code></td>
+</tr>
+<tr>
+<td>API7 SSRF</td>
+<td>サーバーが、利用者の渡した URL を取りに行く場所はある?</td>
+<td>(無い。<code>thumbnail</code> は保存するだけ)</td>
+</tr>
+<tr>
+<td>API8 設定</td>
+<td>エラーにスタックトレースが出る? 応答がキャッシュされる?</td>
+<td><code>middleware.py</code>、<code>check --deploy</code></td>
+</tr>
+<tr>
+<td>API9 在庫</td>
+<td>知らないうちに増えたエンドポイントは?</td>
+<td><code>test_every_api_endpoint_requires_authentication</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="新しい-api-を足したときの手順セキュリティ">新しい API を足したときの手順(セキュリティ)</h2>
+<ol>
+<li><code>get_queryset</code> は <strong><code>visible_*</code> から始める</strong>(API1)。</li>
+<li>入力は <strong>シリアライザで検証</strong>する。読み取り専用の項目は <code>read_only_fields</code>(API3)。文字列は NUL を拒否、数は範囲、自由記述は上限(API4)。</li>
+<li>書き込みは <code>require_write</code>、承認のような特別な操作はモデルのメソッドに権限の検査を置く(API5)。</li>
+<li><code>test_security_audit.py</code> を流す。<strong>未認証で 401 でなければ落ちる</strong>。公開するなら <code>PUBLIC</code> に <strong>理由つき</strong>で足す(API9)。</li>
+<li>ロール別の期待を、<code>CASES</code> に 1 行足す(表のとおりか)。</li>
+<li>壊れた入力を <code>test_robustness.py</code> に足す(500 にならないか)。</li>
+</ol>
+<h2 id="401・403・404-をどう選ぶか">401・403・404 をどう選ぶか</h2>
+<table>
+<thead>
+<tr>
+<th>迷ったら</th>
+<th>答え</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ログインしていない</td>
+<td>401</td>
+</tr>
+<tr>
+<td>ログインしているが、その操作はできない役割</td>
+<td>403</td>
+</tr>
+<tr>
+<td>その対象が<strong>見えるはずのない人</strong></td>
+<td>404(存在を教えない)。作成時に、見えない親を指定したなら 400</td>
+</tr>
+<tr>
+<td>ルール上できない状態</td>
+<td>409(権限より先に判定してよい)</td>
+</tr>
+</tbody>
+</table>
+<h2 id="データベースの見方sql-の指針">データベースの見方(SQL の指針)</h2>
+<table>
+<thead>
+<tr>
+<th>問い</th>
+<th>どうやって確かめるか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>そのクエリは索引を使っている?</td>
+<td><code>python manage.py explain_queries</code>(実データ)、<code>tests/test_query_plans.py</code>(SQLite)</td>
+</tr>
+<tr>
+<td>その列に索引は要る?</td>
+<td><strong>値の種類が多い</strong>列(ID・日付・名前)に。状態のように数種類しかない列の単独の索引は要らない</td>
+</tr>
+<tr>
+<td>列に関数をかけて検索している?</td>
+<td>索引にも<strong>同じ関数</strong>をかける(<code>LOWER(code)</code> の索引には <code>Lower(&quot;code&quot;)</code> で検索)。さもないと索引が効かない</td>
+</tr>
+<tr>
+<td>ページ送りの一覧に <code>ORDER BY</code> は?</td>
+<td><code>apply_ordering</code>。<code>test_every_list_queryset_is_ordered</code> が強制</td>
+</tr>
+<tr>
+<td><code>COUNT</code> は NULL を数える?</td>
+<td><strong>列を指定した <code>COUNT(列)</code> は数えない</strong>。「無いものは 0 件」にしたいなら、そのまま使う。行数を数えたいなら <code>COUNT(*)</code></td>
+</tr>
+<tr>
+<td>派生する値を保存していない?</td>
+<td>進捗・件数のような<strong>計算できる値は保存しない</strong>(更新のたびにずれる)</td>
+</tr>
+<tr>
+<td>一意にしたいものは DB の制約?</td>
+<td>アプリの検査だけでは同時実行で破れる。<strong>DB の一意制約が最後の砦</strong></td>
+</tr>
+</tbody>
+</table>
+<h2 id="実行計画の読み方postgresql">実行計画の読み方(PostgreSQL)</h2>
+<pre class="highlight"><code>Bitmap Heap Scan on tracker_task        ← 索引で見つけた行だけを読む(良い)
+  Recheck Cond: (entity_id = 1)
+  -&gt;  Bitmap Index Scan on tracker_task_entity_id_...   ← 索引を使っている
+Seq Scan on tracker_task                ← 全件走査。大きな表で出たら要注意
+Sort                                    ← 並べ替え。索引の順序で済ませられないか
+</code></pre>
+
+<p>小さな表では、索引があっても <code>Seq Scan</code> が選ばれることがある(全件を読むほうが速いため)。<strong>判断は実データの件数で</strong>する。</p>
+<h2 id="演習">演習</h2>
+<ol>
+<li><code>PUBLIC</code>(未認証で通すもの)に、新しいエンドポイントを足すとき、何を書かなければならないか。(→ 理由。レビューで説明できること)</li>
+<li>閲覧者を <code>viewer</code> から <code>artist</code> に変えると、<code>test_authorization_matrix</code> のどの行が落ちるか。予想してから試す。</li>
+<li><code>Task.status</code> 単独の索引を戻すと、どのテストが落ちるか。なぜそのテストが要るのか説明する。</li>
+<li><code>?q=</code> の検索が遅くなったと想定して、先頭が <code>%</code> の <code>LIKE</code> を速くする方法を調べる。(→ <code>pg_trgm</code>。ただし <a href="../database.html">database.md</a> の「許容していること」の前提を確認してから)</li>
+<li>Cloudflare Access のテスト(<code>test_cf_access.py</code>)で、<code>alg=none</code> のトークンが通ると何が起きるか、言葉で説明する。</li>
+</ol>
+</article>
+    <nav class="pager"><a class="prev" href="07-exercises.html"><span>← 前へ</span>7. 演習と確認問題</a><span></span></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#考え方3-つ">考え方(3 つ)</a></li><li class="lvl2"><a href="#owasp-api-top-10-をこのアプリで見る">OWASP API Top 10 を、このアプリで見る</a></li><li class="lvl2"><a href="#新しい-api-を足したときの手順セキュリティ">新しい API を足したときの手順(セキュリティ)</a></li><li class="lvl2"><a href="#401・403・404-をどう選ぶか">401・403・404 をどう選ぶか</a></li><li class="lvl2"><a href="#データベースの見方sql-の指針">データベースの見方(SQL の指針)</a></li><li class="lvl2"><a href="#実行計画の読み方postgresql">実行計画の読み方(PostgreSQL)</a></li><li class="lvl2"><a href="#演習">演習</a></li></ul></nav>
+</div>
+</body>
+</html>

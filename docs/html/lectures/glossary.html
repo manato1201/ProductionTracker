@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="1c9d140d1f19fabce7cc">
+<title>用語集 — ProductionTracker</title>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="../index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="../README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="glossary.html" aria-current="page" class="current">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="../learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="../learning/01-overview.html">1. 全体像</a></li><li><a href="../learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="../learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="../learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="../learning/05-testing.html">5. テストの書き方</a></li><li><a href="../learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="../learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="../learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="../ui-rules.html">UI の決めごと表</a></li><li><a href="../er.html">ER 図(実装済みモデル)</a></li><li><a href="../integration.html">既存ツールとの連携</a></li><li><a href="../auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="../security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="../database.html">データベースの点検(SQL の指針)</a></li><li><a href="../operations.html">運用手順(Phase 7)</a></li><li><a href="../decisions.html">実装時の判断記録</a></li><li><a href="../learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="../diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../../lectures/glossary.md"><code>docs/lectures/glossary.md</code></a></p>
+    <article class="doc"><h1 id="用語集">用語集</h1>
+<p>講義と実践ガイドに出てくる用語を、分野ごとに並べました。右端は、詳しく説明している回です。
+このアプリに固有の用語(「アセット」「工程」「版」など)は、最初にまとめてあります。</p>
+<h2 id="このアプリの言葉">このアプリの言葉</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>プロジェクト(Project)</td>
+<td>作品や案件の単位。メンバーと役割を持つ</td>
+<td><a href="L00-intro.html">L00</a></td>
+</tr>
+<tr>
+<td>アセット / Entity</td>
+<td>作る対象(例: 木箱・主人公)。<code>path</code>(例 <code>assets/props/crate</code>)を持つ</td>
+<td><a href="../er.html">er.md</a></td>
+</tr>
+<tr>
+<td>工程 / Step</td>
+<td>作業の種類(例: モデリング・FX)</td>
+<td><a href="../er.html">er.md</a></td>
+</tr>
+<tr>
+<td>タスク(Task)</td>
+<td>「あるアセットの、ある工程」の作業。<strong>状態</strong>を持つ</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>版(Version)</td>
+<td>提出された成果物の版(v1, v2…)。レビューの対象</td>
+<td><a href="../er.html">er.md</a></td>
+</tr>
+<tr>
+<td>ノート(Note)</td>
+<td>タスクや版へのコメント</td>
+<td><a href="../er.html">er.md</a></td>
+</tr>
+<tr>
+<td>状態(Status)</td>
+<td>タスクの進み具合: 未着手 / 進行中 / レビュー / 完了</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>役割(Role)</td>
+<td>プロジェクト内の立場: アーティスト / レビュアー / 閲覧者</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>取り込み(Ingest)</td>
+<td>外部ツールの結果を API で受け取ること</td>
+<td><a href="L08-concurrency.html">L08</a>・<a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>品質レポート</td>
+<td>AssetDataInsightSuite が出す、アセットごとの欠陥件数</td>
+<td><a href="../integration.html">integration.md</a></td>
+</tr>
+<tr>
+<td>視覚検査の結果</td>
+<td>VisualRegressionQATool の合否と差分率</td>
+<td><a href="../integration.html">integration.md</a></td>
+</tr>
+<tr>
+<td>モチーフ</td>
+<td>空の列に飾る ASCII の植物(種→芽→花→実)</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="web・通信">Web・通信</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>HTTP</td>
+<td>Web の通信の約束事。リクエストとレスポンスの組</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>URL</td>
+<td>資源の場所を示す文字列(スキーム・ホスト・パス・クエリ)</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>メソッド</td>
+<td>GET(読む)・POST(作る)・PATCH(一部直す)・PUT(置き換え)・DELETE(消す)</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>ステータスコード</td>
+<td>結果を示す数字。2xx 成功 / 4xx クライアントの誤り / 5xx サーバーの誤り</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>ヘッダ</td>
+<td>リクエスト/レスポンスの付加情報(<code>Content-Type</code>・<code>Authorization</code> など)</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>JSON</td>
+<td>データを書く文字列の形式。ほぼすべての API で使われる</td>
+<td><a href="L01-web.html">L01</a>・<a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>REST</td>
+<td>資源を URL で表し、メソッドで操作する API の流儀</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>API</td>
+<td>プログラムから使う窓口</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>エンドポイント</td>
+<td>API の個々の URL</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>ページネーション</td>
+<td>一覧を一定の件数ずつ返すこと</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>Cookie</td>
+<td>ブラウザが覚え、リクエストに自動で付ける小さな情報</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>セッション</td>
+<td>ログイン状態をサーバー側で覚える仕組み</td>
+<td><a href="L01-web.html">L01</a>・<a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>CORS</td>
+<td>別のオリジンからのリクエストをブラウザが許すかの約束</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>オリジン</td>
+<td>スキーム + ホスト + ポートの組</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>プロキシ</td>
+<td>通信を中継するもの。リバースプロキシはサーバーの前に立つ</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>TLS / HTTPS</td>
+<td>通信を暗号化し、相手を確かめる仕組み</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>DNS</td>
+<td>名前(ドメイン)から IP アドレスを引く仕組み</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>キャッシュ</td>
+<td>同じ応答を使い回すこと。<code>Cache-Control</code> で制御</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="python">Python</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>型(type)</td>
+<td>値の種類(整数・文字列・リスト…)</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>関数</td>
+<td>名前を付けた処理のまとまり</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>クラス / インスタンス</td>
+<td>設計図 / それから作った実体</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>例外</td>
+<td>異常を伝える仕組み。<code>try/except</code> で受ける</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>内包表記</td>
+<td>リストなどを 1 行で作る書き方</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>ジェネレータ</td>
+<td>値を 1 つずつ作る(まとめて持たない)</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td><code>with</code> 文</td>
+<td>後始末つきの処理(ファイルを閉じる等)</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>デコレータ</td>
+<td>関数やクラスに機能を足す <code>@名前</code></td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>型ヒント</td>
+<td>値の型の注釈。実行時には強制されない</td>
+<td><a href="L02-python.html">L02</a></td>
+</tr>
+<tr>
+<td>仮想環境(venv)</td>
+<td>プロジェクトごとの独立した Python 環境</td>
+<td><a href="L00-intro.html">L00</a></td>
+</tr>
+<tr>
+<td><code>argparse</code></td>
+<td>コマンドライン引数を読む標準ライブラリ</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="データベース">データベース</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RDB</td>
+<td>表(テーブル)でデータを持つ DB</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>テーブル / 行 / 列</td>
+<td>表 / 1 件のデータ / 項目</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>主キー</td>
+<td>行を一意に決める値(通常は <code>id</code>)</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>外部キー</td>
+<td>他の表の行を指す列</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>正規化</td>
+<td>重複を避けて表を分けること</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>SQL</td>
+<td>DB を操作する言語(SELECT / INSERT / UPDATE / DELETE)</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>JOIN</td>
+<td>複数の表をキーでつなぐ</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>索引(インデックス)</td>
+<td>検索を速くする仕組み。書き込みは少し遅くなる</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>一意制約(UNIQUE)</td>
+<td>同じ値を 2 つ入れさせない</td>
+<td><a href="L03-database.html">L03</a>・<a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>CHECK 制約</td>
+<td>値が条件を満たすことを DB が保証する</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>トランザクション</td>
+<td>「全部成功するか、全部なかったことになる」まとまり</td>
+<td><a href="L03-database.html">L03</a>・<a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>ACID</td>
+<td>トランザクションの 4 性質(原子性・一貫性・分離性・永続性)</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>ロック</td>
+<td>同時に触らせないための排他(<code>select_for_update</code>)</td>
+<td><a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>N+1 問題</td>
+<td>一覧 1 回 + 各行ごとに追加の問い合わせが走る性能問題</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>実行計画</td>
+<td>DB が検索をどう行うかの手順(<code>EXPLAIN</code>)</td>
+<td><a href="L03-database.html">L03</a></td>
+</tr>
+<tr>
+<td>SQL インジェクション</td>
+<td>入力が SQL として解釈されてしまう脆弱性</td>
+<td><a href="L03-database.html">L03</a>・<a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>マイグレーション</td>
+<td>DB の構造変更を記録・適用する仕組み</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>ダンプ / リストア</td>
+<td>DB の書き出し / 書き戻し</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="django--drf">Django / DRF</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MTV</td>
+<td>Model(データ)・Template(表示)・View(処理)の分担</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>ORM</td>
+<td>DB の行を Python のオブジェクトとして扱う仕組み</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>QuerySet</td>
+<td>まだ実行されていない DB への問い合わせ(遅延評価)</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>ミドルウェア</td>
+<td>リクエスト/レスポンスの前後に挟まる共通処理</td>
+<td><a href="L04-django.html">L04</a></td>
+</tr>
+<tr>
+<td>settings</td>
+<td>設定を集めたモジュール</td>
+<td><a href="L04-django.html">L04</a>・<a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>シリアライザ</td>
+<td>オブジェクト ⇔ JSON の変換と入力検査</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>ViewSet / Router</td>
+<td>一式の操作をまとめた View / URL を自動で作る仕組み</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>認証(authentication)</td>
+<td>「誰か」を確かめる</td>
+<td><a href="L05-drf.html">L05</a>・<a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>認可 / 権限(permission)</td>
+<td>「その人に許されているか」を確かめる</td>
+<td><a href="L05-drf.html">L05</a></td>
+</tr>
+<tr>
+<td>スロットル</td>
+<td>回数制限(レート制限)</td>
+<td><a href="L05-drf.html">L05</a>・<a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>fixture / factory</td>
+<td>テストの準備 / テストデータを作る道具</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="アルゴリズム・設計">アルゴリズム・設計</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>状態機械(FSM)</td>
+<td>状態と、許される遷移の表で振る舞いを定める</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>遷移表</td>
+<td>「どの状態からどこへ行けるか」の一覧</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>到達可能性</td>
+<td>ある状態から別の状態へたどり着けるか(幅優先探索)</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>不変条件</td>
+<td>常に成り立つべき性質</td>
+<td><a href="L06-state-machine.html">L06</a></td>
+</tr>
+<tr>
+<td>正規化(パス)</td>
+<td>表記の揺れをそろえる</td>
+<td><a href="L07-strings-paths.html">L07</a></td>
+</tr>
+<tr>
+<td>最長一致</td>
+<td>前方一致のうち最も長いものを選ぶ</td>
+<td><a href="L07-strings-paths.html">L07</a></td>
+</tr>
+<tr>
+<td>トライ木</td>
+<td>文字列を 1 文字ずつ枝分かれで持つ木</td>
+<td><a href="L07-strings-paths.html">L07</a></td>
+</tr>
+<tr>
+<td>計算量(O 記法)</td>
+<td>入力が増えたとき、時間や領域がどう増えるか</td>
+<td><a href="L07-strings-paths.html">L07</a></td>
+</tr>
+<tr>
+<td>Unicode / NFC / NFD</td>
+<td>文字の規格 / 結合済みの形 / 分解した形</td>
+<td><a href="L07-strings-paths.html">L07</a>・<a href="L17-capstone.html">L17</a></td>
+</tr>
+<tr>
+<td>競合状態(race condition)</td>
+<td>同時実行で結果が実行順に左右されること</td>
+<td><a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>冪等(べきとう)</td>
+<td>同じ操作を何回行っても、結果が 1 回と同じ</td>
+<td><a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>Idempotency-Key</td>
+<td>同じ要求の再送を見分けるための、クライアントが付ける印</td>
+<td><a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>楽観的更新</td>
+<td>成功を見込んで先に画面を更新し、失敗したら戻す</td>
+<td><a href="L13-kanban.html">L13</a></td>
+</tr>
+<tr>
+<td>楽観的ロック / 悲観的ロック</td>
+<td>衝突を後で検出 / 先に排他する</td>
+<td><a href="L08-concurrency.html">L08</a></td>
+</tr>
+<tr>
+<td>性質ベーステスト</td>
+<td>「どんな入力でも成り立つ性質」を検査する</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>差分テスト</td>
+<td>元の実装と新しい実装の結果を突き合わせる</td>
+<td><a href="L17-capstone.html">L17</a></td>
+</tr>
+<tr>
+<td>ファズ</td>
+<td>でたらめな入力を大量にぶつけて、落ちないか確かめる</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>回帰テスト</td>
+<td>直したバグが再発しないようにするテスト</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="認証・暗号・セキュリティ">認証・暗号・セキュリティ</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ハッシュ</td>
+<td>データから固定長の「指紋」を作る一方向の関数</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>ソルト</td>
+<td>パスワードのハッシュに混ぜる、ユーザーごとのランダム値</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>PBKDF2</td>
+<td>何度も繰り返してハッシュを遅くする、パスワード向けの方式</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>定数時間比較</td>
+<td>一致までの時間で情報が漏れない比較(<code>hmac.compare_digest</code>)</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>HMAC</td>
+<td>鍵つきのハッシュ。改ざんの検出に使う</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>JWT</td>
+<td>署名つきの情報(ヘッダ.本体.署名)。Cloudflare Access が使う</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>RS256</td>
+<td>公開鍵方式の署名(秘密鍵で署名、公開鍵で検証)</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>JWKS</td>
+<td>検証用の公開鍵の一覧</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>CSRF</td>
+<td>ログイン中の利用者に、意図しない操作をさせる攻撃</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>XSS</td>
+<td>悪意あるスクリプトを画面に差し込む攻撃</td>
+<td><a href="../security.html">security.md</a></td>
+</tr>
+<tr>
+<td>SameSite</td>
+<td>Cookie を別サイトからの送信に付けるかの設定</td>
+<td><a href="L01-web.html">L01</a></td>
+</tr>
+<tr>
+<td>レート制限</td>
+<td>一定時間のリクエスト数に上限を設ける</td>
+<td><a href="L09-security-crypto.html">L09</a></td>
+</tr>
+<tr>
+<td>最小権限</td>
+<td>必要な権限だけを与える</td>
+<td><a href="L15-scripts.html">L15</a>・<a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>fail closed</td>
+<td>迷ったら閉じる(危険な設定なら起動しない・拒否する)</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>OWASP API Top 10</td>
+<td>API の代表的な脆弱性の一覧</td>
+<td><a href="L16-operations.html">L16</a>・<a href="../security.html">security.md</a></td>
+</tr>
+<tr>
+<td>秘密情報</td>
+<td>パスワード・API キー・鍵・トークン。Git やログに出さない</td>
+<td><a href="L15-scripts.html">L15</a>・<a href="L16-operations.html">L16</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="javascript--typescript--react">JavaScript / TypeScript / React</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>const</code> / <code>let</code></td>
+<td>再代入できない / できる変数</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>アロー関数</td>
+<td><code>(x) =&gt; x + 1</code> の書き方</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>分割代入 / スプレッド</td>
+<td>値を取り出す / 展開する(<code>{ ...a }</code>)</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>Promise / <code>async</code> / <code>await</code></td>
+<td>非同期の結果 / それを書きやすくする構文</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td><code>fetch</code></td>
+<td>ブラウザ標準の通信関数</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>イベントループ</td>
+<td>非同期の処理を順に実行する仕組み</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>TypeScript</td>
+<td>型を足した JavaScript</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>ユニオン型 / ジェネリクス</td>
+<td>「A または B」の型 / 型を引数にする</td>
+<td><a href="L10-javascript-typescript.html">L10</a></td>
+</tr>
+<tr>
+<td>コンポーネント</td>
+<td>画面の一部を返す関数</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>props</td>
+<td>親から子へ渡す値(読み取り専用)</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>state</td>
+<td>コンポーネントが覚える、変わる値</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>effect(<code>useEffect</code>)</td>
+<td>描画の外の世界とつなぐ処理と、その後始末</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>フック(Hook)</td>
+<td><code>use</code> で始まる、React の機能を使う関数</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>Context</td>
+<td>離れた階層へ値を届ける仕組み</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td><code>key</code></td>
+<td>リストの要素を見分ける、一意で変わらない値</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>仮想 DOM</td>
+<td>画面の記述を比較して差分だけ反映する仕組み</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>JSX</td>
+<td>JS の中に書く HTML 風の記法</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>StrictMode</td>
+<td>開発中に、副作用の問題を見つけやすくする React の機能</td>
+<td><a href="L11-react.html">L11</a></td>
+</tr>
+<tr>
+<td>バブリング</td>
+<td>イベントが子から親へ伝わること</td>
+<td><a href="L13-kanban.html">L13</a></td>
+</tr>
+<tr>
+<td>ドラッグ&amp;ドロップ</td>
+<td>掴んで動かす操作。キーボードの代替が要る</td>
+<td><a href="L13-kanban.html">L13</a></td>
+</tr>
+<tr>
+<td>Vite</td>
+<td>フロントエンドの開発サーバー兼ビルド道具</td>
+<td><a href="L00-intro.html">L00</a></td>
+</tr>
+<tr>
+<td>MUI</td>
+<td>React の UI 部品集</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="画面・アクセシビリティ">画面・アクセシビリティ</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ボックスモデル</td>
+<td>content・padding・border・margin の箱</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>Flexbox / Grid</td>
+<td>一方向 / 格子のレイアウト</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>CSS 変数</td>
+<td><code>--名前</code> で持ち、<code>var()</code> で使う値。実行時に切替できる</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>Sass</td>
+<td>CSS を書きやすくする言語(変数・map・mixin)</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>デザイントークン</td>
+<td>色・間隔などを役割の名前で管理する値</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>コントラスト比</td>
+<td>文字と背景の明るさの比。通常の文字は 4.5:1 以上</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>a11y(アクセシビリティ)</td>
+<td>誰でも使えること</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>ARIA / <code>aria-hidden</code></td>
+<td>読み上げ向けの補助属性 / 読み上げ対象から外す</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td>スクリーンリーダー</td>
+<td>画面を音声で読み上げる支援技術</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td><code>prefers-reduced-motion</code></td>
+<td>OS の「動きを減らす」設定</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+<tr>
+<td><code>:focus-visible</code></td>
+<td>キーボード操作時だけ出すフォーカス枠</td>
+<td><a href="L12-ui-css.html">L12</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="テスト">テスト</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>単体テスト</td>
+<td>1 つの関数やモデルの検査</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>API テスト</td>
+<td>HTTP の入口から DB まで通した検査</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>パラメータ化</td>
+<td>同じ検査を入力の表で繰り返す</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>モック</td>
+<td>呼び出しを記録する偽物(<code>vi.fn()</code>)</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>jsdom</td>
+<td>Node の中でブラウザの DOM を模すもの</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>Vitest / Testing Library</td>
+<td>フロントのテスト実行 / 利用者目線で部品を探す道具</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+<tr>
+<td>文書テスト</td>
+<td>文書内のコード・抜粋・出力を実際に検証するテスト</td>
+<td><a href="L14-testing.html">L14</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="運用">運用</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Docker / イメージ / コンテナ</td>
+<td>環境ごと箱にして動かす仕組み / 設計図 / 実行中の箱</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>compose</td>
+<td>複数のコンテナをまとめて扱う</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>ボリューム</td>
+<td>コンテナを消しても残るデータ置き場</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>ヘルスチェック</td>
+<td>「仕事ができる状態か」の確認(<code>/healthz</code>)</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>環境変数</td>
+<td>OS から渡す設定値</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>Cloudflare Tunnel</td>
+<td>PC から外向きに張る接続で、外部公開する</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>Cloudflare Access</td>
+<td>公開前に利用者を確かめる門番</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>Sentry</td>
+<td>例外を集めて通知するサービス</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>ログ(JSON ログ)</td>
+<td>動作の記録。1 行 1 JSON だと機械で扱いやすい</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+<tr>
+<td>原子的(atomic)</td>
+<td>途中の状態が見えず、全部か無かのどちらか</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>終了コード</td>
+<td>コマンドの結果を示す数字(0 = 成功)</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>cron</td>
+<td>決まった時刻にコマンドを実行する仕組み</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>ロールバック</td>
+<td>前の状態に戻すこと</td>
+<td><a href="L16-operations.html">L16</a></td>
+</tr>
+</tbody>
+</table>
+<h2 id="文書・開発の進め方">文書・開発の進め方</h2>
+<table>
+<thead>
+<tr>
+<th>用語</th>
+<th>意味</th>
+<th>詳しくは</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>mermaid</td>
+<td>テキストで図を描く記法。Markdown に埋め込める</td>
+<td><a href="../diagrams/README.html">diagrams/README.md</a></td>
+</tr>
+<tr>
+<td>SVG</td>
+<td>拡大しても劣化しない、図のファイル形式</td>
+<td><a href="L15-scripts.html">L15</a></td>
+</tr>
+<tr>
+<td>ADR / 決定記録</td>
+<td>設計判断とその理由の記録(<code>decisions.md</code>)</td>
+<td><a href="L17-capstone.html">L17</a></td>
+</tr>
+<tr>
+<td>受け入れ条件</td>
+<td>「これができたら完成」を確かめられる形で書いたもの</td>
+<td><a href="L17-capstone.html">L17</a></td>
+</tr>
+<tr>
+<td>リファクタリング</td>
+<td>外から見た挙動を変えずに、内部の作りを整える</td>
+<td><a href="L17-capstone.html">L17</a></td>
+</tr>
+<tr>
+<td>赤→緑</td>
+<td>失敗するテストを先に書き(赤)、通す(緑)</td>
+<td><a href="L14-testing.html">L14</a>・<a href="L17-capstone.html">L17</a></td>
+</tr>
+</tbody>
+</table>
+</article>
+    <nav class="pager"><a class="prev" href="L17-capstone.html"><span>← 前へ</span>L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a><span></span></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#このアプリの言葉">このアプリの言葉</a></li><li class="lvl2"><a href="#web・通信">Web・通信</a></li><li class="lvl2"><a href="#python">Python</a></li><li class="lvl2"><a href="#データベース">データベース</a></li><li class="lvl2"><a href="#django--drf">Django / DRF</a></li><li class="lvl2"><a href="#アルゴリズム・設計">アルゴリズム・設計</a></li><li class="lvl2"><a href="#認証・暗号・セキュリティ">認証・暗号・セキュリティ</a></li><li class="lvl2"><a href="#javascript--typescript--react">JavaScript / TypeScript / React</a></li><li class="lvl2"><a href="#画面・アクセシビリティ">画面・アクセシビリティ</a></li><li class="lvl2"><a href="#テスト">テスト</a></li><li class="lvl2"><a href="#運用">運用</a></li><li class="lvl2"><a href="#文書・開発の進め方">文書・開発の進め方</a></li></ul></nav>
+</div>
+</body>
+</html>
