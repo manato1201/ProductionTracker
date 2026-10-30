@@ -39,7 +39,7 @@ def int_param(request, name):
     try:
         value = int(raw)
     except ValueError:
-        raise serializers.ValidationError({name: "整数で指定してください。"})
+        raise serializers.ValidationError({name: "整数で指定してください。"}) from None
     if abs(value) > MAX_ID:
         raise serializers.ValidationError({name: "値が大きすぎます。"})
     return value
@@ -99,9 +99,10 @@ class ProjectViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        count = lambda status: Count(  # noqa: E731
-            "entities__tasks", filter=Q(entities__tasks__status=status), distinct=True
-        )
+
+        def count(status):
+            return Count("entities__tasks", filter=Q(entities__tasks__status=status), distinct=True)
+
         role = ProjectMember.objects.filter(project=OuterRef("pk"), user=user).values("role")[:1]
         # 状態ごとの件数(n_todo, n_in_progress, ...)。状態の一覧は Task.Status から導く(足しても、ここは変えなくてよい)
         counts = {f"n_{status}": count(status) for status in Task.Status.values}

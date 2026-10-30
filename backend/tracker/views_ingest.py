@@ -1,4 +1,5 @@
 from rest_framework.response import Response
+from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from . import ingest
@@ -12,6 +13,8 @@ class IngestBase(APIView):
 
     authentication_classes = [IngestApiKeyAuthentication]
     permission_classes = [IsIngestClient]
+    throttle_classes = [ScopedRateThrottle]  # 既定の「ユーザーごと」ではなく、取り込み全体の枠
+    throttle_scope = "ingest"
 
 
 class QualityIngestView(IngestBase):

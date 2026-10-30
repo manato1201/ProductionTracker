@@ -9,7 +9,7 @@
 | バックエンド | Django 5.2 LTS + Django REST framework、PostgreSQL 16(テストの既定は SQLite) |
 | フロント | Vite + React 19 + TypeScript、React Router、MUI 7、Sass(デザイントークン)、@dnd-kit |
 | 監視 | Sentry(Django / React)、`/healthz`、JSON ログ |
-| テスト | pytest + pytest-django + factory_boy(354 件)/ Vitest(37 件) |
+| テスト | pytest + pytest-django + factory_boy(597 件)/ Vitest(37 件) |
 | 起動 | `docker compose`(`db` / `web` / `frontend`) |
 
 ![タスクボード](docs/screenshots/board.png)
@@ -106,6 +106,7 @@ cd frontend && npm test && npm run build  # Vitest / 型チェック + ビルド
 | GET | `/healthz`(ルートにも) | 死活監視(認証なし。DB の可否のみ) |
 
 一覧は全てページネーション(`?page=&page_size=`、既定 50・上限 200)。エラーは `{"code": "...", "detail": "..."}` に統一。
+レート制限(ユーザーごと 1200 回/分・ログイン 10 回/分・取り込み 120 回/分。超えると 429)、JSON 以外の本文は 415、応答は `Cache-Control: no-store`。
 連携の詳細は [docs/integration.md](docs/integration.md)。
 
 ## 構成
@@ -121,7 +122,9 @@ docker-compose.yml  .env.example
 - **[docs/learning/](docs/learning/README.md) — 保守・拡張のための学習資料(最初にここ)**
 - [docs/ui-rules.md](docs/ui-rules.md) — UI の決めごと表 / [docs/er.md](docs/er.md) — ER 図
 - [docs/integration.md](docs/integration.md) — AssetDataInsightSuite・VisualRegressionQATool・Hub・Publish API
-- [docs/auth.md](docs/auth.md) — 認証と、外部 ID 基盤の差し込み口
+- [docs/auth.md](docs/auth.md) — 認証(セッション・トークン・API キー・Cloudflare Access)と、差し込み口
+- [docs/security.md](docs/security.md) — OWASP API Top 10 での点検結果、ロール別の認可の一覧
+- [docs/database.md](docs/database.md) — SQL の指針での点検結果(キー・索引・`ORDER BY`・実行計画)
 - [docs/operations.md](docs/operations.md) — バックアップ・復元・更新・秘密情報・公開
 - [docs/decisions.md](docs/decisions.md) — バージョン選定・ライブラリ比較・設計書から外れた点
 - [docs/learning-log.md](docs/learning-log.md) — 各スキルで詰まった点
@@ -149,3 +152,5 @@ docker-compose.yml  .env.example
 - `insight.db` と VisualRegressionQATool の実際の出力形式(設計書に記載がなく、想定で作った: [docs/integration.md](docs/integration.md))。
 - ToolOrchestrationHub の `registry.yaml` の実スキーマ(登録例は読み替えが必要)。
 - Sentry・Cloudflare の無料枠の現在の条件(公式で要確認)。
+- **Cloudflare Access の JWT 検証**(`tracker/cf_access.py`)は、手元で作った鍵でのテストのみ。実 Cloudflare では未検証。
+- セキュリティ点検の「要確認」(トークンに期限が無い、レート制限のカウンタがプロセスごと、本番の配信ヘッダ(CSP)が未定)は [docs/security.md](docs/security.md) の F5〜F10。

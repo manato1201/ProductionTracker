@@ -53,7 +53,12 @@ BACKUP_RCLONE_DEST=r2:my-bucket/pt ./scripts/backup.sh   # rclone で R2 にも�
   `SENTRY_SAMPLE_RATE`(エラーのサンプリング)と `SENTRY_TRACES_SAMPLE_RATE`(既定 0)で量を抑える。
   **無料枠の条件(月 5,000 エラー・1 ユーザーとされる情報)は第三者サイト由来で未確認**。公式の料金ページで確認すること。
 
+## レート制限とキャッシュ
+- **レート制限**: ユーザーごと `API_THROTTLE_RATE`(既定 1200/min)、ログイン `LOGIN_THROTTLE_RATE`(10/min)、取り込み全体 `INGEST_THROTTLE_RATE`(120/min)。超えると `429`。カウンタはプロセスごとなので、ワーカーが増えると実質の上限は緩くなる([security.md](security.md) の F6)。
+- **キャッシュ**: API の応答には `Cache-Control: no-store` を付ける。Cloudflare のキャッシュ規則で `/api/*` を「キャッシュしない」にしておくと二重に安全。
+
 ## 公開(Cloudflare Tunnel + Access)
+- Access の JWT をアプリ側でも検証できる(任意): [auth.md](auth.md) の「Cloudflare Access(OIDC)で認証する」。
 - Tunnel のホスト名を `DJANGO_ALLOWED_HOSTS` / `DJANGO_CSRF_TRUSTED_ORIGINS` / `VITE_ALLOWED_HOSTS` に入れ、`DJANGO_SECURE_COOKIES=1`・`DJANGO_BEHIND_PROXY=1` にする。
 - `/admin/` は Access で保護する。API はセッション or ユーザー別トークン、取り込み API は `X-API-Key`。
 - **直接アクセスができない設定**(compose は `127.0.0.1` にだけ公開)と、外部端末からの認証つきアクセスは、実環境での確認が必要(未検証)。

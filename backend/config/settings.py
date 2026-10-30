@@ -43,6 +43,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "tracker.middleware.RejectNulMiddleware",
+    "tracker.middleware.ApiNoStoreMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -126,6 +127,11 @@ if env_bool("DJANGO_BEHIND_PROXY", False):
 SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_HSTS_SECONDS", "0"))
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", False)
 
+# --- Cloudflare Access(OIDC)による認証。任意。チームのドメインと AUD を入れ、認証クラスに足すと有効になる(docs/auth.md) ---
+CF_ACCESS_TEAM_DOMAIN = os.environ.get("CF_ACCESS_TEAM_DOMAIN", "")  # 例: myteam.cloudflareaccess.com
+CF_ACCESS_AUD = os.environ.get("CF_ACCESS_AUD", "")  # Access のアプリケーションの AUD タグ
+CF_ACCESS_AUTO_CREATE = env_bool("CF_ACCESS_AUTO_CREATE", False)  # 未登録のメールのユーザーを自動で作るか
+
 # --- DRF ---
 # 認証の差し替え口(設計書 Phase 6): 認証クラスは環境変数で入れ替えられる。
 # 外部ID基盤(Firebase Auth 等)を足すときは、ここにクラスのパスを追加する。docs/auth.md 参照。
@@ -143,9 +149,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PARSER_CLASSES": ["rest_framework.parsers.JSONParser"],
     "EXCEPTION_HANDLER": "tracker.errors.exception_handler",
     "UNAUTHENTICATED_USER": "django.contrib.auth.models.AnonymousUser",
-    # ログインの総当たり対策。IP(X-Forwarded-For があればその値)ごと。キャッシュはプロセスごとなので、
-    # gunicorn のワーカー数だけ実質の上限は緩くなる(厳密な制限が要るなら共有キャッシュを使う)。
-    "DEFAULT_THROTTLE_RATES": {"login": os.environ.get("LOGIN_THROTTLE_RATE", "10/min")},
+    # レート制限(OWASP API4: 資源の消費)。キャッシュはプロセスごと(既定の LocMemCache)なので、
+    # gunicorn のワーカー数だけ実質の上限は緩くなる(厳密に制限するなら共有キャッシュを使う)。
+    #   user   : ログイン済みの利用者ごと(画面はよく API を呼ぶので広め)
+    #   login  : IP(X-Forwarded-For があればその値)ごと。総当たり対策
+    #   ingest : 取り込み API 全体で 1 つの枠(X-API-Key の持ち主は 1 者ではないが、ユーザー ID を持たない)
+    "DEFAULT_THROTTLE_CLASSES": ["rest_framework.throttling.UserRateThrottle"],
+    "DEFAULT_THROTTLE_RATES": {
+        "user": os.environ.get("API_THROTTLE_RATE", "1200/min"),
+        "login": os.environ.get("LOGIN_THROTTLE_RATE", "10/min"),
+        "ingest": os.environ.get("INGEST_THROTTLE_RATE", "120/min"),
+    },
 }
 
 # --- アプリ固有の設定 ---

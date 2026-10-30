@@ -12,13 +12,14 @@ ProductionTracker を **自分で直せる・足せる** ようになるため�
 | 5 | [テストの書き方](05-testing.md) | 変更に自信を持つ。バグを再現してから直す | 40 分 |
 | 6 | [困ったとき](06-troubleshooting.md) | 症状から原因をたどる | 必要なとき |
 | 7 | [演習と確認問題](07-exercises.md) | 理解の確認。足場のある練習問題 | 数時間 |
+| 8 | [セキュリティとデータベースの見方](08-security-and-database.md) | 点検をテストにする。401/403/404 の選び方、索引と実行計画 | 40 分 |
 
 ## まず 30 分で動かす
 1. [README](../../README.md) の「Docker なしで動かす」で、バックエンドとフロントを起動する。
 2. `python manage.py seed_demo --password <パスワード>` でデモデータを入れ、`demo_reviewer` でログインする。
 3. かんばんで「進行中」のカードを「完了」へドラッグする。**拒否されて元に戻り、理由が出る**ことを見る。
 4. その 1 回の操作が通る道を、[状態遷移の流れ](../diagrams/transition-flow.svg)(図)で確認する。
-5. `cd backend && pytest -q` を実行する(約 3 秒で 354 件)。
+5. `cd backend && pytest -q` を実行する(約 4 秒で 597 件)。
 
 ## 読むときの約束
 - **コードを開きながら読む**。この資料はファイル名と関数名で場所を示す。行番号は書かない(すぐ古くなるため)。
@@ -29,5 +30,6 @@ ProductionTracker を **自分で直せる・足せる** ようになるため�
 ## 資料の保守
 コードを変えたら、変えた場所を指している資料も直す。特に次の 3 つは古くなりやすい。
 1. [04-recipes.md](04-recipes.md) の「変更する場所」の一覧(ファイル名・関数名)
+   (新しい API を足したら、[security.md](../security.md) の認可の表と、[database.md](../database.md) の索引の表も)
 2. [docs/er.md](../er.md)(モデル・制約)と [docs/integration.md](../integration.md)(API の契約)
 3. `docs/diagrams/build.py` の図(タイルの名前・矢印のラベル)

@@ -1,4 +1,7 @@
+import json
+
 from django.contrib.auth import get_user_model
+from django.db.models.functions import Lower
 from django.utils import timezone
 from rest_framework import serializers
 
@@ -20,6 +23,7 @@ User = get_user_model()
 
 
 MAX_ID = 2**63 - 1
+MAX_JSON_CHARS = 20_000  # dcc / conditions の大きさの上限(JSON 文字列にしたとき)。巨大な本文での資源消費を避ける
 
 
 def reject_nul(value, path="値"):
@@ -34,6 +38,12 @@ def reject_nul(value, path="値"):
     elif isinstance(value, (list, tuple)):
         for v in value:
             reject_nul(v, path)
+    return value
+
+
+def limit_json_size(value, path="値"):
+    if len(json.dumps(value, ensure_ascii=False)) > MAX_JSON_CHARS:
+        raise serializers.ValidationError(f"{path}が大きすぎます({MAX_JSON_CHARS} 文字まで)。")
     return value
 
 
@@ -112,7 +122,8 @@ class ProjectSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("コードは作成後に変更できません。")
             return value
         # DB の制約は大文字小文字を区別しない(demo と DEMO は同じ)。DRF は式の制約を検査しないので、ここで先に弾く。
-        if Project.objects.filter(code__iexact=value).exists():
+        # 制約の索引(LOWER(code))と同じ式で検索する。`code__iexact` は PostgreSQL で UPPER(code) になり、索引が効かない。
+        if Project.objects.annotate(code_lower=Lower("code")).filter(code_lower=value.lower()).exists():
             raise serializers.ValidationError("このコードは既に使われています(大文字小文字の違いも同じ扱いです)。")
         return value
 
@@ -287,6 +298,7 @@ class VersionSerializer(serializers.ModelSerializer):
             "created_by", "created_by_name", "created_at", "updated_at",
         ]
         read_only_fields = ["number", "created_by", "created_at", "updated_at"]
+        extra_kwargs = {"comment": {"max_length": 5000}}
 
     def validate_status(self, value):
         # 作成時に選べるのは「作成中」「提出済み」のみ。承認・却下は transition(レビュアーのみ)。
@@ -297,7 +309,7 @@ class VersionSerializer(serializers.ModelSerializer):
     def validate_dcc(self, value):
         if not isinstance(value, dict):
             raise serializers.ValidationError("dcc はオブジェクトで指定してください。")
-        return reject_nul(value, "dcc")
+        return limit_json_size(reject_nul(value, "dcc"), "dcc")
 
     def get_created_by_name(self, obj):
         return display_name(obj.created_by)
@@ -389,7 +401,7 @@ class QualityIngestSerializer(serializers.Serializer):
         try:
             return Project.objects.get(code=value)
         except Project.DoesNotExist:
-            raise serializers.ValidationError("存在しないプロジェクトコードです。")
+            raise serializers.ValidationError("存在しないプロジェクトコードです。") from None
 
 
 class VisualIngestSerializer(serializers.Serializer):
@@ -401,10 +413,10 @@ class VisualIngestSerializer(serializers.Serializer):
     conditions = serializers.DictField(required=False, default=dict)
 
     def validate_conditions(self, value):
-        return reject_nul(value, "conditions")
+        return limit_json_size(reject_nul(value, "conditions"), "conditions")
 
     def validate_version(self, value):
         try:
             return Version.objects.get(pk=value)
         except Version.DoesNotExist:
-            raise serializers.ValidationError("存在しない版です。")
+            raise serializers.ValidationError("存在しない版です。") from None

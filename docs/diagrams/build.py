@@ -30,7 +30,7 @@ def architecture() -> str:
     d.tile(430, 525, "API クライアント", "fetch · CSRF ヘッダ\n401 でログインへ", "plug")
 
     d.group(740, 130, 520, 490, "API (backend)", "Django 5.2 LTS · DRF · /api/v1", "green")
-    d.tile(870, 285, "認証", "Session + CSRF / Token\nX-API-Key(取り込み専用)", "shield")
+    d.tile(870, 285, "認証", "Session + CSRF / Token\nAccess JWT(任意)\nX-API-Key(取り込み専用)", "shield")
     d.tile(1130, 285, "業務ルール", "状態遷移・権限\ntracker/models.py", "gear")
     d.tile(870, 475, "取り込み", "冪等 · パス前方一致\ntracker/ingest.py", "terminal")
     d.tile(1130, 475, "監視", "/healthz · JSON ログ", "pulse")
@@ -192,7 +192,7 @@ def ingest_flow() -> str:
 
 
 def operations() -> str:
-    d = Diagram(1600, 1000, "運用構成(方式 A)― 自分の PC の docker compose + Cloudflare Tunnel + Access")
+    d = Diagram(1600, 1040, "運用構成(方式 A)― 自分の PC の docker compose + Cloudflare Tunnel + Access")
 
     d.tile(110, 300, "外出先の端末", "ブラウザ", "monitor")
     d.group(230, 130, 430, 380, "Cloudflare", "未検証(実環境が必要)", "orange", dashed=True)
@@ -229,12 +229,12 @@ def operations() -> str:
         d, 24, 780, 1552,
         [
             (1, "端末から", ["https で Cloudflare に入る。"]),
-            (2, "Access", ["許可した人だけが先へ進める。/admin も同じ入口。"]),
+            (2, "Access", ["許可した人だけが先へ進める。/admin も同じ入口。", "Django も JWT を検証できる(任意・未検証)"]),
             (3, "Tunnel", ["PC から外へ接続するだけ。PC の待受ポートは開けない。"]),
             (4, "frontend", ["Vite が /api などを web へ中継(開発用の構成)。"]),
             (5, "web → db", ["起動時に migrate。DB はボリュームに保存。"]),
         ],
-        title="手順の説明", cols=2, row_h=52,
+        title="手順の説明", cols=2, row_h=66,
     )
     return d.svg()
 

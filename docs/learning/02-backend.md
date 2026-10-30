@@ -70,19 +70,20 @@
 | 表にない遷移 | 409 | `invalid_transition` |
 | 追加条件を満たさない | 409 | `version_required`(`RuleViolation` の code) |
 | 同じ Idempotency-Key を別タスクに | 409 | `idempotency_conflict` |
-| ログインの試行が多すぎる | 429 | `throttled` |
+| レート制限を超えた(ログイン・API・取り込み) | 429 | `throttled` |
+| JSON 以外の本文 | 415 | `unsupported_media_type` |
 | 想定外の例外 | 500 | `server_error`(Sentry に届く) |
 
 業務ルール違反は `DomainError` のサブクラスを **モデル層から投げる**。HTTP への変換は `exception_handler` だけが担う(モデルは HTTP を知らない)。
 
-## 5. 認証(`tracker/auth.py`)
+## 5. 認証(`tracker/auth.py`、`tracker/cf_access.py`)
 | 方式 | 用途 | 備考 |
 |---|---|---|
 | セッション + CSRF | 画面 | `SessionAuthentication401` で未認証を 401 にする。ログインも CSRF を検査(`views_auth.CsrfOnlyAuthentication`) |
 | `Authorization: Token` | DCC パネルなど | `drf_create_token` で発行 |
 | `X-API-Key` | 取り込み API **だけ** | 定数時間で比較。鍵が未設定なら常に 401(fail closed) |
 
-差し替え方は [auth.md](../auth.md)。
+差し替え方は [auth.md](../auth.md)。**Cloudflare Access(OIDC)の JWT** も、`tracker/cf_access.py` の認証クラスを足すだけで使える(任意・既定は無効)。点検の結果は [security.md](../security.md)。
 
 ## 6. 取り込み(`ingest.py` / `paths.py` / `views_ingest.py`)
 - `ingest_quality`: `(project, scan_run_id)` の行を **全て置き換える**(冪等)。先にプロジェクトの行をロックして、同時再送を直列にする。

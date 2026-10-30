@@ -74,7 +74,7 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 2. `views.py` — `ViewSet` を作る。**`get_queryset` は必ず `visible_*` から始める**(`permissions.py`。足りなければここに足す)。絞り込みは `int_param` / `choice_param`、並べ替えは `apply_ordering`(許可リスト)
 3. 書き込みは `require_write(request.user, project)`。業務ルールは **ビューでなくモデルのメソッド**に置く(違反は `DomainError` のサブクラスを投げる)
 4. `config/urls.py` — `router.register(...)`
-5. `tests/` — **401(未認証)/ 404(他人のデータ)/ 403(閲覧者)/ 400(不正な入力)/ 正常** の 5 つを最低限
+5. `tests/` — **401(未認証)/ 404(他人のデータ)/ 403(閲覧者)/ 400(不正な入力)/ 正常** の 5 つを最低限。さらに `test_security_audit.py`(**未認証で 401** は自動で対象になる。ロール別の期待は `CASES` に 1 行)と、`test_robustness.py`(壊れた入力)、`query_catalog.py`(索引が効くか)に足す。手順は [08](08-security-and-database.md)
 6. `frontend/src/api/endpoints.ts` と `types.ts`(URL はここだけに書く)
 7. [README](../../README.md) の API 表と、[integration.md](../integration.md)(外部が使うなら)
 

@@ -173,7 +173,8 @@ class Task(models.Model):
                 condition=Q(estimate_h__isnull=True) | Q(estimate_h__gte=0), name="task_estimate_non_negative"
             ),
         ]
-        indexes = [models.Index(fields=["status"]), models.Index(fields=["due"])]
+        # 索引は値の種類が多い列に。status(4 種類)単独の索引は効かないので置かない(docs/database.md)
+        indexes = [models.Index(fields=["due"])]
 
     def __str__(self):
         return f"{self.entity.name} / {self.step.name}"
@@ -232,7 +233,8 @@ class Version(models.Model):
         settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name="versions"
     )
     # Publish API の再送で重複させないための鍵(ユーザーごとに一意)
-    idempotency_key = models.CharField(max_length=200, null=True, blank=True)
+    # NULL を許す(鍵なしの版は何件あっても一意制約に触れない)。条件付き一意制約と組で使う
+    idempotency_key = models.CharField(max_length=200, null=True, blank=True)  # noqa: DJ001
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     notes = GenericRelation("Note")
@@ -335,6 +337,9 @@ class QualityReport(models.Model):
         ]
         indexes = [models.Index(fields=["entity", "-scanned_at"])]
 
+    def __str__(self):
+        return f"QualityReport#{self.pk} run={self.scan_run_id} {self.asset_path}"
+
 
 class VisualResult(models.Model):
     """VisualRegressionQATool の評価結果(参照用・読み取り専用)。(run_id, version) で一意。"""
@@ -359,3 +364,6 @@ class VisualResult(models.Model):
             models.UniqueConstraint(fields=["run_id", "version"], name="uniq_visual_run"),
             models.CheckConstraint(condition=Q(diff_ratio__gte=0) & Q(diff_ratio__lte=1), name="visual_diff_ratio_0_1"),
         ]
+
+    def __str__(self):
+        return f"VisualResult#{self.pk} run={self.run_id} {self.verdict}"
