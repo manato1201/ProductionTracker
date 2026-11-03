@@ -89,4 +89,16 @@ describe("Board", () => {
     render(<Board {...base} canWrite loading tasks={[]} />);
     expect(screen.getAllByLabelText("読み込み中").length).toBeGreaterThan(0);
   });
+
+  it("空の列には「次の一手」の説明を出す(書き込める人だけ)", () => {
+    const { rerender } = render(<Board {...base} canWrite tasks={[task(1, "todo")]} />);
+    expect(within(screen.getByRole("region", { name: "進行中の列" })).getByText(/Shift \+ 矢印キー/)).toBeInTheDocument();
+    rerender(<Board {...base} canWrite={false} tasks={[task(1, "todo")]} />);
+    expect(screen.queryByText(/Shift \+ 矢印キー/)).not.toBeInTheDocument();
+  });
+
+  it("アセットが無くタスクを追加できないときは、先にアセットを足すよう案内する", () => {
+    render(<Board {...base} canWrite tasks={[]} />);
+    expect(within(screen.getByRole("region", { name: "未着手の列" })).getByText(/先に「アセット」を追加/)).toBeInTheDocument();
+  });
 });

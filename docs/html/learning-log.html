@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-source-sha256" content="dd9b0dd67a404dc6d2a8">
+<meta name="x-source-sha256" content="f2282d718077bae1c9ed">
 <title>学習ログ(各スキルで詰まった点) — ProductionTracker</title>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js" defer></script>
@@ -99,6 +99,13 @@
 <li>ポインタ操作と、キーボード・タッチの代替操作を<strong>同じ関数(<code>onMove</code>)に流す</strong>と、拒否されたときの巻き戻しとトーストが 1 か所で済む。</li>
 <li>ドロップ前に遷移の可否を UI で判断せず、サーバーの 409/403 を信じて戻す(設計書の方針)。そのぶん「どの遷移が可能か」は <code>next_statuses</code> でサーバーから受け取る。</li>
 </ul>
+<h2 id="取り消し・エラーの-3-行・url-の状態使いやすさの提案">取り消し・エラーの 3 行・URL の状態(使いやすさの提案)</h2>
+<ul>
+<li>「元に戻す」は、画面に逆遷移の表を持たず、<strong>サーバーが返した <code>next_statuses</code> に元の状態が含まれるか</strong>で出し分けた。すると、未着手→進行中・レビュー→完了・完了→進行中は取り消せない。最初は「進行中→レビュー」も取り消せないと思い込んでいたが、表から計算して(講義 L13)間違いに気づいた。</li>
+<li>取り消し処理は、自分自身を呼ぶので <code>useCallback(async function exec(...) {...})</code> と<strong>名前つきの関数式</strong>にした(アロー関数だと自分を参照できない)。</li>
+<li>絞り込みを URL に持つとき、<strong>知らない値は無視して既定に戻す</strong>。共有リンクが古くても壊れても画面が開く。<code>task</code> など他のパラメータを消さないよう、書くときは前の <code>URLSearchParams</code> を土台にする。</li>
+<li>Toast の行を配列で受けると、エラーの 3 行を自然に出せる。同じ文が重なる(何が = なぜ)ときは省く。</li>
+</ul>
 <h2 id="docker">Docker</h2>
 <ul>
 <li>この開発環境には Docker のデーモンがなく、<code>docker compose config</code> による構文確認までしかできていない。<code>docker compose up</code> での起動、DB 停止時の <code>/healthz</code>(代わりに PostgreSQL を直接止めて確認済み)は、手元の PC での確認が必要。</li>
@@ -106,7 +113,7 @@
 </article>
     <nav class="pager"><a class="prev" href="decisions.html"><span>← 前へ</span>実装時の判断記録</a><span></span></nav>
   </main>
-  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#外部資料z32の指針で点検した3-回目のレビュー">外部資料(Z32)の指針で点検した(3 回目のレビュー)</a></li><li class="lvl2"><a href="#入力を壊しにいくテストで見つけた不具合2-回目のレビュー">入力を壊しにいくテストで見つけた不具合(2 回目のレビュー)</a></li><li class="lvl2"><a href="#レビューで見つけた不具合リファクタリング後の見直し">レビューで見つけた不具合(リファクタリング後の見直し)</a></li><li class="lvl2"><a href="#django--drf">Django / DRF</a></li><li class="lvl2"><a href="#pytest--factory_boy">pytest / factory_boy</a></li><li class="lvl2"><a href="#react--react-router">React / React Router</a></li><li class="lvl2"><a href="#mui">MUI</a></li><li class="lvl2"><a href="#sass">Sass</a></li><li class="lvl2"><a href="#sentry">Sentry</a></li><li class="lvl2"><a href="#vite--typescript--vitest">Vite / TypeScript / Vitest</a></li><li class="lvl2"><a href="#ドラッグドロップ">ドラッグ&amp;ドロップ</a></li><li class="lvl2"><a href="#docker">Docker</a></li></ul></nav>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#外部資料z32の指針で点検した3-回目のレビュー">外部資料(Z32)の指針で点検した(3 回目のレビュー)</a></li><li class="lvl2"><a href="#入力を壊しにいくテストで見つけた不具合2-回目のレビュー">入力を壊しにいくテストで見つけた不具合(2 回目のレビュー)</a></li><li class="lvl2"><a href="#レビューで見つけた不具合リファクタリング後の見直し">レビューで見つけた不具合(リファクタリング後の見直し)</a></li><li class="lvl2"><a href="#django--drf">Django / DRF</a></li><li class="lvl2"><a href="#pytest--factory_boy">pytest / factory_boy</a></li><li class="lvl2"><a href="#react--react-router">React / React Router</a></li><li class="lvl2"><a href="#mui">MUI</a></li><li class="lvl2"><a href="#sass">Sass</a></li><li class="lvl2"><a href="#sentry">Sentry</a></li><li class="lvl2"><a href="#vite--typescript--vitest">Vite / TypeScript / Vitest</a></li><li class="lvl2"><a href="#ドラッグドロップ">ドラッグ&amp;ドロップ</a></li><li class="lvl2"><a href="#取り消し・エラーの-3-行・url-の状態使いやすさの提案">取り消し・エラーの 3 行・URL の状態(使いやすさの提案)</a></li><li class="lvl2"><a href="#docker">Docker</a></li></ul></nav>
 </div>
 </body>
 </html>

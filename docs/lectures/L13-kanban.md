@@ -176,20 +176,66 @@ sequenceDiagram
 <!-- excerpt: frontend/src/hooks/useTaskTransition.tsx -->
 ```tsx
   const run = useCallback(
-    async (task: Task, to: TaskStatus) => {
+    async function exec(task: Task, to: TaskStatus, isUndo = false) {
       onApply?.(task, to);
       try {
         const updated = await tasks.transition(task.id, to);
         onSuccess(updated);
-        notify(`「${task.entity_name} / ${task.step_name}」を「${TASK_STATUS_META[to].label}」にしました。`, "success");
+        const name = `「${task.entity_name} / ${task.step_name}」`;
+        if (isUndo) {
+          notify(`${name}を「${TASK_STATUS_META[to].label}」に戻しました。`, "success");
+          return;
+        }
+        // 取り消せるのは、遷移表が元の状態へ戻る道を許すときだけ(サーバーが返す next_statuses)。許されない戻し方(未着手 → 進行中 など)はボタンを出さない。
+        const canUndo = updated.next_statuses.includes(task.status);
+        notify(`${name}を「${TASK_STATUS_META[to].label}」にしました。`, "success", canUndo ? { label: "元に戻す", onClick: () => void exec(updated, task.status, true) } : undefined);
       } catch (e) {
         onRevert?.(task);
-        notify(e instanceof ApiError ? e.detail : "状態を変更できませんでした。", "error");
+        notify(guideLines(explainError(e, "状態を変更できませんでした。")), "error");
       }
     },
     [notify, onApply, onRevert, onSuccess],
   );
 ```
+
+読み解き:
+1. `async function exec(...)` — **名前つきの関数式**。関数の中から自分自身(`exec`)を呼べる(取り消しが、同じ処理をもう一度通るため)。
+2. `isUndo` — 取り消しの取り消し(ボタンの無限の連鎖)を防ぐ。
+3. 取り消しの可否は、**遷移表を画面で持たず**、サーバーが返した `updated.next_statuses`(新しい状態から行ける先)に**元の状態が含まれるか**で決める。ルールは 1 か所のまま。
+4. 失敗したら `onRevert` で戻し、**3 行**(何が起きた / なぜ / 次にどうする)のトーストを出す(`domain/errorGuide.ts`)。
+
+### 4-2b. 取り消せる移動と、取り消せない移動
+遷移表は「進める道」を中心に作ってあるので、**すべての移動が元に戻せるわけではありません**。上の `canUndo` の判断を、表から計算してみます。
+
+<!-- test:node -->
+```javascript
+const TRANSITIONS = {
+  todo: ["in_progress"],
+  in_progress: ["review"],
+  review: ["in_progress", "done"],
+  done: ["in_progress"],
+};
+
+for (const [from, targets] of Object.entries(TRANSITIONS)) {
+  for (const to of targets) {
+    const canUndo = TRANSITIONS[to].includes(from);        // 移動先から、元の状態へ戻る道があるか
+    console.log(`${from.padEnd(11)} → ${to.padEnd(11)} 元に戻す: ${canUndo ? "出す" : "出さない"}`);
+  }
+}
+```
+
+<!-- output -->
+```text
+todo        → in_progress 元に戻す: 出さない
+in_progress → review      元に戻す: 出す
+review      → in_progress 元に戻す: 出す
+review      → done        元に戻す: 出さない
+done        → in_progress 元に戻す: 出さない
+```
+
+`todo → in_progress`・`review → done`・`done → in_progress` は、**戻る道が表に無い**ので、ボタンを出しません(押しても 409 になるだけ)。特に「完了」は取り消せないので、確認モーダルを先に挟んでいる([4-4](#4-4-楽観的更新の危うさ))のと辻褄が合います。出せない取り消しを出さないことで、「押したのに失敗した」を減らします。取り消しを増やしたければ、**画面でなく遷移表(サーバー)**を変える ― 設計判断として決めて、全組み合わせのテストの `ALLOWED` に足します。
+
+> **「履歴」は別の話**: 取り消しは「直前の 1 回」だけです。「いつ・誰が・何から何へ変えたか」の**履歴**を残すには、変更のたびに 1 行を記録する表(と、マイグレーション・API・画面)が要ります。このアプリでは作っていません(設計の判断: [design-index.md](../design-index.md))。
 
 呼び出し側(`BoardPage`)は、state を**コピーして**書き換えます(L11 の「直接書き換えない」)。
 

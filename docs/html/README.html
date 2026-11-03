@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-source-sha256" content="617c3a239ff31647b097">
+<meta name="x-source-sha256" content="44afb90889c6642eb7c5">
 <title>ProductionTracker — ProductionTracker</title>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js" defer></script>
@@ -44,7 +44,7 @@
 </tr>
 <tr>
 <td>テスト</td>
-<td>pytest + pytest-django + factory_boy(879 件(うち文書内コードの検証 約 280 件))/ Vitest(37 件)</td>
+<td>pytest + pytest-django + factory_boy(881 件(うち文書内コードの検証 約 280 件))/ Vitest(55 件)</td>
 </tr>
 <tr>
 <td>起動</td>
@@ -178,6 +178,7 @@ npm<span class="w"> </span>run<span class="w"> </span>dev<span class="w">       
 </tbody>
 </table>
 <p>状態は「色 + アイコン + 文字」で示し、ライト/ダークの切替、幅 360px で横スクロールなし。詳しくは <a href="ui-rules.html">docs/ui-rules.md</a>。</p>
+<p>使いやすさの提案(2026-11-04)から、<strong>エラーの 3 行(何が / なぜ / 次に)</strong>、<strong>空状態の次の一手</strong>、<strong>状態変更の「元に戻す」</strong>(遷移表が戻り道を許すものだけ)、<strong>かんばんの絞り込みの URL 化</strong>を実装した。扱いの一覧は <a href="design-index.html">docs/design-index.md</a>。</p>
 <p>空の列には、状態に対応した植物の ASCII モチーフ(種 → 芽 → 花 → 実)を飾りとして出す(読み上げ対象外・動きを減らす設定では静止画)。<a href="ui-rules.html">docs/ui-rules.md</a>。</p>
 <table>
 <thead>

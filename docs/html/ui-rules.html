@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-source-sha256" content="58fd132d883ee6794c4f">
+<meta name="x-source-sha256" content="d57d859866b4e0e5e096">
 <title>UI の決めごと表 — ProductionTracker</title>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js" defer></script>
@@ -203,7 +203,7 @@
 </tr>
 <tr>
 <td>トースト(08)</td>
-<td>遷移の成功と、<strong>拒否された理由</strong>(サーバーの <code>detail</code> をそのまま表示)</td>
+<td>遷移の成功(戻り道が遷移表にある移動だけ、<strong>「元に戻す」ボタン</strong>付き)と、失敗の<strong>3 行</strong>(何が / なぜ / 次に。次項)</td>
 </tr>
 <tr>
 <td>モーダル(01)</td>
@@ -215,7 +215,7 @@
 </tr>
 <tr>
 <td>エンプティステート(24)</td>
-<td>「〜はありません」+ 次の操作ボタン</td>
+<td>「〜はありません」+ <strong>次の一手</strong>を 1 つ: 押せる操作は <code>actionLabel</code>(ボタン)、置けないときは <code>hint</code>(説明の一文)。閲覧者には、できない操作を案内しない</td>
 </tr>
 <tr>
 <td>スタッガー(03)</td>
@@ -224,6 +224,61 @@
 <tr>
 <td>ドラッグ中</td>
 <td>傾き 2° + 影、元の位置は半透明、ドロップ先の列は枠線で強調。<code>prefers-reduced-motion</code> では傾けない</td>
+</tr>
+</tbody>
+</table>
+<h2 id="エラーの書き方使いやすさの提案-ux4・2026-11-04">エラーの書き方(使いやすさの提案 UX4・2026-11-04)</h2>
+<p>エラーは**「何が起きた / なぜ / 次にどうする」の 3 行**で伝える(<code>domain/errorGuide.ts</code>)。</p>
+<table>
+<thead>
+<tr>
+<th>行</th>
+<th>何を書くか</th>
+<th>出どころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>何が</td>
+<td>失敗した操作(例: 状態を変更できません)</td>
+<td>呼び出し側の文脈、なければ状態コード別の既定</td>
+</tr>
+<tr>
+<td>なぜ</td>
+<td>理由</td>
+<td>サーバーが返した <code>detail</code>。<strong>5xx では内部の文を出さず</strong>「サーバー側の問題」とだけ言う</td>
+</tr>
+<tr>
+<td>次に</td>
+<td>次の一手(ログインし直す・版を登録する・少し待つ…)</td>
+<td>状態コードとエラーコード(<code>invalid_transition</code>・<code>version_required</code> など)から決める</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li>同じ文が重なるときは省く(<code>guideLines</code>)。トーストは行ごとに改行、<code>ErrorNotice</code> は見出し + 2 行。</li>
+<li><strong>新しいエラーコードを足したら</strong> <code>explainError</code> に次の一手を足す(足さなければ、汎用の「入力を確認してください」になる)。</li>
+</ul>
+<h2 id="状態を-url-にするux3と取り消しux1">状態を URL にする(UX3)と、取り消し(UX1)</h2>
+<table>
+<thead>
+<tr>
+<th>決め</th>
+<th>実装</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>かんばんの絞り込みは URL に持つ</td>
+<td><code>?assignee=me&amp;priority=high,urgent&amp;overdue=1&amp;q=...</code>(<code>domain/boardFilters.ts</code>・<code>hooks/useBoardFilters.ts</code>)。既定の値は載せない。知らない値は無視して既定にする(壊れたリンクでも開く)。<strong>履歴を積まない</strong>(<code>replace</code>)ので、戻るボタンは絞り込みの分だけ戻らない。<code>task</code> など他のパラメータは残す</td>
+</tr>
+<tr>
+<td>「元に戻す」は、遷移表が戻り道を許すときだけ</td>
+<td>画面に遷移表を持たず、サーバーが返す <code>next_statuses</code> に<strong>元の状態が含まれるか</strong>で決める。<strong>「完了」は取り消せない</strong>ので、確認モーダルを先に挟む。取り消しの取り消しは出さない</td>
+</tr>
+<tr>
+<td>履歴(いつ・誰が・何から何へ)</td>
+<td>作っていない(<a href="design-index.html">design-index.md</a>)</td>
 </tr>
 </tbody>
 </table>
@@ -308,7 +363,7 @@
 </article>
     <nav class="pager"><a class="prev" href="design-index.html"><span>← 前へ</span>設計書の追補と、実装の対応表</a><a class="next" href="er.html"><span>次へ →</span>ER 図(実装済みモデル)</a></nav>
   </main>
-  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#基本p1">基本(P1)</a></li><li class="lvl2"><a href="#状態">状態</a></li><li class="lvl2"><a href="#色とコントラスト">色とコントラスト</a></li><li class="lvl2"><a href="#テーマ">テーマ</a></li><li class="lvl2"><a href="#画面構成p6-ワークスペース型">画面構成(P6 ワークスペース型)</a></li><li class="lvl2"><a href="#パーツ・動き">パーツ・動き</a></li><li class="lvl2"><a href="#ascii-モチーフ植物の成長設計書-追補-2026-10-27">ASCII モチーフ「植物の成長」(設計書 追補 2026-10-27)</a></li><li class="lvl2"><a href="#かんばんの操作の流れ">かんばんの操作の流れ</a></li><li class="lvl2"><a href="#ドラッグに頼らない操作">ドラッグに頼らない操作</a></li><li class="lvl2"><a href="#注記p9">注記(P9)</a></li></ul></nav>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#基本p1">基本(P1)</a></li><li class="lvl2"><a href="#状態">状態</a></li><li class="lvl2"><a href="#色とコントラスト">色とコントラスト</a></li><li class="lvl2"><a href="#テーマ">テーマ</a></li><li class="lvl2"><a href="#画面構成p6-ワークスペース型">画面構成(P6 ワークスペース型)</a></li><li class="lvl2"><a href="#パーツ・動き">パーツ・動き</a></li><li class="lvl2"><a href="#エラーの書き方使いやすさの提案-ux4・2026-11-04">エラーの書き方(使いやすさの提案 UX4・2026-11-04)</a></li><li class="lvl2"><a href="#状態を-url-にするux3と取り消しux1">状態を URL にする(UX3)と、取り消し(UX1)</a></li><li class="lvl2"><a href="#ascii-モチーフ植物の成長設計書-追補-2026-10-27">ASCII モチーフ「植物の成長」(設計書 追補 2026-10-27)</a></li><li class="lvl2"><a href="#かんばんの操作の流れ">かんばんの操作の流れ</a></li><li class="lvl2"><a href="#ドラッグに頼らない操作">ドラッグに頼らない操作</a></li><li class="lvl2"><a href="#注記p9">注記(P9)</a></li></ul></nav>
 </div>
 </body>
 </html>

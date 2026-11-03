@@ -192,3 +192,14 @@ def test_design_index_uses_the_shared_status_symbols():
     for row in rows:
         cells = [c.strip() for c in row.strip("|").split("|")]
         assert re.search("✅|⚠️|🔶|❌", cells[4]), f"状態記号がありません: {row[:60]}"
+
+
+def test_design_index_usability_table_is_complete():
+    """使いやすさの提案(UX1〜UX7)は、全行に状態記号がある(見送ったものも、理由つきで載せる)。"""
+    text = (ROOT / "docs" / "design-index.md").read_text(encoding="utf-8")
+    section = text.split("## 使いやすさの提案", 1)[1].split("## 設計書が参照している文書", 1)[0]
+    rows = [line for line in section.splitlines() if re.match(r"\| UX\d \|", line)]
+    assert [r.split("|")[1].strip() for r in rows] == [f"UX{i}" for i in range(1, 8)]
+    for row in rows:
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        assert re.search("✅|🔶|❌", cells[2]), f"状態記号がありません: {row[:40]}"

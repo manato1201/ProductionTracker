@@ -1,6 +1,6 @@
 import { Stack } from "@mui/material";
 import { useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { projects, tasks } from "../api/endpoints";
 import type { Task } from "../api/types";
 import { EmptyState, ErrorNotice, RowSkeletons } from "../components/Feedback";
@@ -19,6 +19,7 @@ const VIEWS = {
 /** 期日順。期限切れは記号 + 文字でも示す。 */
 export default function MyTasksPage() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const viewKey = (params.get("view") as keyof typeof VIEWS) in VIEWS ? (params.get("view") as keyof typeof VIEWS) : "default";
   const view = VIEWS[viewKey];
   const [withDone, setWithDone] = useState(false);
@@ -39,7 +40,7 @@ export default function MyTasksPage() {
       ) : null}
       {res.error ? <ErrorNotice error={res.error} onRetry={res.reload} /> : null}
       {res.loading && !res.data ? <RowSkeletons /> : null}
-      {res.data && res.data.items.length === 0 ? <EmptyState message={viewKey === "overdue" ? "期限切れのタスクはありません" : "タスクはありません"} /> : null}
+      {res.data && res.data.items.length === 0 ? <EmptyState message={viewKey === "overdue" ? "期限切れのタスクはありません" : "タスクはありません"} actionLabel="プロジェクト一覧へ" onAction={() => navigate("/projects")} /> : null}
       {res.data && res.data.items.length > 0 ? (
         <div className="panel" style={{ padding: 0 }}>
           <div className="muted" style={{ fontSize: "0.8125rem", padding: "8px 12px" }} aria-live="polite"><span className="num">{res.data.count}</span> 件</div>

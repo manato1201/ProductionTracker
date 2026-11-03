@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-source-sha256" content="9c9848b38abaa7c7d004">
+<meta name="x-source-sha256" content="aa770f527e63e8924c26">
 <title>設計書の追補と、実装の対応表 — ProductionTracker</title>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js" defer></script>
@@ -173,8 +173,65 @@
 <blockquote>
 <p><strong>設計書側の表記について</strong>: 追補 7・8 は設計書で「提案/未実装」のままですが、上の表のとおり実装しています。設計書の状態欄は、設計書の側で更新してください(このリポジトリからは設計書を変更しません)。</p>
 </blockquote>
+<h2 id="使いやすさの提案usability_advice_2026-11-04md・追補の索引の外の別文書">使いやすさの提案(<code>USABILITY_ADVICE_2026-11-04.md</code>・追補の索引の外の別文書)</h2>
+<p>全プロジェクト共通の提案(UX1〜UX7)です。ProductionTracker は、その文書で「設計だけのもの」に入っており、「実装を始めるときに UX1・UX2・UX4 を最初の部品として入れる」とされています。<strong>元の文書は「提案/未実装」で、アプリを実際に操作して書かれたものではない</strong>(語句の数え上げ)と断られています。次の表は、このリポジトリでの扱いです。</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>提案</th>
+<th>このリポジトリ</th>
+<th>実装・根拠 / 見送った理由</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>UX1</td>
+<td>取り消し(Undo)と履歴</td>
+<td>🔶</td>
+<td><strong>取り消し</strong>: 状態変更の成功トーストに「元に戻す」(<code>useTaskTransition.tsx</code>)。ただし<strong>遷移表が戻り道を許す移動だけ</strong>(未着手→進行中・レビュー→完了・完了→進行中は出さない。ルールを画面に持たないため)。<strong>履歴</strong>(いつ・誰が・何から何へ)❌: 記録用の表・マイグレーション・API・画面が要る。需要が出てから判断する</td>
+</tr>
+<tr>
+<td>UX2</td>
+<td>長い処理の進捗・取り消し・完了通知</td>
+<td>❌</td>
+<td>長く待つ処理が無い(取り込みは秒単位のスクリプト)。対象外</td>
+</tr>
+<tr>
+<td>UX3</td>
+<td>状態を URL にする</td>
+<td>🔶</td>
+<td>かんばんの絞り込み(担当・優先度・期限切れ・検索)を URL に(<code>useBoardFilters.ts</code>)。開いているタスク(<code>?task=</code>)は既存。概要の「タスク」タブの絞り込みは URL にしていない</td>
+</tr>
+<tr>
+<td>UX4</td>
+<td>エラーの書き方の型(何が / なぜ / 次に)</td>
+<td>✅</td>
+<td><code>domain/errorGuide.ts</code>。エラー表示(<code>ErrorNotice</code>)と、状態変更・ノート・版のトーストに適用。5xx では内部の文を画面に出さない</td>
+</tr>
+<tr>
+<td>UX5</td>
+<td>続きから再開</td>
+<td>❌</td>
+<td>学習系・長い処理に当たる機能が無い。対象外</td>
+</tr>
+<tr>
+<td>UX6</td>
+<td>空状態に「次の一手」を 1 つ</td>
+<td>✅</td>
+<td><code>EmptyState</code> の <code>hint</code>(ボタンを置けない所の説明)と <code>actionLabel</code>。かんばんの空の列・ノート・品質/画面差分・自分のタスク・概要のタスクとアセット</td>
+</tr>
+<tr>
+<td>UX7</td>
+<td>キー操作とコマンドパレット</td>
+<td>🔶</td>
+<td>既存: カードの Enter / <code>Shift + ←→</code>。コマンドパレットと <code>j</code>/<code>k</code> は、追補 3 の T6 と同じく ❌(需要が出てから)</td>
+</tr>
+</tbody>
+</table>
+<p>実装の判断は <a href="decisions.html">decisions.md</a>、画面の決めごとは <a href="ui-rules.html">ui-rules.md</a>。</p>
 <h2 id="設計書が参照している文書このリポジトリには無い">設計書が参照している文書(このリポジトリには無い)</h2>
-<p>設計書の索引は、次の文書を指しています。<strong>いずれもこのリポジトリに含まれておらず、中身は確認していません</strong>。</p>
+<p>設計書の索引は、次の文書を指しています。<strong>このリポジトリには含まれていません</strong>。<code>USABILITY_ADVICE</code> は受け取って確認しましたが、他は<strong>中身を確認していません</strong>。</p>
 <table>
 <thead>
 <tr>
@@ -197,7 +254,7 @@
 <tr>
 <td><code>USABILITY_ADVICE_2026-11-04.md</code></td>
 <td>使いやすさの提案</td>
-<td><strong>未確認のため、反映していない</strong></td>
+<td><strong>受け取って確認した</strong>。上の「使いやすさの提案」の表のとおり扱った</td>
 </tr>
 <tr>
 <td><code>EXTERNAL_RESOURCES_*.md</code>・<code>REFERENCE_TAKAYUSTUDIO_2026-10.md</code>・<code>CLOUDFLARE_MIGRATION_PLAN_2026-10-25.md</code>・<code>ASCII_MOTIF_MAP_2026-10-27.md</code></td>
@@ -218,7 +275,7 @@
 </article>
     <nav class="pager"><span></span><a class="next" href="ui-rules.html"><span>次へ →</span>UI の決めごと表</a></nav>
   </main>
-  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#読み方の規則設計書の規則とこのリポジトリでの適用">読み方の規則(設計書の規則と、このリポジトリでの適用)</a></li><li class="lvl3"><a href="#追補どうしが食い違ったまたは本文を上書きした箇所と採った判断">追補どうしが食い違った(または本文を上書きした)箇所と、採った判断</a></li><li class="lvl2"><a href="#追補ごとの対応表">追補ごとの対応表</a></li><li class="lvl2"><a href="#設計書が参照している文書このリポジトリには無い">設計書が参照している文書(このリポジトリには無い)</a></li><li class="lvl2"><a href="#新しい追補が来たときの手順">新しい追補が来たときの手順</a></li></ul></nav>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#読み方の規則設計書の規則とこのリポジトリでの適用">読み方の規則(設計書の規則と、このリポジトリでの適用)</a></li><li class="lvl3"><a href="#追補どうしが食い違ったまたは本文を上書きした箇所と採った判断">追補どうしが食い違った(または本文を上書きした)箇所と、採った判断</a></li><li class="lvl2"><a href="#追補ごとの対応表">追補ごとの対応表</a></li><li class="lvl2"><a href="#使いやすさの提案usability_advice_2026-11-04md・追補の索引の外の別文書">使いやすさの提案(USABILITY_ADVICE_2026-11-04.md・追補の索引の外の別文書)</a></li><li class="lvl2"><a href="#設計書が参照している文書このリポジトリには無い">設計書が参照している文書(このリポジトリには無い)</a></li><li class="lvl2"><a href="#新しい追補が来たときの手順">新しい追補が来たときの手順</a></li></ul></nav>
 </div>
 </body>
 </html>

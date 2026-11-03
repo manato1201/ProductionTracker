@@ -9,7 +9,7 @@
 | バックエンド | Django 5.2 LTS + Django REST framework、PostgreSQL 16(テストの既定は SQLite) |
 | フロント | Vite + React 19 + TypeScript、React Router、MUI 7、Sass(デザイントークン)、@dnd-kit |
 | 監視 | Sentry(Django / React)、`/healthz`、JSON ログ |
-| テスト | pytest + pytest-django + factory_boy(879 件(うち文書内コードの検証 約 280 件))/ Vitest(37 件) |
+| テスト | pytest + pytest-django + factory_boy(881 件(うち文書内コードの検証 約 280 件))/ Vitest(55 件) |
 | 起動 | `docker compose`(`db` / `web` / `frontend`) |
 
 ![タスクボード](docs/screenshots/board.png)
@@ -121,6 +121,8 @@ cd frontend && npm test && npm run build  # Vitest / 型チェック + ビルド
 | 自分のタスク(期日順。ビュー: 期限切れ・レビュー待ち) | `/me/tasks` |
 
 状態は「色 + アイコン + 文字」で示し、ライト/ダークの切替、幅 360px で横スクロールなし。詳しくは [docs/ui-rules.md](docs/ui-rules.md)。
+
+使いやすさの提案(2026-11-04)から、**エラーの 3 行(何が / なぜ / 次に)**、**空状態の次の一手**、**状態変更の「元に戻す」**(遷移表が戻り道を許すものだけ)、**かんばんの絞り込みの URL 化**を実装した。扱いの一覧は [docs/design-index.md](docs/design-index.md)。
 
 空の列には、状態に対応した植物の ASCII モチーフ(種 → 芽 → 花 → 実)を飾りとして出す(読み上げ対象外・動きを減らす設定では静止画)。[docs/ui-rules.md](docs/ui-rules.md)。
 
