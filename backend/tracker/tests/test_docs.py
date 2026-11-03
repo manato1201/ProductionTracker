@@ -181,3 +181,14 @@ def test_docs_contain_no_control_characters():
                 bad.append(f"{path.relative_to(ROOT)}: U+{ord(ch):04X} (位置 {i})")
                 break
     assert not bad, "\n".join(bad)
+
+
+def test_design_index_uses_the_shared_status_symbols():
+    """設計書の追補の対応表(docs/design-index.md): 全行に、決めた状態記号のどれかがある。"""
+    text = (ROOT / "docs" / "design-index.md").read_text(encoding="utf-8")
+    section = text.split("## 追補ごとの対応表", 1)[1].split("> **設計書側の表記", 1)[0]
+    rows = [line for line in section.splitlines() if re.match(r"\| \d+ \|", line)]
+    assert len(rows) == 8, "設計書の索引にある追補は 8 件(新しい追補を足したら、この数も直す)"
+    for row in rows:
+        cells = [c.strip() for c in row.strip("|").split("|")]
+        assert re.search("✅|⚠️|🔶|❌", cells[4]), f"状態記号がありません: {row[:60]}"

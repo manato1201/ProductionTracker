@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-source-sha256" content="9c9848b38abaa7c7d004">
+<title>設計書の追補と、実装の対応表 — ProductionTracker</title>
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/theme.js" defer></script>
+</head>
+<body>
+<a class="skip" href="#main">本文へ</a>
+<header class="top">
+  <a class="brand" href="index.html">ProductionTracker <span>ドキュメント</span></a>
+  <button id="theme-toggle" type="button" aria-label="テーマを切り替える">◐</button>
+</header>
+<div class="layout">
+  <aside class="sidebar" aria-label="文書の一覧"><details open><summary>はじめに</summary><ul><li><a href="README.html">ProductionTracker</a></li></ul></details><details open><summary>講義(基礎から)</summary><ul><li><a href="lectures/README.html">講義資料 ― 基礎から、保守・拡張できるところまで</a></li><li><a href="lectures/L00-intro.html">L00 はじめに ― 進め方・環境づくり・リポジトリの歩き方</a></li><li><a href="lectures/L01-web.html">L01 Web の仕組み ― HTTP・URL・ステータスコード・JSON・Cookie</a></li><li><a href="lectures/L02-python.html">L02 Python の基礎 ― サーバー側のコードを読むための道具</a></li><li><a href="lectures/L03-database.html">L03 データベースと SQL ― 表・キー・索引・トランザクション</a></li><li><a href="lectures/L04-django.html">L04 Django の基礎 ― 設定・ミドルウェア・モデルと ORM・マイグレーション</a></li><li><a href="lectures/L05-drf.html">L05 Django REST framework ― モデルを、安全な JSON の API にする</a></li><li><a href="lectures/L06-state-machine.html">L06 アルゴリズム① 状態機械 ― 遷移表・全組み合わせの検証・小さなモデル検査</a></li><li><a href="lectures/L07-strings-paths.html">L07 アルゴリズム② 文字列とパス ― 正規化・最長前方一致・計算量・トライ木</a></li><li><a href="lectures/L08-concurrency.html">L08 アルゴリズム③ 並行制御と冪等性 ― 「同時に」「何度も」届く処理を壊さずに扱う</a></li><li><a href="lectures/L09-security-crypto.html">L09 アルゴリズム④ 認証と暗号 ― ハッシュ・CSRF・定数時間比較・JWT・レート制限</a></li><li><a href="lectures/L10-javascript-typescript.html">L10 JavaScript / TypeScript の基礎 ― 値・関数・非同期・型</a></li><li><a href="lectures/L11-react.html">L11 React の基礎 ― コンポーネント・state・effect・フック</a></li><li><a href="lectures/L12-ui-css.html">L12 画面づくり ― CSS・Sass・デザイントークン・アクセシビリティ</a></li><li><a href="lectures/L13-kanban.html">L13 かんばん ― イベント・ドラッグ&amp;ドロップ・楽観的更新</a></li><li><a href="lectures/L14-testing.html">L14 テスト ― 何を・どう守るか(pytest・fixture・パラメータ化・ファズ・Vitest)</a></li><li><a href="lectures/L15-scripts.html">L15 スクリプトを読む ― シェル・バックアップ・取り込み・図の生成</a></li><li><a href="lectures/L16-operations.html">L16 運用 ― Docker・設定・Cloudflare・ログ・Sentry・障害対応</a></li><li><a href="lectures/L17-capstone.html">L17 総合演習 ― 機能を 1 つ足す(設計 → テスト → 実装 → 文書)</a></li><li><a href="lectures/glossary.html">用語集</a></li></ul></details><details open><summary>実践ガイド(保守・拡張)</summary><ul><li><a href="learning/README.html">学習資料 ― 保守・拡張できるようになるために</a></li><li><a href="learning/01-overview.html">1. 全体像</a></li><li><a href="learning/02-backend.html">2. バックエンドの道案内</a></li><li><a href="learning/03-frontend.html">3. フロントエンドの道案内</a></li><li><a href="learning/04-recipes.html">4. 拡張レシピ</a></li><li><a href="learning/05-testing.html">5. テストの書き方</a></li><li><a href="learning/06-troubleshooting.html">6. 困ったとき</a></li><li><a href="learning/07-exercises.html">7. 演習と確認問題</a></li><li><a href="learning/08-security-and-database.html">8. セキュリティとデータベースの見方</a></li></ul></details><details open><summary>設計・仕様</summary><ul><li><a href="design-index.html" aria-current="page" class="current">設計書の追補と、実装の対応表</a></li><li><a href="ui-rules.html">UI の決めごと表</a></li><li><a href="er.html">ER 図(実装済みモデル)</a></li><li><a href="integration.html">既存ツールとの連携</a></li><li><a href="auth.html">認証と、差し替え口(Phase 6)</a></li><li><a href="security.html">セキュリティ点検(OWASP API Security Top 10 : 2023)</a></li><li><a href="database.html">データベースの点検(SQL の指針)</a></li><li><a href="operations.html">運用手順(Phase 7)</a></li><li><a href="decisions.html">実装時の判断記録</a></li><li><a href="learning-log.html">学習ログ(各スキルで詰まった点)</a></li></ul></details><details open><summary>図</summary><ul><li><a href="diagrams/README.html">構成図</a></li></ul></details></aside>
+  <main id="main">
+    <p class="source">元の Markdown: <a href="../design-index.md"><code>docs/design-index.md</code></a></p>
+    <article class="doc"><h1 id="設計書の追補と実装の対応表">設計書の追補と、実装の対応表</h1>
+<p>設計書(<code>ProductionTracker_DESIGN.md</code>)は、本文の下に<strong>日付順の追補</strong>が積み重なっています(2026-11-04 整理で、追補の索引が付きました)。
+この文書は、**追補ごとに「このリポジトリで何をしたか」**を 1 か所にまとめたものです。設計書そのものはこのリポジトリに入れていないので、ここが実装側の対応表になります。</p>
+<h2 id="読み方の規則設計書の規則とこのリポジトリでの適用">読み方の規則(設計書の規則と、このリポジトリでの適用)</h2>
+<p>設計書の索引は、次のように定めています。</p>
+<blockquote>
+<p>基本の設計は、索引より上の本文。<strong>同じ話題が複数の追補にあるときは、新しい日付を優先</strong>する。</p>
+</blockquote>
+<figure class="diagram"><svg id="mbc3062eaadc7cfa3" width="100%" xmlns="http://www.w3.org/2000/svg" class="flowchart" style="max-width: 619.375px;" viewBox="0 0 619.375 944.96875" role="graphics-document document" aria-roledescription="flowchart-v2"><style>#mbc3062eaadc7cfa3{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;fill:#000000;}@keyframes edge-animation-frame{from{stroke-dashoffset:0;}}@keyframes dash{to{stroke-dashoffset:0;}}#mbc3062eaadc7cfa3 .edge-animation-slow{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 50s linear infinite;stroke-linecap:round;}#mbc3062eaadc7cfa3 .edge-animation-fast{stroke-dasharray:9,5!important;stroke-dashoffset:900;animation:dash 20s linear infinite;stroke-linecap:round;}#mbc3062eaadc7cfa3 .error-icon{fill:#552222;}#mbc3062eaadc7cfa3 .error-text{fill:#552222;stroke:#552222;}#mbc3062eaadc7cfa3 .edge-thickness-normal{stroke-width:1px;}#mbc3062eaadc7cfa3 .edge-thickness-thick{stroke-width:3.5px;}#mbc3062eaadc7cfa3 .edge-pattern-solid{stroke-dasharray:0;}#mbc3062eaadc7cfa3 .edge-thickness-invisible{stroke-width:0;fill:none;}#mbc3062eaadc7cfa3 .edge-pattern-dashed{stroke-dasharray:3;}#mbc3062eaadc7cfa3 .edge-pattern-dotted{stroke-dasharray:2;}#mbc3062eaadc7cfa3 .marker{fill:#666;stroke:#666;}#mbc3062eaadc7cfa3 .marker.cross{stroke:#666;}#mbc3062eaadc7cfa3 svg{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:16px;}#mbc3062eaadc7cfa3 p{margin:0;}#mbc3062eaadc7cfa3 .label{font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;color:#000000;}#mbc3062eaadc7cfa3 .cluster-label text{fill:#333;}#mbc3062eaadc7cfa3 .cluster-label span{color:#333;}#mbc3062eaadc7cfa3 .cluster-label span p{background-color:transparent;}#mbc3062eaadc7cfa3 .label text,#mbc3062eaadc7cfa3 span{fill:#000000;color:#000000;}#mbc3062eaadc7cfa3 .node rect,#mbc3062eaadc7cfa3 .node circle,#mbc3062eaadc7cfa3 .node ellipse,#mbc3062eaadc7cfa3 .node polygon,#mbc3062eaadc7cfa3 .node path{fill:#eee;stroke:#999;stroke-width:1px;}#mbc3062eaadc7cfa3 .rough-node .label text,#mbc3062eaadc7cfa3 .node .label text,#mbc3062eaadc7cfa3 .image-shape .label,#mbc3062eaadc7cfa3 .icon-shape .label{text-anchor:middle;}#mbc3062eaadc7cfa3 .node .katex path{fill:#000;stroke:#000;stroke-width:1px;}#mbc3062eaadc7cfa3 .rough-node .label,#mbc3062eaadc7cfa3 .node .label,#mbc3062eaadc7cfa3 .image-shape .label,#mbc3062eaadc7cfa3 .icon-shape .label{text-align:center;}#mbc3062eaadc7cfa3 .node.clickable{cursor:pointer;}#mbc3062eaadc7cfa3 .root .anchor path{fill:#666!important;stroke-width:0;stroke:#666;}#mbc3062eaadc7cfa3 .arrowheadPath{fill:#333333;}#mbc3062eaadc7cfa3 .edgePaths .path{stroke:#666;stroke-width:1px;}#mbc3062eaadc7cfa3 .flowchart-link{stroke:#666;fill:none;}#mbc3062eaadc7cfa3 .edgeLabel{background-color:white;text-align:center;}#mbc3062eaadc7cfa3 .edgeLabel p{background-color:white;}#mbc3062eaadc7cfa3 .edgeLabel rect{opacity:0.5;background-color:white;fill:white;}#mbc3062eaadc7cfa3 .labelBkg{background-color:rgba(255, 255, 255, 0.5);}#mbc3062eaadc7cfa3 .cluster rect{fill:hsl(0, 0%, 98.9215686275%);stroke:#707070;stroke-width:1px;}#mbc3062eaadc7cfa3 .cluster text{fill:#333;}#mbc3062eaadc7cfa3 .cluster span{color:#333;}#mbc3062eaadc7cfa3 .node .collapsed-indicator{fill:#707070;stroke:none;opacity:0.6;}#mbc3062eaadc7cfa3 .node .collapsed-separator{stroke:#707070;stroke-width:0.75px;}#mbc3062eaadc7cfa3 div.mermaidTooltip{position:absolute;text-align:center;max-width:200px;padding:2px;font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;font-size:12px;background:hsl(-160, 0%, 93.3333333333%);border:1px solid #707070;border-radius:2px;pointer-events:none;z-index:100;}#mbc3062eaadc7cfa3 .flowchartTitleText{text-anchor:middle;font-size:18px;fill:#000000;}#mbc3062eaadc7cfa3 rect.text{fill:none;stroke-width:0;}#mbc3062eaadc7cfa3 .icon-shape,#mbc3062eaadc7cfa3 .image-shape{background-color:white;text-align:center;}#mbc3062eaadc7cfa3 .icon-shape p,#mbc3062eaadc7cfa3 .image-shape p{background-color:white;padding:2px;}#mbc3062eaadc7cfa3 .icon-shape .label rect,#mbc3062eaadc7cfa3 .image-shape .label rect{opacity:0.5;background-color:white;fill:white;}#mbc3062eaadc7cfa3 .label-icon{display:inline-block;height:1em;overflow:visible;vertical-align:-0.125em;}#mbc3062eaadc7cfa3 .node .label-icon path{fill:currentColor;stroke:revert;stroke-width:revert;}#mbc3062eaadc7cfa3 .node .neo-node{stroke:#999;}#mbc3062eaadc7cfa3 [data-look="neo"].node rect,#mbc3062eaadc7cfa3 [data-look="neo"].cluster rect,#mbc3062eaadc7cfa3 [data-look="neo"].node polygon{stroke:url(#mbc3062eaadc7cfa3-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mbc3062eaadc7cfa3 [data-look="neo"].swimlane.cluster rect{filter:none;}#mbc3062eaadc7cfa3 [data-look="neo"].node path{stroke:url(#mbc3062eaadc7cfa3-gradient);stroke-width:1px;}#mbc3062eaadc7cfa3 [data-look="neo"].node .outer-path{filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mbc3062eaadc7cfa3 [data-look="neo"].node .neo-line path{stroke:#999;filter:none;}#mbc3062eaadc7cfa3 [data-look="neo"].node circle{stroke:url(#mbc3062eaadc7cfa3-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mbc3062eaadc7cfa3 [data-look="neo"].node circle .state-start{fill:#000000;}#mbc3062eaadc7cfa3 [data-look="neo"].icon-shape .icon{fill:url(#mbc3062eaadc7cfa3-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mbc3062eaadc7cfa3 [data-look="neo"].icon-shape .icon-neo path{stroke:url(#mbc3062eaadc7cfa3-gradient);filter:drop-shadow( 1px 2px 2px rgba(185,185,185,1));}#mbc3062eaadc7cfa3 :root{--mermaid-font-family:'Hiragino Sans','Noto Sans JP','Yu Gothic UI',system-ui,sans-serif;}</style><g><marker id="mbc3062eaadc7cfa3_flowchart-v2-pointEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-pointStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="4.5" refY="5" markerUnits="userSpaceOnUse" markerWidth="8" markerHeight="8" orient="auto"><path d="M 0 5 L 10 10 L 10 0 z" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-pointEnd-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="11.5" refY="7" markerUnits="userSpaceOnUse" markerWidth="10.5" markerHeight="14" orient="auto"><path d="M 0 0 L 11.5 7 L 0 14 z" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-pointStart-margin" class="marker flowchart-v2" viewBox="0 0 11.5 14" refX="1" refY="7" markerUnits="userSpaceOnUse" markerWidth="11.5" markerHeight="14" orient="auto"><polygon points="0,7 11.5,14 11.5,0" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></polygon></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-circleEnd" class="marker flowchart-v2" viewBox="0 0 10 10" refX="11" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-circleStart" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-1" refY="5" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 1; stroke-dasharray: 1, 0;"></circle></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-circleEnd-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refY="5" refX="12.25" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-circleStart-margin" class="marker flowchart-v2" viewBox="0 0 10 10" refX="-2" refY="5" markerUnits="userSpaceOnUse" markerWidth="14" markerHeight="14" orient="auto"><circle cx="5" cy="5" r="5" class="arrowMarkerPath" style="stroke-width: 0; stroke-dasharray: 1, 0;"></circle></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-crossEnd" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="12" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-crossStart" class="marker cross flowchart-v2" viewBox="0 0 11 11" refX="-1" refY="5.2" markerUnits="userSpaceOnUse" markerWidth="11" markerHeight="11" orient="auto"><path d="M 1,1 l 9,9 M 10,1 l -9,9" class="arrowMarkerPath" style="stroke-width: 2; stroke-dasharray: 1, 0;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-crossEnd-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="17.7" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5;"></path></marker><marker id="mbc3062eaadc7cfa3_flowchart-v2-crossStart-margin" class="marker cross flowchart-v2" viewBox="0 0 15 15" refX="-3.5" refY="7.5" markerUnits="userSpaceOnUse" markerWidth="12" markerHeight="12" orient="auto"><path d="M 1,1 L 14,14 M 1,14 L 14,1" class="arrowMarkerPath" style="stroke-width: 2.5; stroke-dasharray: 1, 0;"></path></marker><g class="root"><g class="clusters"></g><g class="edgePaths"><path d="M333.688,62L333.688,66.167C333.688,70.333,333.688,78.667,333.688,86.333C333.688,94,333.688,101,333.688,104.5L333.688,108" id="mbc3062eaadc7cfa3-L_A_B_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_A_B_0" data-points="W3sieCI6MzMzLjY4NzUsInkiOjYyfSx7IngiOjMzMy42ODc1LCJ5Ijo4N30seyJ4IjozMzMuNjg3NSwieSI6MTEyfV0=" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M290.047,259.266L278.727,272.706C267.406,286.146,244.766,313.026,233.445,331.966C222.125,350.906,222.125,361.906,222.125,367.406L222.125,372.906" id="mbc3062eaadc7cfa3-L_B_C_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_C_0" data-points="W3sieCI6MjkwLjA0Njg5NjAxMDc1NzUsInkiOjI1OS4yNjU2NDYwMTA3NTc1fSx7IngiOjIyMi4xMjUsInkiOjMzOS45MDYyNX0seyJ4IjoyMjIuMTI1LCJ5IjozNzYuOTA2MjV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M375.572,261.022L385.852,274.169C396.131,287.317,416.691,313.611,426.97,332.259C437.25,350.906,437.25,361.906,437.25,367.406L437.25,372.906" id="mbc3062eaadc7cfa3-L_B_D_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_B_D_0" data-points="W3sieCI6Mzc1LjU3MTg2MzYyMTMxNzQ1LCJ5IjoyNjEuMDIxODg2Mzc4NjgyNTV9LHsieCI6NDM3LjI1LCJ5IjozMzkuOTA2MjV9LHsieCI6NDM3LjI1LCJ5IjozNzYuOTA2MjV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M222.125,430.906L222.125,435.073C222.125,439.24,222.125,447.573,232.414,463.27C242.702,478.967,263.279,502.029,273.568,513.559L283.856,525.09" id="mbc3062eaadc7cfa3-L_C_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_C_E_0" data-points="W3sieCI6MjIyLjEyNSwieSI6NDMwLjkwNjI1fSx7IngiOjIyMi4xMjUsInkiOjQ1NS45MDYyNX0seyJ4IjoyODYuNTE5MTUyMDI3NDczMjQsInkiOjUyOC4wNzQ1OTc5NzI1MjY3fV0=" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M437.25,430.906L437.25,435.073C437.25,439.24,437.25,447.573,427.968,462.946C418.686,478.319,400.122,500.731,390.839,511.938L381.557,523.144" id="mbc3062eaadc7cfa3-L_D_E_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_D_E_0" data-points="W3sieCI6NDM3LjI1LCJ5Ijo0MzAuOTA2MjV9LHsieCI6NDM3LjI1LCJ5Ijo0NTUuOTA2MjV9LHsieCI6Mzc5LjAwNTgyNzA2NzY2OTE0LCJ5Ijo1MjYuMjI0NTc3MDY3NjY5Mn1d" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M270.889,618.17L242.834,634.803C214.78,651.436,158.671,684.703,130.617,706.836C102.563,728.969,102.563,739.969,102.563,745.469L102.563,750.969" id="mbc3062eaadc7cfa3-L_E_F_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_F_0" data-points="W3sieCI6MjcwLjg4ODgzMDUzMjIxMjg2LCJ5Ijo2MTguMTcwMDgwNTMyMjEyOX0seyJ4IjoxMDIuNTYyNSwieSI6NzE3Ljk2ODc1fSx7IngiOjEwMi41NjI1LCJ5Ijo3NTQuOTY4NzV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M333.688,680.969L333.688,687.135C333.688,693.302,333.688,705.635,333.688,717.302C333.688,728.969,333.688,739.969,333.688,745.469L333.688,750.969" id="mbc3062eaadc7cfa3-L_E_G_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_G_0" data-points="W3sieCI6MzMzLjY4NzUsInkiOjY4MC45Njg3NX0seyJ4IjozMzMuNjg3NSwieSI6NzE3Ljk2ODc1fSx7IngiOjMzMy42ODc1LCJ5Ijo3NTQuOTY4NzV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M393.89,620.767L418.377,636.967C442.864,653.167,491.838,685.568,516.325,707.268C540.813,728.969,540.813,739.969,540.813,745.469L540.813,750.969" id="mbc3062eaadc7cfa3-L_E_H_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_E_H_0" data-points="W3sieCI6MzkzLjg4OTcyNjkxMzY0NzUsInkiOjYyMC43NjY1MjMwODYzNTI0fSx7IngiOjU0MC44MTI1LCJ5Ijo3MTcuOTY4NzV9LHsieCI6NTQwLjgxMjUsInkiOjc1NC45Njg3NX1d" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M102.563,808.969L102.563,813.135C102.563,817.302,102.563,825.635,109.503,833.646C116.443,841.656,130.324,849.343,137.264,853.187L144.205,857.031" id="mbc3062eaadc7cfa3-L_F_I_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_F_I_0" data-points="W3sieCI6MTAyLjU2MjUsInkiOjgwOC45Njg3NX0seyJ4IjoxMDIuNTYyNSwieSI6ODMzLjk2ODc1fSx7IngiOjE0Ny43MDQxMDE1NjI1LCJ5Ijo4NTguOTY4NzV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path><path d="M333.688,808.969L333.688,813.135C333.688,817.302,333.688,825.635,326.747,833.646C319.807,841.656,305.926,849.343,298.986,853.187L292.045,857.031" id="mbc3062eaadc7cfa3-L_G_I_0" class="edge-thickness-normal edge-pattern-solid edge-thickness-normal edge-pattern-solid flowchart-link" style=";" data-edge="true" data-et="edge" data-id="L_G_I_0" data-points="W3sieCI6MzMzLjY4NzUsInkiOjgwOC45Njg3NX0seyJ4IjozMzMuNjg3NSwieSI6ODMzLjk2ODc1fSx7IngiOjI4OC41NDU4OTg0Mzc1LCJ5Ijo4NTguOTY4NzV9XQ==" data-look="classic" marker-end="url(#mbc3062eaadc7cfa3_flowchart-v2-pointEnd)"></path></g><g class="edgeLabels"><g class="edgeLabel"><g class="label" data-id="L_A_B_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(222.125, 339.90625)"><g class="label" data-id="L_B_C_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">はい</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(437.25, 339.90625)"><g class="label" data-id="L_B_D_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-26.5625" y="-2" width="53.125" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">いいえ</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_C_E_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_D_E_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel" transform="translate(102.5625, 717.96875)"><g class="label" data-id="L_E_F_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-66.75" y="-2" width="133.5" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">複数の追補にある</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(333.6875, 717.96875)"><g class="label" data-id="L_E_G_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-32.0703125" y="-2" width="64.140625" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">1</tspan><tspan font-style="normal" class="text-inner-tspan" font-weight="normal"> つだけ</tspan></tspan></text></g></g></g><g class="edgeLabel" transform="translate(540.8125, 717.96875)"><g class="label" data-id="L_E_H_0" transform="translate(0, -10)"><g><rect class="background" style="" x="-18.375" y="-2" width="36.75" height="24"></rect><text y="-10.1" text-anchor="middle" style=""><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"><tspan font-style="normal" class="text-inner-tspan" font-weight="normal">ない</tspan></tspan></text></g></g></g><g class="edgeLabel"><g class="label" data-id="L_F_I_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g><g class="edgeLabel"><g class="label" data-id="L_G_I_0" transform="translate(0, 0)"><text y="-10.1" text-anchor="middle"><tspan class="text-outer-tspan row" x="0" y="-0.1em" dy="1.1em" text-anchor="middle"></tspan></text></g></g><g><rect class="background" style="stroke: none"></rect></g></g><g class="nodes"><g class="node default" id="mbc3062eaadc7cfa3-flowchart-A-0" data-look="classic" transform="translate(333.6875, 35)"><rect class="basic label-container" style="" x="-127.6875" y="-27" width="255.375" height="54"></rect><g class="label" style="" transform="translate(-97.6875, -12)"><rect></rect><foreignObject width="195.375" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>ある話題について決めたい</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-B-1" data-look="classic" transform="translate(333.6875, 207.453125)"><polygon points="95.453125,0 190.90625,-95.453125 95.453125,-190.90625 0,-95.453125" class="label-container" transform="translate(-94.953125, 95.453125)"></polygon><g class="label" style="" transform="translate(-56.453125, -24)"><rect></rect><foreignObject width="112.90625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>本文(§0〜§7)に<br>書いてある?</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-C-3" data-look="classic" transform="translate(222.125, 403.90625)"><rect class="basic label-container" style="" x="-94.75" y="-27" width="189.5" height="54"></rect><g class="label" style="" transform="translate(-64.75, -12)"><rect></rect><foreignObject width="129.5" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>本文を基本とする</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-D-5" data-look="classic" transform="translate(437.25, 403.90625)"><rect class="basic label-container" style="" x="-70.375" y="-27" width="140.75" height="54"></rect><g class="label" style="" transform="translate(-40.375, -12)"><rect></rect><foreignObject width="80.75" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>追補を探す</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-E-7" data-look="classic" transform="translate(333.6875, 580.9375)"><polygon points="100.03125,0 200.0625,-100.03125 100.03125,-200.0625 0,-100.03125" class="label-container" transform="translate(-99.53125, 100.03125)"></polygon><g class="label" style="" transform="translate(-61.03125, -24)"><rect></rect><foreignObject width="122.0625" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>追補が<br>上書きしている?</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-F-11" data-look="classic" transform="translate(102.5625, 781.96875)"><rect class="basic label-container" style="" x="-94.5625" y="-27" width="189.125" height="54"></rect><g class="label" style="" transform="translate(-64.5625, -12)"><rect></rect><foreignObject width="129.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>新しい日付を採用</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-G-13" data-look="classic" transform="translate(333.6875, 781.96875)"><rect class="basic label-container" style="" x="-86.5625" y="-27" width="173.125" height="54"></rect><g class="label" style="" transform="translate(-56.5625, -12)"><rect></rect><foreignObject width="113.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>その追補を採用</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-H-15" data-look="classic" transform="translate(540.8125, 781.96875)"><rect class="basic label-container" style="" x="-70.5625" y="-27" width="141.125" height="54"></rect><g class="label" style="" transform="translate(-40.5625, -12)"><rect></rect><foreignObject width="81.125" height="24"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>本文のまま</p></span></div></foreignObject></g></g><g class="node default" id="mbc3062eaadc7cfa3-flowchart-I-17" data-look="classic" transform="translate(218.125, 897.96875)"><rect class="basic label-container" style="" x="-106.625" y="-39" width="213.25" height="78"></rect><g class="label" style="" transform="translate(-76.625, -24)"><rect></rect><foreignObject width="153.25" height="48"><div xmlns="http://www.w3.org/1999/xhtml" style="display: table-cell; white-space: nowrap; line-height: 1.5; max-width: 200px; text-align: center;"><span class="nodeLabel"><p>採用した判断は<br>decisions.md に記録</p></span></div></foreignObject></g></g></g></g></g><defs><filter id="mbc3062eaadc7cfa3-drop-shadow" height="130%" width="130%"><feDropShadow dx="4" dy="4" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><defs><filter id="mbc3062eaadc7cfa3-drop-shadow-small" height="150%" width="150%"><feDropShadow dx="2" dy="2" stdDeviation="0" flood-opacity="0.06" flood-color="#000000"></feDropShadow></filter></defs><linearGradient id="mbc3062eaadc7cfa3-gradient" gradientUnits="objectBoundingBox" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="hsl(0, 0%, 83.3333333333%)" stop-opacity="1"></stop><stop offset="100%" stop-color="hsl(0, 0%, 88.9215686275%)" stop-opacity="1"></stop></linearGradient></svg></figure>
+<h3 id="追補どうしが食い違ったまたは本文を上書きした箇所と採った判断">追補どうしが食い違った(または本文を上書きした)箇所と、採った判断</h3>
+<table>
+<thead>
+<tr>
+<th>話題</th>
+<th>古い記述</th>
+<th>新しい記述</th>
+<th>このリポジトリの判断</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Cloudflare Containers</td>
+<td>追補 1(2026-10-11): Phase 10 として半日の検証(スパイク)を行う</td>
+<td>追補 6(2026-10-25): <strong>推奨しない</strong>(ディスクが一時的で Postgres を中に置けない)。方式 A を継続</td>
+<td><strong>新しい方を採用。Phase 10 は実施しない</strong>(<a href="decisions.html">decisions.md</a>)</td>
+</tr>
+<tr>
+<td>認証</td>
+<td>本文 §2: Django のセッション認証</td>
+<td>追補 8(2026-10-30): 認証は <strong>Cloudflare Access(OIDC)</strong></td>
+<td>上書きでなく<strong>追加</strong>: セッション認証を基本に、Access の JWT 検証を<strong>任意の認証クラス</strong>として足した(既定は無効)(<a href="auth.html">auth.md</a>)</td>
+</tr>
+<tr>
+<td>ASCII モチーフの状態</td>
+<td>追補 7(2026-10-27): 提案/未実装、出す場所は「UI を作る段階で決める」</td>
+<td>同じ追補の追記(2026-10-30): 上流の動作は確認済み(型検査・ビルド成功、60fps)</td>
+<td>設計書の表記は「提案/未実装」のまま。<strong>このリポジトリでは実装した</strong>(空の列だけに出す。上流のコードは使わず自前)(<a href="decisions.html">decisions.md</a>)</td>
+</tr>
+<tr>
+<td>外部資料の使い方</td>
+<td>追補 5(2026-10-23): スキルは点検・補助に使う。<strong>最初は自分で書く</strong></td>
+<td>—</td>
+<td>そのとおり。自分で書き、追補 4 の点検(OWASP 風の監査)は自動テストにした</td>
+</tr>
+</tbody>
+</table>
+<h2 id="追補ごとの対応表">追補ごとの対応表</h2>
+<p>状態の記号は、このリポジトリの文書で共通です。</p>
+<table>
+<thead>
+<tr>
+<th>記号</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>✅</td>
+<td>実装し、テストか実行で確かめた</td>
+</tr>
+<tr>
+<td>⚠️</td>
+<td>実装したが、実環境では未検証</td>
+</tr>
+<tr>
+<td>🔶</td>
+<td>一部だけ実装した</td>
+</tr>
+<tr>
+<td>❌</td>
+<td>実装していない(対象外・需要待ち)</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>追補</th>
+<th>日付</th>
+<th>設計書の状態</th>
+<th>このリポジトリ</th>
+<th>実装・根拠</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>裏取りの結果と、実務で運用するための拡張(Phase 7〜10)</td>
+<td>2026-10-11</td>
+<td>—</td>
+<td>🔶</td>
+<td>Phase 7(運用整備)✅: <a href="operations.html">operations.md</a>、<code>scripts/backup.sh</code>・<code>restore.sh</code>。Phase 8 は <strong>API 側のみ</strong> ✅(<code>Idempotency-Key</code>。<a href="integration.html">integration.md</a>)、パネル本体 ❌。Phase 9(3D ビューア)❌。Phase 10 は追補 6 で見送り ❌</td>
+</tr>
+<tr>
+<td>2</td>
+<td>カンバンボードの UI・モーション</td>
+<td>2026-10-11</td>
+<td>—</td>
+<td>✅</td>
+<td><code>frontend/src/components/Board.tsx</code>(ドラッグの傾き・影・列の強調、キーボード代替、トースト、確認モーダル、スケルトン、空状態)。<a href="ui-rules.html">ui-rules.md</a>、<a href="lectures/L13-kanban.html">講義 L13</a></td>
+</tr>
+<tr>
+<td>3</td>
+<td>TakayuStudio 系リファレンス(T1・T2・T6・T7・T13)</td>
+<td>2026-10-15</td>
+<td>—</td>
+<td>🔶</td>
+<td><strong>T13(絞り込み・並べ替え・件数・リセット・空状態)✅</strong>: かんばん・概要・自分のタスク・プロジェクト一覧。T7 の URL 共有は、開いているタスク(<code>?task=</code>)だけ 🔶(絞り込みの状態は URL に載せていない)。<strong>T1(版の比較)・T2(定型項目)・T6(<code>j</code>/<code>k</code>)・ウォッチ ❌</strong></td>
+</tr>
+<tr>
+<td>4</td>
+<td>外部リソース(X8 形式検証・X2 セキュリティ点検)</td>
+<td>2026-10-22</td>
+<td>—</td>
+<td>✅</td>
+<td>X2: <a href="security.html">security.md</a>(OWASP API Top 10 風の点検)と <code>test_security_audit.py</code>。X8: TLA+ は使わず、設計書が「足りる」とした <strong>全遷移の表のテスト</strong>(<code>test_task_transitions.py</code>)と、講義の小さなモデル検査(<a href="lectures/L06-state-machine.html">L06</a>)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>外部リソース 第2弾(skills.sh)</td>
+<td>2026-10-23</td>
+<td>—</td>
+<td>❌</td>
+<td>スキルは導入していない(設計書も「最初は自分で書く」)。点検は 4・8 の自動テストで行った</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Cloudflare 活用(C9)</td>
+<td>2026-10-25</td>
+<td>—</td>
+<td>⚠️</td>
+<td>方式 A(compose + Tunnel + Access)。設定と手順は <a href="operations.html">operations.md</a>。<strong>Tunnel / Access の実環境は未検証</strong></td>
+</tr>
+<tr>
+<td>7</td>
+<td>ASCII モチーフ</td>
+<td>2026-10-27</td>
+<td>提案/未実装</td>
+<td>✅</td>
+<td>植物の成長(種→芽→花→実)を空の列に。<code>domain/motif.ts</code>・<code>components/AsciiPlant.tsx</code>、静止画は <code>prefers-reduced-motion</code>。<a href="ui-rules.html">ui-rules.md</a>。元資料 <code>ASCII_MOTIF_MAP</code> は<strong>リポジトリに無く未確認</strong></td>
+</tr>
+<tr>
+<td>8</td>
+<td>第4弾の外部資料(Z32 Web API / SQL)</td>
+<td>2026-10-30</td>
+<td>提案/未実装</td>
+<td>✅ / ⚠️</td>
+<td>Web API: <a href="security.html">security.md</a>・<a href="auth.html">auth.md</a>(401/403/404 の使い分け、最小権限、レート制限)。Cloudflare Access の JWT 検証は <strong>手元の鍵でのテストのみ ⚠️</strong>。SQL: <a href="database.html">database.md</a>(索引・<code>ORDER BY</code>・実行計画)</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>設計書側の表記について</strong>: 追補 7・8 は設計書で「提案/未実装」のままですが、上の表のとおり実装しています。設計書の状態欄は、設計書の側で更新してください(このリポジトリからは設計書を変更しません)。</p>
+</blockquote>
+<h2 id="設計書が参照している文書このリポジトリには無い">設計書が参照している文書(このリポジトリには無い)</h2>
+<p>設計書の索引は、次の文書を指しています。<strong>いずれもこのリポジトリに含まれておらず、中身は確認していません</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>文書</th>
+<th>設計書での役割</th>
+<th>このリポジトリでの扱い</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>IMPLEMENTATION_PROGRESS_2026-10-27.md</code></td>
+<td>追補ごとの進み具合</td>
+<td>上の対応表が代わりを務める</td>
+</tr>
+<tr>
+<td><code>DOCS_INDEX_2026-11-04.md</code></td>
+<td>文書全体の地図・ID の一覧・状態の語彙</td>
+<td>状態の語彙は上の 4 記号に揃えた。<strong>元の語彙とは一致しない可能性がある</strong></td>
+</tr>
+<tr>
+<td><code>USABILITY_ADVICE_2026-11-04.md</code></td>
+<td>使いやすさの提案</td>
+<td><strong>未確認のため、反映していない</strong></td>
+</tr>
+<tr>
+<td><code>EXTERNAL_RESOURCES_*.md</code>・<code>REFERENCE_TAKAYUSTUDIO_2026-10.md</code>・<code>CLOUDFLARE_MIGRATION_PLAN_2026-10-25.md</code>・<code>ASCII_MOTIF_MAP_2026-10-27.md</code></td>
+<td>追補の元資料</td>
+<td>設計書の要約だけを根拠にした。元資料と食い違うなら、該当する文書・コードを直す</td>
+</tr>
+</tbody>
+</table>
+<h2 id="新しい追補が来たときの手順">新しい追補が来たときの手順</h2>
+<ol>
+<li>追補の日付と話題を、上の「追補ごとの対応表」に 1 行足す(設計書の状態欄は<strong>そのまま</strong>写す)。</li>
+<li>既存の話題と重なるなら、<strong>新しい日付を優先</strong>し、「食い違った箇所」の表に判断を書く。</li>
+<li>採用・見送りの<strong>理由</strong>を <a href="decisions.html">decisions.md</a> に書く。</li>
+<li>実装したら、テストと、関係する文書(図も)を更新する。実環境でしか確かめられない部分は ⚠️ のまま残す。</li>
+<li><a href="README.html">README</a> の「検証チェックリスト」と「未実装・未確認」を見直す。</li>
+<li><code>pytest tracker/tests/test_docs.py</code> と <code>python docs/tools/build_html.py</code> を実行する。</li>
+</ol>
+</article>
+    <nav class="pager"><span></span><a class="next" href="ui-rules.html"><span>次へ →</span>UI の決めごと表</a></nav>
+  </main>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#読み方の規則設計書の規則とこのリポジトリでの適用">読み方の規則(設計書の規則と、このリポジトリでの適用)</a></li><li class="lvl3"><a href="#追補どうしが食い違ったまたは本文を上書きした箇所と採った判断">追補どうしが食い違った(または本文を上書きした)箇所と、採った判断</a></li><li class="lvl2"><a href="#追補ごとの対応表">追補ごとの対応表</a></li><li class="lvl2"><a href="#設計書が参照している文書このリポジトリには無い">設計書が参照している文書(このリポジトリには無い)</a></li><li class="lvl2"><a href="#新しい追補が来たときの手順">新しい追補が来たときの手順</a></li></ul></nav>
+</div>
+</body>
+</html>

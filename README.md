@@ -9,7 +9,7 @@
 | バックエンド | Django 5.2 LTS + Django REST framework、PostgreSQL 16(テストの既定は SQLite) |
 | フロント | Vite + React 19 + TypeScript、React Router、MUI 7、Sass(デザイントークン)、@dnd-kit |
 | 監視 | Sentry(Django / React)、`/healthz`、JSON ログ |
-| テスト | pytest + pytest-django + factory_boy(877 件(うち文書内コードの検証 約 280 件))/ Vitest(37 件) |
+| テスト | pytest + pytest-django + factory_boy(879 件(うち文書内コードの検証 約 280 件))/ Vitest(37 件) |
 | 起動 | `docker compose`(`db` / `web` / `frontend`) |
 
 ![タスクボード](docs/screenshots/board.png)
@@ -169,6 +169,7 @@ Markdown を直したら `python docs/tools/build_html.py` で HTML を作り直
 
 - **[docs/lectures/](docs/lectures/README.md) — 講義資料(基礎から。Web・Python・DB・Django・アルゴリズム・React・テスト・運用まで)**
 - **[docs/learning/](docs/learning/README.md) — 保守・拡張のための実践ガイド(レシピ・トラブルシューティング)**
+- [docs/design-index.md](docs/design-index.md) — 設計書の追補ごとの対応表(何を実装し、何をしていないか。追補どうしの食い違いの判断)
 - [docs/ui-rules.md](docs/ui-rules.md) — UI の決めごと表 / [docs/er.md](docs/er.md) — ER 図
 - [docs/integration.md](docs/integration.md) — AssetDataInsightSuite・VisualRegressionQATool・Hub・Publish API
 - [docs/auth.md](docs/auth.md) — 認証(セッション・トークン・API キー・Cloudflare Access)と、差し込み口
@@ -197,6 +198,7 @@ Markdown を直したら `python docs/tools/build_html.py` で HTML を作り直
 | 方式 B の 4 項目の測定 / GLB の 3D 表示 | ❌ 未実施 | Phase 9・10 は対象外(`docs/decisions.md`) |
 
 ## 未実装・未確認(要点)
+追補ごとの状況は [docs/design-index.md](docs/design-index.md) にまとめてある。
 - 追補のうち「提案(未実装)」とされた項目、Phase 8 の Houdini パネル本体、Phase 9(3D ビューア)、Phase 10(Cloudflare Containers の検証)。
 - `insight.db` と VisualRegressionQATool の実際の出力形式(設計書に記載がなく、想定で作った: [docs/integration.md](docs/integration.md))。
 - ToolOrchestrationHub の `registry.yaml` の実スキーマ(登録例は読み替えが必要)。

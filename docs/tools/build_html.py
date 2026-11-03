@@ -61,7 +61,7 @@ def groups() -> list[tuple[str, list[str]]]:
         (
             "設計・仕様",
             [
-                "docs/ui-rules.md", "docs/er.md", "docs/integration.md", "docs/auth.md", "docs/security.md",
+                "docs/design-index.md", "docs/ui-rules.md", "docs/er.md", "docs/integration.md", "docs/auth.md", "docs/security.md",
                 "docs/database.md", "docs/operations.md", "docs/decisions.md", "docs/learning-log.md",
             ],
         ),
