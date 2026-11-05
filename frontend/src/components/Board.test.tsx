@@ -26,6 +26,16 @@ describe("Board", () => {
     expect(within(screen.getByRole("region", { name: "進行中の列" })).getByText("タスクはありません")).toBeInTheDocument();
   });
 
+  it("空の列には、状態に対応した植物のモチーフを飾りとして出す(読み上げ対象外)", () => {
+    render(<Board {...base} canWrite tasks={[task(1, "done")]} />);
+    const todo = screen.getByRole("region", { name: "未着手の列" });
+    const plant = within(todo).getByTestId("ascii-plant");
+    expect(plant).toHaveAttribute("aria-hidden", "true");
+    expect(plant).toHaveClass("ascii-motif--todo");
+    // タスクがある列(完了)には出さない
+    expect(within(screen.getByRole("region", { name: "完了の列" })).queryByTestId("ascii-plant")).not.toBeInTheDocument();
+  });
+
   it("カードに題名・副題(アセット名)・優先度・期日が出る", () => {
     render(<Board {...base} canWrite tasks={[task(1, "todo", { due: "2026-10-01", is_overdue: true, priority: "urgent", assignee_name: "alice" })]} />);
     const card = screen.getByRole("article");
@@ -78,5 +88,17 @@ describe("Board", () => {
   it("読み込み中はスケルトンを出す", () => {
     render(<Board {...base} canWrite loading tasks={[]} />);
     expect(screen.getAllByLabelText("読み込み中").length).toBeGreaterThan(0);
+  });
+
+  it("空の列には「次の一手」の説明を出す(書き込める人だけ)", () => {
+    const { rerender } = render(<Board {...base} canWrite tasks={[task(1, "todo")]} />);
+    expect(within(screen.getByRole("region", { name: "進行中の列" })).getByText(/Shift \+ 矢印キー/)).toBeInTheDocument();
+    rerender(<Board {...base} canWrite={false} tasks={[task(1, "todo")]} />);
+    expect(screen.queryByText(/Shift \+ 矢印キー/)).not.toBeInTheDocument();
+  });
+
+  it("アセットが無くタスクを追加できないときは、先にアセットを足すよう案内する", () => {
+    render(<Board {...base} canWrite tasks={[]} />);
+    expect(within(screen.getByRole("region", { name: "未着手の列" })).getByText(/先に「アセット」を追加/)).toBeInTheDocument();
   });
 });

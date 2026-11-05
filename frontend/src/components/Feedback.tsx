@@ -2,13 +2,24 @@ import InboxOutlinedIcon from "@mui/icons-material/InboxOutlined";
 import { Alert, Button, Skeleton, Stack } from "@mui/material";
 import type { ReactNode } from "react";
 import type { ApiError } from "../api/client";
+import { explainError } from "../domain/errorGuide";
 
-/** エンプティステート(24): 理由 + 次の操作。 */
-export function EmptyState({ message, actionLabel, onAction }: { message: string; actionLabel?: string; onAction?: () => void }) {
+/** エンプティステート(24): 理由 + 次の操作(ボタン `actionLabel`、置けないときは説明 `hint`)。 */
+export function EmptyState({
+  message, hint, actionLabel, onAction, motif,
+}: {
+  message: string;
+  /** 押せるボタンを置けないときの、次の一手の説明(1 文)。 */
+  hint?: string;
+  actionLabel?: string; onAction?: () => void;
+  /** 飾り(ASCII モチーフなど)。指定すると既定のアイコンの代わりに出す */
+  motif?: ReactNode;
+}) {
   return (
     <Stack alignItems="center" spacing={1.5} sx={{ py: 4, color: "text.secondary", textAlign: "center" }}>
-      <InboxOutlinedIcon aria-hidden />
+      {motif ?? <InboxOutlinedIcon aria-hidden />}
       <div>{message}</div>
+      {hint ? <div style={{ fontSize: "0.8125rem" }}>{hint}</div> : null}
       {actionLabel && onAction ? (
         <Button size="small" variant="outlined" onClick={onAction}>
           {actionLabel}
@@ -18,13 +29,17 @@ export function EmptyState({ message, actionLabel, onAction }: { message: string
   );
 }
 
+/** エラーの表示。「何が起きた / なぜ / 次にどうする」の 3 行(domain/errorGuide.ts)。 */
 export function ErrorNotice({ error, onRetry }: { error: ApiError; onRetry?: () => void }) {
+  const guide = explainError(error);
   return (
     <Alert
       severity="error"
       action={onRetry ? <Button color="inherit" size="small" onClick={onRetry}>再読み込み</Button> : undefined}
     >
-      {error.detail}
+      <strong>{guide.what}</strong>
+      {guide.why && guide.why !== guide.what ? <div>{guide.why}</div> : null}
+      <div>{guide.next}</div>
     </Alert>
   );
 }

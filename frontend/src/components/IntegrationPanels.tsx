@@ -28,7 +28,7 @@ export function groupRuns(reports: QualityReport[]): Run[] {
 /** 品質(AssetDataInsightSuite)。取得日時を固定表示する(P9)。 */
 export function QualityView({ reports, entityNames }: { reports: QualityReport[]; entityNames?: Map<number, string> }) {
   const runs = useMemo(() => groupRuns(reports), [reports]);
-  if (runs.length === 0) return <EmptyState message="品質スキャンの結果はまだありません" />;
+  if (runs.length === 0) return <EmptyState message="品質スキャンの結果はまだありません" hint="取り込みスクリプト(scripts/send_quality.py)で結果を送ると、ここに出ます。" />;
   const [latest, ...older] = runs;
   return (
     <div>
@@ -82,7 +82,7 @@ export function VisualPanel({ entityId }: { entityId: number }) {
   const res = useResource(() => visual.list({ entity: entityId }), [entityId]);
   if (res.error) return <ErrorNotice error={res.error} onRetry={res.reload} />;
   if (!res.data) return <RowSkeletons count={3} />;
-  if (res.data.items.length === 0) return <EmptyState message="画面差分の結果はまだありません" />;
+  if (res.data.items.length === 0) return <EmptyState message="画面差分の結果はまだありません" hint="取り込みスクリプト(scripts/send_visual.py)で結果を送ると、ここに出ます。" />;
   return (
     <div>
       {res.data.items.map((r) => (

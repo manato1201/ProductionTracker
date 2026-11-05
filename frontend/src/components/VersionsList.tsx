@@ -1,6 +1,6 @@
 import { Button, Stack } from "@mui/material";
 import { versions } from "../api/endpoints";
-import { ApiError } from "../api/client";
+import { explainError, guideLines } from "../domain/errorGuide";
 import type { Project, Version, VersionStatus } from "../api/types";
 import { useToast } from "../context/Toast";
 import { formatDateTime } from "../domain/format";
@@ -23,7 +23,7 @@ export function VersionsList({
       await versions.transition(v.id, to);
       onChanged();
     } catch (e) {
-      notify(e instanceof ApiError ? e.detail : "版の状態を変更できませんでした。", "error");
+      notify(guideLines(explainError(e, "版の状態を変更できませんでした。")), "error");
     }
   }
 

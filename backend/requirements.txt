@@ -5,3 +5,4 @@ psycopg[binary]>=3.3,<3.4
 sentry-sdk>=2.73,<3
 gunicorn>=26,<27
 whitenoise>=6.12,<7
+PyJWT[crypto]>=2.9,<3  # Cloudflare Access の JWT の検証(任意機能。tracker/cf_access.py)

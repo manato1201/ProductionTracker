@@ -59,7 +59,7 @@ export default function OverviewPage() {
         {ents.error ? <ErrorNotice error={ents.error} onRetry={ents.reload} /> : null}
         {ents.loading && !ents.data ? <RowSkeletons count={3} /> : null}
         {ents.data && ents.data.items.length === 0 ? <EmptyState message="アセットはまだありません" actionLabel={project.can_write ? "アセットを追加" : undefined} onAction={() => setAdding(true)} /> : null}
-        {ents.data && ents.data.items.length > 0 && visibleEntities.length === 0 ? <EmptyState message="該当するアセットはありません" /> : null}
+        {ents.data && ents.data.items.length > 0 && visibleEntities.length === 0 ? <EmptyState message="該当するアセットはありません" actionLabel="検索をクリア" onAction={() => setAssetQuery("")} /> : null}
         <div style={{ marginTop: 8 }}>
           {visibleEntities.map((e) => (
             <RouterLink key={e.id} to={`/projects/${project.code}/entities/${e.id}`} className="row">
@@ -124,6 +124,8 @@ const ORDERINGS = [
 ] as const;
 
 function ProjectTasks({ code, onOpen, refreshKey }: { code: string; onOpen: (t: Task) => void; refreshKey: number }) {
+  const { project } = useProject();
+  const canWrite = project.can_write;
   const [statuses, setStatuses] = useState<TaskStatus[]>([]);
   const [mine, setMine] = useState(false);
   const [overdue, setOverdue] = useState(false);
@@ -157,7 +159,12 @@ function ProjectTasks({ code, onOpen, refreshKey }: { code: string; onOpen: (t: 
       {res.error ? <ErrorNotice error={res.error} onRetry={res.reload} /> : null}
       {res.loading && !res.data ? <RowSkeletons /> : null}
       {res.data ? <div className="muted" style={{ fontSize: "0.8125rem", margin: "4px 0" }} aria-live="polite"><span className="num">{res.data.count}</span> 件</div> : null}
-      {res.data && res.data.items.length === 0 ? <EmptyState message={anyFilter ? "条件に合うタスクはありません" : "タスクはありません"} /> : null}
+      {res.data && res.data.items.length === 0 ? <EmptyState
+        message={anyFilter ? "条件に合うタスクはありません" : "タスクはありません"}
+        hint={anyFilter || !canWrite ? undefined : "「かんばん」か、アセットの詳細から、タスクを追加できます。"}
+        actionLabel={anyFilter ? "条件をリセット" : undefined}
+        onAction={anyFilter ? () => { setStatuses([]); setMine(false); setOverdue(false); setQ(""); } : undefined}
+      /> : null}
       {res.data?.items.map((t) => <TaskRow key={t.id} task={t} onOpen={onOpen} />)}
     </div>
   );

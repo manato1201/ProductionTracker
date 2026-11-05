@@ -3,3 +3,5 @@ pytest>=9.1,<10
 pytest-django>=4.14,<5
 factory_boy>=3.3,<4
 ruff>=0.8
+markdown-it-py[plugins]>=4,<5  # docs の HTML 版の生成と、その検査(docs/tools/build_html.py)
+pygments>=2.19,<3

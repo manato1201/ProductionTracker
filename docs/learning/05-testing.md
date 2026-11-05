@@ -5,7 +5,7 @@
 ## 実行
 ```bash
 cd backend
-pytest -q                          # 全件(SQLite。約 1 秒)
+pytest -q                          # 全件(SQLite。約 3 秒)
 pytest -q -x                       # 最初の失敗で止める
 pytest -q -k transition            # 名前で絞る
 pytest -q tracker/tests/test_task_transitions.py::test_only_reviewer_can_approve
@@ -19,6 +19,25 @@ npx tsc --noEmit                   # 型チェック(テスト用データの型
 npm run build                      # 型チェック + ビルド
 ```
 
+```mermaid
+flowchart TB
+    subgraph fast["速い・多い(数秒)"]
+        U["純粋な関数<br/>paths / format / status"]
+        R["ルール<br/>遷移表の全組み合わせ"]
+        AP["API(認可・検証・冪等)<br/>APIClient + DB"]
+        FZ["壊れた入力<br/>test_robustness"]
+        SA["セキュリティの点検<br/>test_security_audit"]
+        QP["実行計画<br/>test_query_plans(SQLite)"]
+    end
+    subgraph mid["画面の部品(Vitest)"]
+        CT["Board / StatusLabel / AsciiPlant"]
+    end
+    subgraph slow["手で確認(ブラウザ)"]
+        MN["ドラッグ・360px・ダーク・グレースケール"]
+    end
+    fast --> mid --> slow
+```
+
 ## 何をどこでテストしているか
 | 層 | 場所 | 例 |
 |---|---|---|
@@ -26,6 +45,10 @@ npm run build                      # 型チェック + ビルド
 | API(認証・見える範囲・検証) | `test_api_projects.py` / `test_api_entities_tasks.py` / `test_api_versions_notes.py` | 401 / 403 / 404 / 400 / 409 の網羅 |
 | 取り込み | `test_ingest.py` / `test_ingest_scripts.py` | キーなし 401、再送で重複しない、件数一致 |
 | 運用の安全 | `test_health_auth_errors.py` | DB 停止で 503、CSRF、ログインの制限、Sentry の除去 |
+| セキュリティの点検 | `test_security_audit.py` | **全エンドポイントは未認証で 401**、ロール別の認可の表、読み取り専用の項目、レート制限、`no-store`、一覧の ORDER BY |
+| 壊れた入力 | `test_robustness.py` | NUL・巨大な数・不正な JSON でも 500 にならない(**PostgreSQL でも流す**) |
+| 認証(外部) | `test_cf_access.py` | Cloudflare Access の JWT。手元の鍵で署名して、偽装・期限切れ・別の鍵を確かめる |
+| 実行計画 | `test_query_plans.py` | 主要なクエリに全件走査が無い(SQLite のときだけ) |
 | 純粋な関数 | `test_paths.py`、`domain/*.test.ts` | 入出力だけのテスト |
 | 部品 | `components/*.test.tsx` | 見た目(文字・アイコン)とキーボード操作 |
 | API クライアント | `api/client.test.ts` | エラーの変換、CSRF ヘッダ |

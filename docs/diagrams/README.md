@@ -1,5 +1,14 @@
 # 構成図
 
+図は 2 通りで持つ。**どちらも同じ内容**を指すので、片方を直したらもう片方も見直すこと。
+
+| 形 | 場所 | 使いどころ |
+|---|---|---|
+| mermaid(テキスト) | 各 `.md` に埋め込み | GitHub などで Markdown のまま読める。差分がレビューしやすい。構造を素早く描く |
+| SVG(コード生成) | `docs/diagrams/*.svg` | 番号つきの手順・アイコンなど、見せたい図。HTML 版にも埋め込まれる |
+
+HTML 版(`docs/html/`)では、mermaid の図は**事前に SVG へ描画**してあり、JavaScript なしで表示される(`python docs/tools/build_html.py`)。
+
 | ファイル | 内容 |
 |---|---|
 | `architecture.svg` | システム構成 |
@@ -7,12 +16,16 @@
 | `ingest-flow.svg` | 取り込みの流れ(番号付き 9 手順) |
 | `code-map.svg` | コードの地図 |
 | `operations.svg` | 運用構成(方式 A) |
+| `request-pipeline.svg` | リクエストの通り道(ブラウザ → Tunnel/Access → ミドルウェア → 認証 → 権限 → ビュー → DB) |
+| `auth-flow.svg` | 認証の流れ(セッション + CSRF / トークン / Cloudflare Access の JWT / 取り込み用 API キー) |
+| `data-model.svg` | データモデル(テーブルと関係) |
+| `lecture-roadmap.svg` | 講義資料の地図(L00〜L17) |
 
 ## 直し方
 SVG は **`build.py` から生成**する。SVG を直接編集しない(次の再生成で消える)。
 
 ```bash
-python docs/diagrams/build.py        # 5 枚とも作り直す(標準ライブラリのみ)
+python docs/diagrams/build.py        # 9 枚とも作り直す(標準ライブラリのみ)
 ```
 
 - `diagram.py` — 描き方の部品(`group` 枠 / `tile` アイコン付きタイル / `box` 箱 / `edge` 矢印 / `step` 番号 / `steplist` 説明欄)。
@@ -24,6 +37,9 @@ python docs/diagrams/build.py        # 5 枚とも作り直す(標準ライブ�
 - 番号の丸は、ラベルに重ならないよう線の上側に置く。
 - 矢印の終点がタイルの文字に被らないよう、**グループ枠の縁**で止める。
 - 実線の青 = 通常の流れ、赤の点線 = 失敗、灰色の点線 = 補助(監視・保全・未実装)。タイルの点線 = 未実装。
+
+## 再現性
+`build.py` は何度実行しても同じ SVG を出す(マーカーの順序を固定してある)。**図を直していないのに差分が出たら、生成の再現性が壊れている**。
 
 ## 確認の仕方
 ブラウザで SVG を開いて目で見る。重なり(文字と線・番号とラベル)が無いこと。

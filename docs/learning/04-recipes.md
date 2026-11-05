@@ -11,6 +11,16 @@ cd frontend && npx tsc --noEmit && npm test && npm run build
 
 > **コンパイラを味方にする**: フロントで型を変えたら `npx tsc --noEmit` が、直すべき場所を全部教えてくれる(テスト用のデータ生成関数も含む)。先に型を変えて、赤くなった所を順に直す。
 
+```mermaid
+flowchart TD
+    Q{"何を足す?"} --> F["項目(フィールド)"] --> A["レシピ A<br/>モデル → マイグレーション → シリアライザ → 型 → 画面"]
+    Q --> ST["状態"] --> B["レシピ B<br/>models → 画面の表(Record)→ トークン → テスト"]
+    Q --> AP["API"] --> C["レシピ C<br/>visible_* → シリアライザ → ビュー → URL → 5 つのテスト"]
+    Q --> SC["画面"] --> D["レシピ D<br/>useResource → 4 状態 → Route → 360px"]
+    Q --> IN["取り込み口"] --> E["レシピ E<br/>冪等性の鍵 → ingest → スクリプト → 件数の突き合わせ"]
+    Q --> RO["役割"] --> Fr["レシピ F<br/>Role → can_write_as / can_review_as"]
+```
+
 ---
 
 ## A. タスクに項目を足す(例: `description`)
@@ -39,7 +49,7 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 
 ## B. タスクの状態を 1 つ足す(例: 「保留 `blocked`」)
 遷移ルールをモデルに集約し、**状態の一覧は 1 か所から導く**ようにしてあるので、変更は少ない。
-(実際に使い捨てのコピーで実行した結果: サーバーでは `models.py` を直すだけで、落ちたのは下の「テスト」の 4 件だけ。フロントでは `tsc` が 4 か所を指摘した。)
+(使い捨てのコピーで実行した結果: サーバーでは `models.py` を直すだけで、落ちたのは下の「テスト」の 4 件だけ。フロントでは `tsc` が数か所を指摘する。ASCII モチーフの追加後は、`domain/motif.ts` の対応表も `Record` なので指摘される。)
 
 **サーバー**
 1. `models.py` — `Task.Status` に `BLOCKED = "blocked", "保留"`。`Task.TRANSITIONS` に、**行き先と戻り先の両方**を足す(例: 進行中 → 保留、保留 → 進行中)。`next_statuses` は表から自動で出る
@@ -51,8 +61,9 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 **フロント**
 4. `api/types.ts` — `TaskStatus` と `TaskCounts` に `blocked`
 5. `domain/status.tsx` — `TASK_STATUS_META`(文言とアイコン)に足す。**`TASK_STATUSES`(並び順 = かんばんの列順 = Shift+←/→ の隣)は META の定義順から自動で決まる**ので、**入れたい位置に書く**(`Record<TaskStatus, …>` なので、書き忘れると型エラー)
+5b. `domain/motif.ts` — `GROWTH_STAGE_OF_STATUS`(`Record<TaskStatus, …>`)に、空の列に出す植物の段階を足す(**書き忘れると型エラー**。段階を増やすなら `GROWTH_FRAMES` に 2 コマ追加。寸法は幅 9 × 高さ 4)
 6. `styles/_tokens.scss` — `status-blocked` を **ライトとダークの両方**に(背景に対し 4.5:1 以上)
-7. `styles/global.scss` — `.status--blocked` と `.stack-bar__seg--blocked`、かんばんの `grid-template-columns: repeat(4, …)` を **列数に合わせる**
+7. `styles/global.scss` — `.status--blocked` と `.stack-bar__seg--blocked` と `.ascii-motif--blocked`、かんばんの `grid-template-columns: repeat(4, …)` を **列数に合わせる**
 8. `pages/MyTasksPage.tsx` — 既定ビューの `status` 一覧に入れるか決める
 
 > **型が教えてくれないもの**(手で探す): 6・7 の SCSS、8 の文字列。`grep -rn "in_progress" frontend/src backend/tracker` で同じ書かれ方をしている場所を洗い出す。
@@ -73,7 +84,7 @@ def test_task_description_roundtrip(client_for, artist, entity, step):
 2. `views.py` — `ViewSet` を作る。**`get_queryset` は必ず `visible_*` から始める**(`permissions.py`。足りなければここに足す)。絞り込みは `int_param` / `choice_param`、並べ替えは `apply_ordering`(許可リスト)
 3. 書き込みは `require_write(request.user, project)`。業務ルールは **ビューでなくモデルのメソッド**に置く(違反は `DomainError` のサブクラスを投げる)
 4. `config/urls.py` — `router.register(...)`
-5. `tests/` — **401(未認証)/ 404(他人のデータ)/ 403(閲覧者)/ 400(不正な入力)/ 正常** の 5 つを最低限
+5. `tests/` — **401(未認証)/ 404(他人のデータ)/ 403(閲覧者)/ 400(不正な入力)/ 正常** の 5 つを最低限。さらに `test_security_audit.py`(**未認証で 401** は自動で対象になる。ロール別の期待は `CASES` に 1 行)と、`test_robustness.py`(壊れた入力)、`query_catalog.py`(索引が効くか)に足す。手順は [08](08-security-and-database.md)
 6. `frontend/src/api/endpoints.ts` と `types.ts`(URL はここだけに書く)
 7. [README](../../README.md) の API 表と、[integration.md](../integration.md)(外部が使うなら)
 

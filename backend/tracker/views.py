@@ -28,16 +28,21 @@ from .permissions import (
     visible_versions,
 )
 
-
 # --- クエリパラメータの読み取り(不正値は 400) ---
+MAX_ID = 2**63 - 1  # DB の bigint の上限。これを超える値は「存在しない」ではなく不正な入力として 400 にする
+
+
 def int_param(request, name):
     raw = request.query_params.get(name)
     if raw in (None, ""):
         return None
     try:
-        return int(raw)
+        value = int(raw)
     except ValueError:
-        raise serializers.ValidationError({name: "整数で指定してください。"})
+        raise serializers.ValidationError({name: "整数で指定してください。"}) from None
+    if abs(value) > MAX_ID:
+        raise serializers.ValidationError({name: "値が大きすぎます。"})
+    return value
 
 
 def choice_param(request, name, choices):
@@ -56,6 +61,8 @@ def project_q(request, prefix=""):
     if not raw:
         return Q()
     if raw.isdigit():
+        if int(raw) > MAX_ID:
+            raise serializers.ValidationError({"project": "値が大きすぎます。"})
         return Q(**{f"{prefix}project_id": int(raw)})
     return Q(**{f"{prefix}project__code": raw})
 
@@ -92,9 +99,10 @@ class ProjectViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        count = lambda status: Count(  # noqa: E731
-            "entities__tasks", filter=Q(entities__tasks__status=status), distinct=True
-        )
+
+        def count(status):
+            return Count("entities__tasks", filter=Q(entities__tasks__status=status), distinct=True)
+
         role = ProjectMember.objects.filter(project=OuterRef("pk"), user=user).values("role")[:1]
         # 状態ごとの件数(n_todo, n_in_progress, ...)。状態の一覧は Task.Status から導く(足しても、ここは変えなくてよい)
         counts = {f"n_{status}": count(status) for status in Task.Status.values}
@@ -108,7 +116,11 @@ class ProjectViewSet(
 
     def get_object(self):
         lookup = self.kwargs["pk"]
-        return self._get({"pk": int(lookup)} if lookup.isdigit() else {"code": lookup})
+        if lookup.isdigit():
+            if int(lookup) > MAX_ID:
+                raise NotFound()
+            return self._get({"pk": int(lookup)})
+        return self._get({"code": lookup})
 
     def _get(self, flt):
         return get_object_or_404(self.get_queryset(), **flt)

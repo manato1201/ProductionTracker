@@ -2,6 +2,24 @@
 
 症状 → 原因 → 確かめ方 → 直し方。**まずステータスコードと `code` を見る**(統一エラー形式なので、`code` で原因がほぼ決まる)。
 
+```mermaid
+flowchart TD
+    S[API が失敗した] --> C{"ステータスは?"}
+    C -- 401 --> A["認証: 未ログイン / セッション切れ /<br/>キーなし / JWT 不正"]
+    C -- 403 --> F{"code は?"}
+    F -- "permission_denied + CSRF" --> F1["CSRF クッキー・ヘッダ・オリジン"]
+    F -- "permission_denied" --> F2["役割(閲覧者・承認はレビュアーのみ)"]
+    C -- 404 --> N["見える範囲の外<br/>(メンバーでない)かも"]
+    C -- 400 --> V["errors の項目別の理由<br/>NUL / 大きすぎる / 時刻のタイムゾーン"]
+    C -- 409 --> K{"code は?"}
+    K -- invalid_transition --> K1["遷移表にない移動"]
+    K -- version_required --> K2["版が 1 つも無い"]
+    K -- idempotency_conflict --> K3["同じ鍵を別のタスクに使った"]
+    C -- 415 --> J["JSON で送る"]
+    C -- 429 --> T["レート制限。少し待つ"]
+    C -- 500 --> L["サーバーのログのスタックトレース"]
+```
+
 ## API / 画面
 | 症状 | 原因 | 確かめる / 直す |
 |---|---|---|
@@ -12,7 +30,11 @@
 | **409** `version_required` | 版が 1 つも無いのに「完了」 | 版を登録する。ルールを外すなら `REQUIRE_VERSION_FOR_COMPLETION=0` |
 | **400** `validation_error` | 入力の誤り。`errors` に項目別の理由が入る | レスポンスの `detail`(先頭 1 件)と `errors` |
 | **404** なのに、あるはずのデータ | **見える範囲の外**(プロジェクトのメンバーでない) | 管理画面でメンバーに入れる。管理者(`is_staff`)は全て見える |
-| **429** `throttled`(ログイン) | 10 回/分を超えた | 1 分待つ。変えるなら `LOGIN_THROTTLE_RATE`。プロセスを再起動するとカウントが消える |
+| **429** `throttled` | レート制限(ログイン 10 回/分、ユーザーごと 1200 回/分、取り込み全体 120 回/分)を超えた | 少し待つ。変えるなら `LOGIN_THROTTLE_RATE` / `API_THROTTLE_RATE` / `INGEST_THROTTLE_RATE`。画面が連打していないか(ループで API を呼んでいないか)も見る。プロセスを再起動するとカウントが消える |
+| Cloudflare Access 経由で **401** `Cloudflare Access の認証情報を確認できません` | JWT の AUD・チームのドメインが違う / 期限切れ / 公開鍵が取れない | `CF_ACCESS_AUD` と `CF_ACCESS_TEAM_DOMAIN`。サーバーのログに拒否の理由(`ExpiredSignatureError` など)が出る |
+| Cloudflare Access 経由で **403** `登録されていません` | Access は通ったが、同じメールのユーザーがアプリに無い | 管理画面でユーザーを作る(メールを一致させる)→ プロジェクトのメンバーにする |
+| **400** `NUL 文字(%00)は使えません` / `値が大きすぎます` | URL や JSON に NUL、bigint を超える数 | 送り手を直す(正しい入力ではない)。PostgreSQL は NUL を保存できず、通すと 500 になるため入口で弾いている |
+| **415** `Unsupported media type` | JSON 以外(フォーム・multipart)で送った | `Content-Type: application/json` で送る |
 | 一覧が 50 件で止まる | ページネーション(既定 50・上限 200) | `?page=2`、`?page_size=200`。`next` を辿る |
 | 絞り込みが 400 | `?status=` などに、選択肢にない値 | 値の一覧がエラーメッセージに出る |
 | 概要の「タスク」タブが、ドロワーでの変更後も古い | 再読み込みの合図が足りない(過去の不具合) | `OverviewPage` の `tasksRevision`。新しい画面でも「変更があった」ことを明示の値で伝える |

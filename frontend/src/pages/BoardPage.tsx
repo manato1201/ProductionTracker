@@ -3,30 +3,28 @@ import SearchIcon from "@mui/icons-material/Search";
 import { Button, InputAdornment, Stack, TextField } from "@mui/material";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { entities, steps, tasks } from "../api/endpoints";
-import type { Priority, Task } from "../api/types";
+import type { Task } from "../api/types";
 import { Board } from "../components/Board";
 import { FilterChip } from "../components/FilterChip";
 import { TaskFormDialog } from "../components/Dialogs";
 import { ErrorNotice } from "../components/Feedback";
 import { TaskDrawer } from "../components/TaskDrawer";
 import { useAuth } from "../context/Auth";
+import { hasFilter } from "../domain/boardFilters";
 import { PRIORITIES, PRIORITY_META } from "../domain/status";
+import { useBoardFilters } from "../hooks/useBoardFilters";
 import { useResource } from "../hooks/useResource";
 import { useTaskParam } from "../hooks/useTaskParam";
 import { useTaskTransition } from "../hooks/useTaskTransition";
 import { useProject } from "./ProjectLayout";
-
-type Assignee = "all" | "me" | "none";
 
 export default function BoardPage() {
   const { project, members, reloadProject } = useProject();
   const { user } = useAuth();
   const [taskId, setTaskId] = useTaskParam();
   const res = useResource(() => tasks.list({ project: project.code }), [project.code]);
-  const [assignee, setAssignee] = useState<Assignee>("all");
-  const [priorities, setPriorities] = useState<Priority[]>([]);
-  const [overdueOnly, setOverdueOnly] = useState(false);
-  const [q, setQ] = useState("");
+  const [filters, setFilters, resetFilters] = useBoardFilters(); // 絞り込みは URL に持つ(共有・再読み込みで保たれる)
+  const { assignee, priorities, overdueOnly, q } = filters;
   const [adding, setAdding] = useState(false);
 
   // 初回表示のスタッガーは 1 回だけ
@@ -65,7 +63,7 @@ export default function BoardPage() {
       }),
     [all, assignee, priorities, overdueOnly, q, user?.id],
   );
-  const anyFilter = assignee !== "all" || priorities.length > 0 || overdueOnly || q !== "";
+  const anyFilter = hasFilter(filters);
 
   // タスク追加(アセットはダイアログ内で選ぶ)
   const ents = useResource(() => entities.list(project.id), [project.id]);
@@ -74,18 +72,18 @@ export default function BoardPage() {
   return (
     <div>
       <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center" sx={{ mb: 1 }}>
-        <TextField size="small" placeholder="タスクを検索" value={q} onChange={(e) => setQ(e.target.value)} inputProps={{ "aria-label": "タスクを検索" }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
+        <TextField size="small" placeholder="タスクを検索" value={q} onChange={(e) => setFilters({ q: e.target.value })} inputProps={{ "aria-label": "タスクを検索" }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
         {project.can_write ? <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setAdding(true)} disabled={!ents.data?.items.length}>タスクを追加</Button> : null}
       </Stack>
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }} role="group" aria-label="絞り込み">
         {(["all", "me", "none"] as const).map((a) => (
-          <FilterChip key={a} label={{ all: "担当: すべて", me: "担当: 自分", none: "担当: 未割当" }[a]} pressed={assignee === a} onClick={() => setAssignee(a)} />
+          <FilterChip key={a} label={{ all: "担当: すべて", me: "担当: 自分", none: "担当: 未割当" }[a]} pressed={assignee === a} onClick={() => setFilters({ assignee: a })} />
         ))}
         {PRIORITIES.map((p) => (
-          <FilterChip key={p} label={`優先度: ${PRIORITY_META[p].label}`} pressed={priorities.includes(p)} onClick={() => setPriorities((cur) => (cur.includes(p) ? cur.filter((x) => x !== p) : [...cur, p]))} />
+          <FilterChip key={p} label={`優先度: ${PRIORITY_META[p].label}`} pressed={priorities.includes(p)} onClick={() => setFilters({ priorities: priorities.includes(p) ? priorities.filter((x) => x !== p) : [...priorities, p] })} />
         ))}
-        <FilterChip label="期限切れ" pressed={overdueOnly} onClick={() => setOverdueOnly(!overdueOnly)} />
-        {anyFilter ? <FilterChip label="条件をリセット" pressed={false} onClick={() => { setAssignee("all"); setPriorities([]); setOverdueOnly(false); setQ(""); }} /> : null}
+        <FilterChip label="期限切れ" pressed={overdueOnly} onClick={() => setFilters({ overdueOnly: !overdueOnly })} />
+        {anyFilter ? <FilterChip label="条件をリセット" pressed={false} onClick={resetFilters} /> : null}
       </Stack>
       <div className="muted" style={{ fontSize: "0.8125rem", marginBottom: 8 }} aria-live="polite">
         <span className="num">{filtered.length}</span> 件{anyFilter ? <> (全 <span className="num">{res.data?.count ?? 0}</span> 件中)</> : null}

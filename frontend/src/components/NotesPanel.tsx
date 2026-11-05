@@ -1,7 +1,7 @@
 import { Button, Stack, TextField } from "@mui/material";
 import { useState } from "react";
 import { notes } from "../api/endpoints";
-import { ApiError } from "../api/client";
+import { explainError, guideLines } from "../domain/errorGuide";
 import type { NoteTarget } from "../api/types";
 import { useToast } from "../context/Toast";
 import { formatDateTime } from "../domain/format";
@@ -21,7 +21,7 @@ export function NotesPanel({ targetType, targetId, canWrite }: { targetType: Not
       setBody("");
       await res.reload();
     } catch (e) {
-      notify(e instanceof ApiError ? e.detail : "ノートを送信できませんでした。", "error");
+      notify(guideLines(explainError(e, "ノートを送信できませんでした。")), "error");
     } finally {
       setBusy(false);
     }
@@ -39,7 +39,7 @@ export function NotesPanel({ targetType, targetId, canWrite }: { targetType: Not
       ) : null}
       {res.error ? <ErrorNotice error={res.error} onRetry={res.reload} /> : null}
       {res.loading && !res.data ? <RowSkeletons count={2} /> : null}
-      {res.data && res.data.results.length === 0 ? <EmptyState message="ノートはまだありません" /> : null}
+      {res.data && res.data.results.length === 0 ? <EmptyState message="ノートはまだありません" hint={canWrite ? "上の入力欄から、最初のノートを書けます。" : undefined} /> : null}
       {res.data?.results.map((n) => (
         <div key={n.id} className="row" style={{ alignItems: "flex-start" }}>
           <div className="row__main" style={{ whiteSpace: "normal" }}>

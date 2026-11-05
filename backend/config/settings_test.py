@@ -10,6 +10,6 @@ PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 ALLOWED_HOSTS = [*ALLOWED_HOSTS, "testserver"]  # noqa: F405
 INGEST_API_KEYS = ["test-ingest-key"]
 SENTRY_DSN = ""
-REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {"login": "1000/min"}}  # noqa: F405
+REST_FRAMEWORK = {**REST_FRAMEWORK, "DEFAULT_THROTTLE_RATES": {"user": "100000/min", "login": "1000/min", "ingest": "100000/min"}}  # noqa: F405
 LOGGING_CONFIG = None  # テスト出力にログを混ぜない
 MIDDLEWARE = [m for m in MIDDLEWARE if "whitenoise" not in m]  # noqa: F405 静的ファイルはテストで使わない
