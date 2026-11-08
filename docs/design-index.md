@@ -44,7 +44,7 @@ flowchart TD
 |---|---|---|---|---|---|
 | 1 | 裏取りの結果と、実務で運用するための拡張(Phase 7〜10) | 2026-10-11 | — | 🔶 | Phase 7(運用整備)✅: [operations.md](operations.md)、`scripts/backup.sh`・`restore.sh`。Phase 8 は **API 側のみ** ✅(`Idempotency-Key`。[integration.md](integration.md))、パネル本体 ❌。Phase 9(3D ビューア)❌。Phase 10 は追補 6 で見送り ❌ |
 | 2 | カンバンボードの UI・モーション | 2026-10-11 | — | ✅ | `frontend/src/components/Board.tsx`(ドラッグの傾き・影・列の強調、キーボード代替、トースト、確認モーダル、スケルトン、空状態)。[ui-rules.md](ui-rules.md)、[講義 L13](lectures/L13-kanban.md) |
-| 3 | TakayuStudio 系リファレンス(T1・T2・T6・T7・T13) | 2026-10-15 | — | 🔶 | **T13(絞り込み・並べ替え・件数・リセット・空状態)✅**: かんばん・概要・自分のタスク・プロジェクト一覧。T7 の URL 共有は、開いているタスク(`?task=`)だけ 🔶(絞り込みの状態は URL に載せていない)。**T1(版の比較)・T2(定型項目)・T6(`j`/`k`)・ウォッチ ❌** |
+| 3 | TakayuStudio 系リファレンス(T1・T2・T6・T7・T13) | 2026-10-15 | — | 🔶 | **T13(絞り込み・並べ替え・件数・リセット・空状態)✅**: かんばん・概要・自分のタスク・プロジェクト一覧。T7 の URL 共有は、開いているタスク(`?task=`)だけ 🔶(絞り込みの状態は URL に載せていない)。**T6(`/` で検索、自分のタスクで `j`/`k`/Enter)✅、T2(ノートの定型項目)✅**。**T1(版の比較)・ウォッチ ❌**(ウォッチはサーバー側のモデルが要る) |
 | 4 | 外部リソース(X8 形式検証・X2 セキュリティ点検) | 2026-10-22 | — | ✅ | X2: [security.md](security.md)(OWASP API Top 10 風の点検)と `test_security_audit.py`。X8: TLA+ は使わず、設計書が「足りる」とした **全遷移の表のテスト**(`test_task_transitions.py`)と、講義の小さなモデル検査([L06](lectures/L06-state-machine.md)) |
 | 5 | 外部リソース 第2弾(skills.sh) | 2026-10-23 | — | ❌ | スキルは導入していない(設計書も「最初は自分で書く」)。点検は 4・8 の自動テストで行った |
 | 6 | Cloudflare 活用(C9) | 2026-10-25 | — | ⚠️ | 方式 A(compose + Tunnel + Access)。設定と手順は [operations.md](operations.md)。**Tunnel / Access の実環境は未検証** |
@@ -64,7 +64,7 @@ flowchart TD
 | UX4 | エラーの書き方の型(何が / なぜ / 次に) | ✅ | `domain/errorGuide.ts`。エラー表示(`ErrorNotice`)と、状態変更・ノート・版のトーストに適用。5xx では内部の文を画面に出さない |
 | UX5 | 続きから再開 | ❌ | 学習系・長い処理に当たる機能が無い。対象外 |
 | UX6 | 空状態に「次の一手」を 1 つ | ✅ | `EmptyState` の `hint`(ボタンを置けない所の説明)と `actionLabel`。かんばんの空の列・ノート・品質/画面差分・自分のタスク・概要のタスクとアセット |
-| UX7 | キー操作とコマンドパレット | 🔶 | 既存: カードの Enter / `Shift + ←→`。コマンドパレットと `j`/`k` は、追補 3 の T6 と同じく ❌(需要が出てから) |
+| UX7 | キー操作とコマンドパレット | 🔶 | カードの Enter / `Shift + ←→`、`/`(検索)、自分のタスクの `j`/`k`/Enter(`hooks/useHotkeys.ts`。入力中・ダイアログ中は無効)。コマンドパレットは ❌(需要が出てから) |
 
 実装の判断は [decisions.md](decisions.md)、画面の決めごとは [ui-rules.md](ui-rules.md)。
 

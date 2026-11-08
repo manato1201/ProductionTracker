@@ -5,8 +5,10 @@ import { explainError, guideLines } from "../domain/errorGuide";
 import type { NoteTarget } from "../api/types";
 import { useToast } from "../context/Toast";
 import { formatDateTime } from "../domain/format";
+import { NOTE_TEMPLATES, insertTemplate } from "../domain/noteTemplates";
 import { useResource } from "../hooks/useResource";
 import { EmptyState, ErrorNotice, RowSkeletons } from "./Feedback";
+import { FilterChip } from "./FilterChip";
 
 export function NotesPanel({ targetType, targetId, canWrite }: { targetType: NoteTarget; targetId: number; canWrite: boolean }) {
   const { notify } = useToast();
@@ -31,6 +33,11 @@ export function NotesPanel({ targetType, targetId, canWrite }: { targetType: Not
     <div>
       {canWrite ? (
         <Stack spacing={1} sx={{ mb: 2 }}>
+          <Stack direction="row" gap={1} flexWrap="wrap" role="group" aria-label="定型項目">
+            {NOTE_TEMPLATES.map((tpl) => (
+              <FilterChip key={tpl} label={`＋ ${tpl.replace(":", "")}`} pressed={false} onClick={() => setBody((cur) => insertTemplate(cur, tpl))} />
+            ))}
+          </Stack>
           <TextField label="ノートを書く" multiline minRows={2} value={body} onChange={(e) => setBody(e.target.value)} inputProps={{ maxLength: 5000 }} />
           <Button variant="contained" onClick={send} disabled={busy || !body.trim()} sx={{ alignSelf: "flex-end" }}>
             送信

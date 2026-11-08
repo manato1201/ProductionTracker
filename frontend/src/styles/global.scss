@@ -140,6 +140,12 @@ a {
 a.row:hover,
 button.row:hover { background: var(--pt-surface-2); }
 
+// j / k で選んだ行。色だけにせず左の線でも示す
+.row[data-focused="true"] {
+  background: var(--pt-surface-2);
+  box-shadow: inset 3px 0 0 var(--pt-primary);
+}
+
 button.row {
   width: 100%;
   background: none;

@@ -13,6 +13,7 @@ import { useAuth } from "../context/Auth";
 import { hasFilter } from "../domain/boardFilters";
 import { PRIORITIES, PRIORITY_META } from "../domain/status";
 import { useBoardFilters } from "../hooks/useBoardFilters";
+import { useHotkeys } from "../hooks/useHotkeys";
 import { useResource } from "../hooks/useResource";
 import { useTaskParam } from "../hooks/useTaskParam";
 import { useTaskTransition } from "../hooks/useTaskTransition";
@@ -26,6 +27,8 @@ export default function BoardPage() {
   const [filters, setFilters, resetFilters] = useBoardFilters(); // 絞り込みは URL に持つ(共有・再読み込みで保たれる)
   const { assignee, priorities, overdueOnly, q } = filters;
   const [adding, setAdding] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  useHotkeys({ "/": () => searchRef.current?.focus() }); // T6
 
   // 初回表示のスタッガーは 1 回だけ
   const [intro, setIntro] = useState(true);
@@ -72,7 +75,7 @@ export default function BoardPage() {
   return (
     <div>
       <Stack direction="row" gap={1} flexWrap="wrap" alignItems="center" sx={{ mb: 1 }}>
-        <TextField size="small" placeholder="タスクを検索" value={q} onChange={(e) => setFilters({ q: e.target.value })} inputProps={{ "aria-label": "タスクを検索" }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
+        <TextField size="small" placeholder="タスクを検索( / )" value={q} onChange={(e) => setFilters({ q: e.target.value })} inputRef={searchRef} inputProps={{ "aria-label": "タスクを検索", "aria-keyshortcuts": "/" }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" /></InputAdornment> }} />
         {project.can_write ? <Button size="small" variant="contained" startIcon={<AddIcon />} onClick={() => setAdding(true)} disabled={!ents.data?.items.length}>タスクを追加</Button> : null}
       </Stack>
       <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mb: 2 }} role="group" aria-label="絞り込み">

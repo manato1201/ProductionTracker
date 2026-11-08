@@ -3,9 +3,9 @@ import { DueText } from "./DueText";
 import { PriorityLabel, StatusLabel } from "./StatusLabel";
 
 /** 一覧の行: 題名 + 副題(アセット名)+ 状態 + 優先度 + 期日。 */
-export function TaskRow({ task, onOpen, showProject }: { task: Task; onOpen: (t: Task) => void; showProject?: boolean }) {
+export function TaskRow({ task, onOpen, showProject, focused }: { task: Task; onOpen: (t: Task) => void; showProject?: boolean; focused?: boolean }) {
   return (
-    <button type="button" className="row row--task" onClick={() => onOpen(task)}>
+    <button type="button" className="row row--task" data-focused={focused ? "true" : undefined} aria-current={focused ? "true" : undefined} onClick={() => onOpen(task)}>
       <div className="row__main">
         <div className="row__title">{task.step_name}</div>
         <div className="row__sub">

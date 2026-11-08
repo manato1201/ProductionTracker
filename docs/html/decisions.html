@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="x-source-sha256" content="6db8ec35dd6a5521c673">
+<meta name="x-source-sha256" content="2b1cf69711bb6e5f0590">
 <title>実装時の判断記録 — ProductionTracker</title>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/theme.js" defer></script>
@@ -148,16 +148,21 @@
 </ul>
 <h2 id="実装しなかったもの">実装しなかったもの</h2>
 <ul>
-<li>追補の<strong>提案(未実装)<strong>扱いの項目のうち、<strong>ASCII モチーフ・第4弾(Z32)・使いやすさの提案の一部以外</strong>: TakayuStudio 系の</strong>比較ラボ(T1)・ウォッチ・<code>j</code>/<code>k</code> ショートカット(T6)・定型項目(T2)</strong>(T13 の絞り込み・並べ替えは実装した)、TLA+ などの形式検証(全遷移の表のテストで足りるとした設計書の記述どおり)、skills.sh のスキル(「最初は自分で書く」)。</li>
+<li>追補の<strong>提案(未実装)<strong>扱いの項目のうち、<strong>ASCII モチーフ・第4弾(Z32)・使いやすさの提案の一部以外</strong>: TakayuStudio 系の</strong>比較ラボ(T1)・ウォッチ</strong>(T13 の絞り込み・並べ替えは実装した)、TLA+ などの形式検証(全遷移の表のテストで足りるとした設計書の記述どおり)、skills.sh のスキル(「最初は自分で書く」)。</li>
 <li><strong>Phase 10 を見送った理由</strong>: 設計書の追補 6(2026-10-25)が Containers を推奨しないとしており、追補 1(2026-10-11)の「検証する」より<strong>新しい日付を優先</strong>した。追補どうしの食い違いの判断は <a href="design-index.html">design-index.md</a>。</li>
 <li><strong>Phase 8 のうち DCC パネル本体</strong>、ローカルキュー、確認ダイアログ(API 側のみ実装)。</li>
 <li><strong>Phase 9</strong>(three.js の GLB ビューア)、<strong>Phase 10</strong>(Cloudflare Containers の検証スパイク。実環境が必要で、設計書も「半日の検証に留める」としているもの)。</li>
 <li>Firebase Auth(設計書どおり。差し込み口だけ: <code>docs/auth.md</code>)。</li>
 </ul>
+<h2 id="t6-キー操作・t2-定型項目追補-3-の残り">T6 キー操作・T2 定型項目(追補 3 の残り)</h2>
+<ul>
+<li><strong>T6</strong>: <code>/</code> でかんばんの検索欄へ、自分のタスクで <code>j</code> / <code>k</code> / Enter。入力欄・ダイアログ・ドロワー表示中・修飾キー付きでは<strong>効かせない</strong>(<code>hooks/useHotkeys.ts</code>)。<code>Shift + ←→</code>(列の移動)と衝突しないよう、1 キーのみ。選んだ行は色だけでなく左の線と <code>aria-current</code> でも示す。コマンドパレットは見送り。</li>
+<li><strong>T2</strong>: ノート入力欄に「見るポイント / 使うときの注意」のチップ。押すと見出しを足すだけで、同じ見出しは二重に足さない(<code>domain/noteTemplates.ts</code>)。サーバー側の変更なし。</li>
+</ul>
 </article>
     <nav class="pager"><a class="prev" href="operations.html"><span>← 前へ</span>運用手順(Phase 7)</a><a class="next" href="learning-log.html"><span>次へ →</span>学習ログ(各スキルで詰まった点)</a></nav>
   </main>
-  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#技術・バージョン2026-10-25-に確認して固定">技術・バージョン(2026-10-25 に確認して固定)</a></li><li class="lvl2"><a href="#ドラッグドロップのライブラリ設計書実装時に比較">ドラッグ&amp;ドロップのライブラリ(設計書「実装時に比較」)</a></li><li class="lvl2"><a href="#設計書から外れた点・補った点">設計書から外れた点・補った点</a></li><li class="lvl2"><a href="#ascii-モチーフ設計書-追補-2026-10-27で決めたこと">ASCII モチーフ(設計書 追補 2026-10-27)で決めたこと</a></li><li class="lvl2"><a href="#第4弾の外部資料z32で決めたこと">第4弾の外部資料(Z32)で決めたこと</a></li><li class="lvl2"><a href="#入力の堅牢性設計書にない追加">入力の堅牢性(設計書にない追加)</a></li><li class="lvl2"><a href="#使いやすさの提案2026-11-04で決めたこと">使いやすさの提案(2026-11-04)で決めたこと</a></li><li class="lvl2"><a href="#実装しなかったもの">実装しなかったもの</a></li></ul></nav>
+  <nav class="toc" aria-label="この文書の目次"><h2>目次</h2><ul><li class="lvl2"><a href="#技術・バージョン2026-10-25-に確認して固定">技術・バージョン(2026-10-25 に確認して固定)</a></li><li class="lvl2"><a href="#ドラッグドロップのライブラリ設計書実装時に比較">ドラッグ&amp;ドロップのライブラリ(設計書「実装時に比較」)</a></li><li class="lvl2"><a href="#設計書から外れた点・補った点">設計書から外れた点・補った点</a></li><li class="lvl2"><a href="#ascii-モチーフ設計書-追補-2026-10-27で決めたこと">ASCII モチーフ(設計書 追補 2026-10-27)で決めたこと</a></li><li class="lvl2"><a href="#第4弾の外部資料z32で決めたこと">第4弾の外部資料(Z32)で決めたこと</a></li><li class="lvl2"><a href="#入力の堅牢性設計書にない追加">入力の堅牢性(設計書にない追加)</a></li><li class="lvl2"><a href="#使いやすさの提案2026-11-04で決めたこと">使いやすさの提案(2026-11-04)で決めたこと</a></li><li class="lvl2"><a href="#実装しなかったもの">実装しなかったもの</a></li><li class="lvl2"><a href="#t6-キー操作・t2-定型項目追補-3-の残り">T6 キー操作・T2 定型項目(追補 3 の残り)</a></li></ul></nav>
 </div>
 </body>
 </html>
