@@ -6,6 +6,7 @@ from django.utils import timezone
 from rest_framework import serializers
 
 from .models import (
+    AuditEvent,
     Entity,
     Note,
     Project,
@@ -420,3 +421,12 @@ class VisualIngestSerializer(serializers.Serializer):
             return Version.objects.get(pk=value)
         except Version.DoesNotExist:
             raise serializers.ValidationError("存在しない版です。") from None
+
+
+class AuditEventSerializer(serializers.ModelSerializer):
+    action_label = serializers.CharField(source="get_action_display")
+
+    class Meta:
+        model = AuditEvent
+        fields = ["id", "created_at", "actor_name", "action", "action_label", "target_type", "target_id", "detail"]
+        read_only_fields = fields

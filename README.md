@@ -148,6 +148,7 @@ cd frontend && npm test && npm run build  # Vitest / 型チェック + ビルド
 | POST | `/tasks/{id}/transition/` | 状態遷移(本文 `{"to": "..."}`)。不正は 409 |
 | GET/POST | `/versions/?task=`、`POST /versions/{id}/transition/` | 版(`Idempotency-Key` 対応) |
 | GET/POST | `/notes/?target_type=&target_id=` | ノート(対象は entity / task / version のみ) |
+| GET | `/projects/{id または code}/audit/?action=` | **監査ログ**(版の登録・状態変更、ノートの追加。新しい順)。読めるのは管理者とそのプロジェクトのレビュアーのみ(他は 403、見えないプロジェクトは 404)。誰が・いつ・何をだけを残し、**ノートの本文・版のコメント・ファイルの場所は残さない**。追記のみ(更新・削除不可、管理画面も読み取り専用)。反映は `python manage.py migrate` |
 | GET | `/steps/`, `/quality-reports/`, `/visual-results/`, `/me/` | 参照用 |
 | POST | `/ingest/quality/`, `/ingest/visual/` | 外部ツールの結果の取り込み(`X-API-Key`、冪等) |
 | GET | `/healthz`(ルートにも) | 死活監視(認証なし。DB の可否のみ) |

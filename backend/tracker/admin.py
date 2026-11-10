@@ -1,6 +1,7 @@
 from django.contrib import admin
 
 from .models import (
+    AuditEvent,
     Entity,
     Note,
     Project,
@@ -72,3 +73,21 @@ class QualityReportAdmin(admin.ModelAdmin):
 class VisualResultAdmin(admin.ModelAdmin):
     list_display = ["version", "run_id", "verdict", "diff_ratio", "captured_at"]
     list_filter = ["verdict"]
+
+
+@admin.register(AuditEvent)
+class AuditEventAdmin(admin.ModelAdmin):
+    """監査ログは見るだけ(追加・変更・削除は管理画面からもできない)。"""
+
+    list_display = ["created_at", "project_code", "actor_name", "action", "target_type", "target_id"]
+    list_filter = ["action", "project_code"]
+    search_fields = ["actor_name", "project_code"]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

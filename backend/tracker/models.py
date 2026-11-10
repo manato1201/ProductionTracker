@@ -367,3 +367,42 @@ class VisualResult(models.Model):
 
     def __str__(self):
         return f"VisualResult#{self.pk} run={self.run_id} {self.verdict}"
+
+
+class AuditEvent(models.Model):
+    """版・ノートの変更の記録(追記のみ。設計 S-C)。
+
+    誰が・いつ・何を、だけを残す。**ノートの本文・版のコメントやファイルの場所は入れない**(秘密や個人情報が
+    入りうるため)。更新・削除はできない。プロジェクトや利用者が消えても記録は残る(名前を文字列で持つ)。
+    """
+
+    class Action(models.TextChoices):
+        VERSION_CREATE = "version.create", "版を登録"
+        VERSION_TRANSITION = "version.transition", "版の状態を変更"
+        NOTE_CREATE = "note.create", "ノートを追加"
+
+    project = models.ForeignKey(Project, null=True, on_delete=models.SET_NULL, related_name="audit_events")
+    project_code = models.CharField(max_length=32)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="+")
+    actor_name = models.CharField(max_length=150)
+    action = models.CharField(max_length=32, choices=Action.choices)
+    target_type = models.CharField(max_length=16)
+    target_id = models.PositiveBigIntegerField()
+    detail = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "監査ログ"
+        verbose_name_plural = "監査ログ"
+        indexes = [models.Index(fields=["project", "-created_at"], name="audit_project_time_idx")]
+
+    def __str__(self):
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.actor_name} {self.action} {self.target_type}#{self.target_id}"
+
+    def save(self, *args, **kwargs):
+        if not self._state.adding:
+            raise PermissionError("監査ログは更新できません。")
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        raise PermissionError("監査ログは削除できません。")

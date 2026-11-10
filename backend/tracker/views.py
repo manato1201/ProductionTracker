@@ -8,9 +8,11 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 
+from . import audit
 from . import serializers as s
 from .errors import Forbidden, IdempotencyConflict
 from .models import (
+    AuditEvent,
     Entity,
     Note,
     ProjectMember,
@@ -153,6 +155,19 @@ class ProjectViewSet(
         qs = project.members.select_related("user").order_by("user__username")
         page = self.paginate_queryset(qs)
         return self.get_paginated_response(s.MemberSerializer(page, many=True).data)
+
+    @action(detail=True, methods=["get"])
+    def audit(self, request, pk=None):
+        """版・ノートの変更の記録。読めるのは管理者とプロジェクトのレビュアーのみ(新しい順)。"""
+        project = self.get_object()
+        if not (request.user.is_staff or project.can_review(request.user)):
+            raise Forbidden("監査ログを読めるのは、プロジェクトのレビュアーと管理者のみです。")
+        qs = project.audit_events.order_by("-created_at", "-id")
+        act = choice_param(request, "action", AuditEvent.Action.values)
+        if act:
+            qs = qs.filter(action=act)
+        page = self.paginate_queryset(qs)
+        return self.get_paginated_response(s.AuditEventSerializer(page, many=True).data)
 
 
 # --- 工程 ---
@@ -334,7 +349,13 @@ class VersionViewSet(
             if response is not None:
                 return response
         try:
-            version = Version.create_for_task(task, created_by=request.user, idempotency_key=key, **data)
+            with transaction.atomic():
+                version = Version.create_for_task(task, created_by=request.user, idempotency_key=key, **data)
+                audit.record(
+                    user=request.user, action=AuditEvent.Action.VERSION_CREATE, project=task.project,
+                    target_type="version", target_id=version.pk, number=version.number, status=version.status,
+                    task=task.pk,
+                )
         except IntegrityError:
             # 同じ鍵の同時送信に負けた場合
             response = replay() if key else None
@@ -350,7 +371,12 @@ class VersionViewSet(
         body.is_valid(raise_exception=True)
         with transaction.atomic():
             locked = Version.objects.select_for_update().select_related("task__entity__project").get(pk=version.pk)
+            before = locked.status
             locked.transition_to(body.validated_data["to"], request.user)
+            audit.record(
+                user=request.user, action=AuditEvent.Action.VERSION_TRANSITION, project=locked.task.project,
+                target_type="version", target_id=locked.pk, number=locked.number, **{"from": before, "to": locked.status},
+            )
         return Response(self.get_serializer(self.get_queryset().get(pk=version.pk)).data)
 
 
@@ -394,7 +420,13 @@ class NoteViewSet(mixins.ListModelMixin, mixins.CreateModelMixin, viewsets.Gener
             raise serializers.ValidationError({"target_id": "対象が見つかりません。"})
         project = target.task.project if isinstance(target, Version) else target.project
         require_write(request.user, project)
-        note = Note.objects.create(target=target, author=request.user, body=data["body"])
+        with transaction.atomic():
+            note = Note.objects.create(target=target, author=request.user, body=data["body"])
+            audit.record(
+                user=request.user, action=AuditEvent.Action.NOTE_CREATE, project=project,
+                target_type="note", target_id=note.pk, body_length=len(note.body),
+                on_type=data["target_type"], on_id=data["target_id"],
+            )
         return Response(s.NoteSerializer(note).data, status=201)
 
 
