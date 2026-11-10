@@ -28,3 +28,6 @@ backups/
 # docs の HTML 版を作る道具
 docs/tools/node_modules/
 docs/tools/.cache/
+
+# Claude Code の承認済みコマンドには秘密情報が残ることがある(2026-11-09 追加)
+.claude/settings.local.json
