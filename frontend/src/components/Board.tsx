@@ -1,6 +1,6 @@
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
 import { Badge } from "@mui/material";
-import { useState, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent } from "react";
 import type { Task, TaskStatus } from "../api/types";
 import { adjacentStatus, TASK_STATUS_META, TASK_STATUSES } from "../domain/status";
 import { DueText } from "./DueText";
@@ -64,7 +64,7 @@ function Column({ status, tasks, loading, canWrite, intro, activeId, onOpen, onM
           {label}
         </span>
         <span className="column__count">
-          <Badge badgeContent={tasks.length} showZero color="default" max={999} sx={{ "& .MuiBadge-badge": { position: "static", transform: "none", fontFamily: "ui-monospace, monospace" } }} aria-label={`${tasks.length}件`} />
+          <CountBadge count={tasks.length} loading={loading} />
         </span>
       </header>
       <div className="column__cards">
@@ -77,6 +77,25 @@ function Column({ status, tasks, loading, canWrite, intro, activeId, onOpen, onM
         ))}
       </div>
     </section>
+  );
+}
+
+/** 列の件数バッジ。件数が変わったとき(読み込み中を除く)だけ、1 回弾ませる(CSS `.count-pop`)。 */
+function CountBadge({ count, loading }: { count: number; loading: boolean }) {
+  const prev = useRef(count);
+  const wasLoading = useRef(loading);
+  const [pops, setPops] = useState(0);
+  useEffect(() => {
+    const changed = prev.current !== count;
+    prev.current = count;
+    // 初回の読み込みで 0 → N になるときは弾ませない
+    if (changed && !loading && !wasLoading.current) setPops((n) => n + 1);
+    wasLoading.current = loading;
+  }, [count, loading]);
+  return (
+    <span key={pops} className={pops > 0 ? "count-pop" : undefined}>
+      <Badge badgeContent={count} showZero color="default" max={999} sx={{ "& .MuiBadge-badge": { position: "static", transform: "none", fontFamily: "ui-monospace, monospace" } }} aria-label={`${count}件`} />
+    </span>
   );
 }
 

@@ -40,32 +40,35 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         {current ? (
-          <Alert
-            severity={current.severity}
-            variant="filled"
-            onClose={() => setCurrent(null)}
-            sx={{ width: "100%" }}
-            role="status"
-            action={
-              current.action ? (
-                <Button
-                  color="inherit"
-                  size="small"
-                  onClick={() => {
-                    const act = current.action;
-                    setCurrent(null);
-                    act?.onClick();
-                  }}
-                >
-                  {current.action.label}
-                </Button>
-              ) : undefined
-            }
-          >
-            {current.lines.map((line, i) => (
-              <div key={i}>{line}</div>
-            ))}
-          </Alert>
+          // Snackbar(Grow)は直下の要素に transform を付けるので、震えは内側の要素に付ける
+          <div className={current.severity === "error" ? "toast-shake" : undefined}>
+            <Alert
+              severity={current.severity}
+              variant="filled"
+              onClose={() => setCurrent(null)}
+              sx={{ width: "100%" }}
+              role="status"
+              action={
+                current.action ? (
+                  <Button
+                    color="inherit"
+                    size="small"
+                    onClick={() => {
+                      const act = current.action;
+                      setCurrent(null);
+                      act?.onClick();
+                    }}
+                  >
+                    {current.action.label}
+                  </Button>
+                ) : undefined
+              }
+            >
+              {current.lines.map((line, i) => (
+                <div key={i}>{line}</div>
+              ))}
+            </Alert>
+          </div>
         ) : undefined}
       </Snackbar>
     </ToastContext.Provider>

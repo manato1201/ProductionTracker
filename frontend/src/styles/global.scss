@@ -280,3 +280,47 @@ button.row {
   .card--stagger { animation: none; }
   .column { transition: none; }
 }
+
+// --- 状態変化の動き(1 回きり。transform / opacity だけ) ---
+// 時間とイージングはここ 1 か所で決める。reduce のときは何も付かない(no-preference の中だけ)。
+:root {
+  --pt-dur-quick: 200ms;
+  --pt-dur-base: 280ms;
+  --pt-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  // 積み上げバー: 状態の内訳が左から伸びる(区切りごとに少しずらす)
+  .stack-bar__seg {
+    transform-origin: left center;
+    animation: seg-grow var(--pt-dur-base) var(--pt-ease-out) both;
+  }
+  .stack-bar__seg--in_progress { animation-delay: 60ms; }
+  .stack-bar__seg--review { animation-delay: 120ms; }
+  .stack-bar__seg--done { animation-delay: 180ms; }
+
+  // 件数バッジ: 件数が変わったとき 1 回だけ小さく弾む(何が変わったかが分かる)
+  .count-pop { display: inline-flex; animation: badge-pop var(--pt-dur-quick) var(--pt-ease-out) both; }
+
+  // 拒否されたときのトースト: 横に 1 回だけ震える(Snackbar 側の transform とは別の要素に付ける)
+  .toast-shake { animation: shake-x var(--pt-dur-base) ease-in-out both; }
+}
+
+@keyframes seg-grow {
+  from { transform: scaleX(0); }
+  to { transform: none; }
+}
+
+@keyframes badge-pop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.18); }
+  100% { transform: none; }
+}
+
+@keyframes shake-x {
+  0%, 100% { transform: none; }
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
